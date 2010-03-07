@@ -63,7 +63,7 @@ void print_format (const char * format, const char * target, int query, pmpkg_t 
 				case 'n': info = alpm_pkg_get_name (pkg_sync); break;
 				case 'v': info = alpm_pkg_get_version (pkg_sync); break;
 				case 'l': if (pkg_local) info = alpm_pkg_get_version (pkg_local); break;
-				case 'q': info = &q[query*2]; break;
+				case 'q': info = &q[(query-1)*2]; break;
 				case 'r': info = alpm_db_get_name (alpm_pkg_get_db (pkg_sync)); break;
 				case 't': info = target; break;
 				default: ;
