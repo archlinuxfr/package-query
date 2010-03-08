@@ -67,6 +67,36 @@ void init (const char *myname)
 	strcpy (config.format_out, FORMAT_OUT);
 }
 
+char *strtrim(char *str)
+{
+	char *pch = str;
+
+	if(str == NULL || *str == '\0') {
+		/* string is empty, so we're done. */
+		return(str);
+	}
+
+	while(isspace(*pch)) {
+		pch++;
+	}
+	if(pch != str) {
+		memmove(str, pch, (strlen(pch) + 1));
+	}
+
+	/* check if there wasn't anything but whitespace in the string. */
+	if(*str == '\0') {
+		return(str);
+	}
+
+	pch = (str + (strlen(str) - 1));
+	while(isspace(*pch)) {
+		pch--;
+	}
+	*++pch = '\0';
+
+	return(str);
+}
+
 void strins (char *dest, const char *src)
 {
 	char *prov;
@@ -76,6 +106,43 @@ void strins (char *dest, const char *src)
 	strcpy (dest, prov);
 	free (prov);
 }
+
+char *concat_str_list (alpm_list_t *l)
+{
+	char *ret;
+	int len=0;
+	alpm_list_t *i;
+	if (!l)
+	{
+		ret = (char *) malloc (sizeof (char) * 2);
+		strcpy (ret, "-");
+	}
+	else
+	{
+		for(i = l; i; i = alpm_list_next(i)) 
+		{
+			len += strlen (alpm_list_getdata (i)) + 1;
+		}
+		if (len)
+		{
+			ret = (char *) malloc (sizeof (char) * len);
+			strcpy (ret, "");
+			for(i = l; i; i = alpm_list_next(i)) 
+			{
+				strcat (ret, alpm_list_getdata (i));
+				strcat (ret, " ");
+			}
+		}
+		else
+		{
+			ret = (char *) malloc (sizeof (char) * 2);
+			strcpy (ret, "+");			
+		}
+	}
+	strtrim (ret);
+	return ret;
+}
+
 
 void init_path ()
 {
@@ -92,7 +159,8 @@ void print_format (const char * target, int query, pmpkg_t * pkg_sync, pmpkg_t *
 	char *end;
 	char *c;
 	char q[8] = {'d','\0', 'c', '\0', 'p', '\0', 'r', '\0'};
-	const char *info;
+	char *info;
+	int free_info = 0;
 	format_cpy = strdup (config.format_out);
 	ptr = format_cpy;
 	end = &(format_cpy[strlen(format_cpy)]);
@@ -107,22 +175,29 @@ void print_format (const char * target, int query, pmpkg_t * pkg_sync, pmpkg_t *
 		}
 		else
 		{
+			free_info = 0;
 			info = NULL;
 			switch (c[1])
 			{
-				case 'd': info = alpm_pkg_get_desc (pkg_sync); break;
-				case 'n': info = alpm_pkg_get_name (pkg_sync); break;
-				case 'v': info = alpm_pkg_get_version (pkg_sync); break;
-				case 'l': if (pkg_local) info = alpm_pkg_get_version (pkg_local); break;
+				case 'd': info = (char *) alpm_pkg_get_desc (pkg_sync); break;
+				case 'n': info = (char *) alpm_pkg_get_name (pkg_sync); break;
+				case 'g':
+					info = concat_str_list (alpm_pkg_get_groups (pkg_sync)); 
+					free_info = 1;
+					break;
+				case 'v': info = (char *) alpm_pkg_get_version (pkg_sync); break;
+				case 'l': if (pkg_local) info = (char *) alpm_pkg_get_version (pkg_local); break;
 				case 'q': if (query) info = &q[(query-1)*2]; break;
-				case 'r': info = alpm_db_get_name (alpm_pkg_get_db (pkg_sync)); break;
-				case 't': info = target; break;
+				case 'r': info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg_sync)); break;
+				case 't': info = (char *) target; break;
 				default: ;
 			}
 			if (info)
 				printf ("%s%s", ptr, info);
 			else
 				printf ("%s-", ptr);
+			if (free_info)
+				free (info);
 		}
 		ptr = &(c[2]);
 	}
@@ -171,42 +246,6 @@ const char *ret_depname (void *data)
 {
 	return alpm_dep_get_name (data);
 }
-
-char *concat_str_list (alpm_list_t *l)
-{
-	char *ret;
-	int len=0;
-	alpm_list_t *i;
-	if (!l)
-	{
-		ret = (char *) malloc (sizeof (char) * 2);
-		strcpy (ret, "-");
-	}
-	else
-	{
-		for(i = l; i; i = alpm_list_next(i)) 
-		{
-			len += strlen (alpm_list_getdata (i)) + 1;
-		}
-		if (len)
-		{
-			ret = (char *) malloc (sizeof (char) * len);
-			strcpy (ret, "");
-			for(i = l; i; i = alpm_list_next(i)) 
-			{
-				strcat (ret, alpm_list_getdata (i));
-				strcat (ret, " ");
-			}
-		}
-		else
-		{
-			ret = (char *) malloc (sizeof (char) * 2);
-			strcpy (ret, "+");			
-		}
-	}
-	return ret;
-}
-
 			
 int search_pkg (alpm_list_t *targets)
 {
@@ -302,35 +341,6 @@ int check_pkg (alpm_list_t *targets, int query, alpm_list_t *(*f)(pmpkg_t *),
 	return ret;
 }
 
-char *strtrim(char *str)
-{
-	char *pch = str;
-
-	if(str == NULL || *str == '\0') {
-		/* string is empty, so we're done. */
-		return(str);
-	}
-
-	while(isspace(*pch)) {
-		pch++;
-	}
-	if(pch != str) {
-		memmove(str, pch, (strlen(pch) + 1));
-	}
-
-	/* check if there wasn't anything but whitespace in the string. */
-	if(*str == '\0') {
-		return(str);
-	}
-
-	pch = (str + (strlen(str) - 1));
-	while(isspace(*pch)) {
-		pch--;
-	}
-	*++pch = '\0';
-
-	return(str);
-}
 
 
 int parse_config (const char * config_file)
