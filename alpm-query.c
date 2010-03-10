@@ -250,45 +250,17 @@ const char *ret_depname (void *data)
 int search_pkg (alpm_list_t *targets)
 {
 	int ret=0;
-	int found;
-	const char *compare_to_name;
-	const char *compare_to_desc;
-	alpm_list_t *t;
-	alpm_list_t *i;
+	alpm_list_t *res, *t;
 
-	for(i = alpm_db_get_pkgcache(db); i; i = alpm_list_next(i)) 
+	res = alpm_db_search(db, targets);
+	for(t = res; t; t = alpm_list_next(t)) 
 	{
-		pmpkg_t *info = alpm_list_getdata(i);
-		compare_to_name = alpm_pkg_get_name(info);
-		compare_to_desc = alpm_pkg_get_desc(info);
-		found = 0;
-		for(t = targets; t; t = alpm_list_next(t)) 
-		{
-			const char *target = alpm_list_getdata(t);
-			if (strcasestr (compare_to_name, target) != NULL)
-			{
-				found++;
-				continue;
-			}
-			if (compare_to_desc == NULL)
-			{
-				continue;
-			}
-			if (strcasestr (compare_to_desc, target) != NULL)
-			{
-				found++;
-				continue;
-			}
-			found = 0;
-		}
-		if (found==alpm_list_count(targets))
-		{	
-			char *ts;
-			ret++;
-			ts = concat_str_list (targets);
-			print_package (ts, 0, info);
-			free(ts);
-		}
+		pmpkg_t *info = alpm_list_getdata(t);
+		char *ts;
+		ret++;
+		ts = concat_str_list (targets);
+		print_package (ts, 0, info);
+		free(ts);
 	}
 	return ret;
 }
