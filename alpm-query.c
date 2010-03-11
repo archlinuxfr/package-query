@@ -262,6 +262,7 @@ int search_pkg (alpm_list_t *targets)
 		print_package (ts, 0, info);
 		free(ts);
 	}
+	FREELIST(res);
 	return ret;
 }
 
@@ -511,6 +512,7 @@ int main (int argc, char **argv)
 			}
 		}
 	}
+	//alpm_db_unregister_all();
 	FREELIST(dbs);
 	FREELIST(targets);
 	if (ret != 0)
