@@ -1,4 +1,4 @@
-CC=gcc -Wall -g
+CC=gcc -Wall #-g
 all: package-query
 
 package-query: aur.o alpm-query.o util.o package-query.o
