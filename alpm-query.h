@@ -15,6 +15,8 @@ int init_db_local ();
 /*
  * Parse pacman config to find sync databases
  */
+/* get_db_sync() returns new list, use FREELIST() to free the list */
+alpm_list_t *get_db_sync (const char * config_file);
 int init_db_sync (const char * config_file);
 
 

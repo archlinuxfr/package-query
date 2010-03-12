@@ -22,11 +22,13 @@ void init_config (const char *myname)
 	config.myname = strdup(basename(_myname));
 	free (_myname);
 	config.quiet = 0;
-	config.db_target = NONE;
+	config.db_local = 0;
+	config.db_sync = 0;
 	config.aur = 0;
 	config.query=ALL;
 	config.information = 0;
 	config.search = 0;
+	config.list = 0;
 	strcpy (config.root_dir, ROOTDIR);
 	strcpy (config.db_path, DBPATH);
 	strcpy (config.config_file, CONFFILE);
@@ -54,6 +56,7 @@ void usage ()
 	fprintf(stderr, "\n\t-b <database path> : default %s", DBPATH);
 	fprintf(stderr, "\n\t-f <format> : default %s", FORMAT_OUT_USAGE);
 	fprintf(stderr, "\n\t-i search by name");
+	fprintf(stderr, "\n\t-L list configured repository");
 	fprintf(stderr, "\n\t-q quiet");
 	fprintf(stderr, "\n\t-Q search in local database");
 	fprintf(stderr, "\n\t-r <root path> : default %s", ROOTDIR);
@@ -86,7 +89,6 @@ void usage ()
 int main (int argc, char **argv)
 {
 	int ret=0;
-	int aur_passed=0;
 	pmdb_t *db;
 	alpm_list_t *targets=NULL;
 	alpm_list_t *dbs=NULL;
@@ -95,7 +97,7 @@ int main (int argc, char **argv)
 	init_config (argv[0]);
 
 	int opt;
-	while ((opt = getopt (argc, argv, "Ac:b:f:hiQqr:Sst:")) != -1) 
+	while ((opt = getopt (argc, argv, "Ac:b:f:hiLQqr:Sst:")) != -1) 
 	{
 		switch (opt) 
 		{
@@ -114,8 +116,11 @@ int main (int argc, char **argv)
 			case 'i':
 				config.information = 1;
 				break;
+			case 'L':
+				config.list = 1;
+				break;
 			case 'Q':
-				config.db_target = LOCAL;
+				config.db_local = 1;
 				break;
 			case 'q':
 				config.quiet = 1;
@@ -127,7 +132,7 @@ int main (int argc, char **argv)
 				config.search = 1;
 				break;
 			case 'S':
-				config.db_target = SYNC;
+				config.db_sync = 1;
 				break;
 			case 't':
 				if (strcmp (optarg, "depends")==0)
@@ -144,7 +149,7 @@ int main (int argc, char **argv)
 				usage ();
 		}
 	}
-	if ((config.search || config.information) && !config.aur && config.db_target == NONE)
+	if ((config.search || config.information) && !config.aur && !config.db_local && !config.db_sync)
 	{
 		fprintf(stderr, "search or information must have database target (-{Q,S,A}).\n");
 		exit(1);
@@ -154,12 +159,23 @@ int main (int argc, char **argv)
 	{
 		targets = alpm_list_add(targets, strdup(argv[i]));
 	}
-	if (targets == NULL)
+	if (targets == NULL && !config.list)
 	{
 		fprintf(stderr, "no targets specified.\n");
 		usage();
 	}
 	init_path ();
+	if (config.list)
+	{
+		dbs = get_db_sync (config.config_file);
+		if (dbs)
+		{
+			for(t = dbs; t; t = alpm_list_next(t))
+				printf ("%s\n", (char *)alpm_list_getdata(t));
+		}
+		FREELIST (dbs);
+		exit (0);
+	}
 	if (!init_alpm (config.root_dir, config.db_path))
 	{
 		fprintf(stderr, "unable to initialise alpm.\n");
@@ -170,7 +186,7 @@ int main (int argc, char **argv)
 		fprintf(stderr, "unable to register local database.\n");
 		exit(1);
 	}
-	if (config.db_target != LOCAL)
+	if (config.db_sync)
 	{
 		if (!init_db_sync (config.config_file))
 		{
@@ -179,28 +195,25 @@ int main (int argc, char **argv)
 		}
 		dbs = alpm_option_get_syncdbs();
 	}
-	else
+	if (config.db_local)
 		dbs = alpm_list_add(dbs, alpm_option_get_localdb());
+	if (config.aur)
+	{
+		if (config.information)
+			ret += aur_info (targets);
+		else if (config.search)
+			ret += aur_search (targets);
+	}
 	for(t = dbs; t; t = alpm_list_next(t))
 	{
 		db = alpm_list_getdata(t);
 		if (config.information)
 		{
 			ret += search_pkg_by_name (db, targets);
-			if (config.aur && !aur_passed)
-			{
-				ret += aur_info (targets);
-				aur_passed=1;
-			}
 		}
 		else if (config.search)
 		{
 			ret += search_pkg (db, targets);
-			if (config.aur && !aur_passed)
-			{
-				ret += aur_search (targets);
-				aur_passed=1;
-			}
 		}
 		else
 		{

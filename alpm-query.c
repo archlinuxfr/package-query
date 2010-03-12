@@ -39,7 +39,7 @@ int init_db_local ()
 	return (alpm_db_register_local() != NULL);
 }
 
-int init_db_sync (const char * config_file)
+alpm_list_t * _get_db_sync (alpm_list_t *dbs, const char * config_file)
 {
 	char line[PATH_MAX+1];
 	char *ptr;
@@ -66,11 +66,7 @@ int init_db_sync (const char * config_file)
 			ptr = &(line[1]);
 			if (strcmp (ptr, "options") != 0)
 			{
-				if (alpm_db_register_sync(ptr) == NULL)
-				{
-					fclose (config);
-					return 0;
-				}
+				dbs = alpm_list_add (dbs, strdup (ptr));
 			}
 		}
 		else
@@ -84,19 +80,42 @@ int init_db_sync (const char * config_file)
 				if (strcmp (line, "Include") == 0)
 				{
 					strtrim (ptr);
-					if (!init_db_sync (ptr))
+					if ((dbs = _get_db_sync (dbs, ptr)) == NULL)
 					{
 						fclose (config);
-						return 0;
+						return NULL;
 					}
 				}
 			}
 		}
 	}
 	fclose (config);
-	return 1;
+	return dbs;
 }
 
+alpm_list_t * get_db_sync (const char * config_file)
+{
+	return _get_db_sync (NULL, config_file);
+}
+
+int init_db_sync (const char * config_file)
+{
+	alpm_list_t *dbs, *d;
+	if ((dbs = get_db_sync (config_file)) != NULL)
+	{
+		for (d=dbs; d; d=alpm_list_next (d))
+		{
+			if (alpm_db_register_sync(alpm_list_getdata(d)) == NULL)
+			{
+					FREELIST (dbs);
+					return 0;
+			}
+		}
+		FREELIST (dbs);
+		return 1;
+	}
+	return 0;
+}
 
 int _search_pkg_by (pmdb_t *db, alpm_list_t *targets, int query, 
 	alpm_list_t *(*f)(pmpkg_t *), 

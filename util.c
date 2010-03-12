@@ -128,6 +128,7 @@ char *concat_str_list (alpm_list_t *l)
 
 void print_aur_package (const char * target, package_t * pkg_sync)
 {
+	if (config.quiet) return;
 	pmpkg_t * pkg_local;
 	char *format_cpy;
 	char *ptr;
@@ -162,6 +163,9 @@ void print_aur_package (const char * target, package_t * pkg_sync)
 					if (pkg_local)
 						info = (char *) alpm_pkg_get_version (pkg_local); break;
 				case 'n': info = (char *) aur_pkg_get_name (pkg_sync); break;
+				case 'o': 
+					sprintf (itostr, "%d", aur_pkg_get_outofdate (pkg_sync));
+					info = itostr; break;
 				case 'r': info = strdup ("aur"); free_info=1; break;
 				case 't': info = (char *) target; break;
 				case 'u': 
@@ -171,6 +175,9 @@ void print_aur_package (const char * target, package_t * pkg_sync)
 					free_info = 1;
 					break;
 				case 'v': info = (char *) aur_pkg_get_version (pkg_sync); break;
+				case 'w': 
+					sprintf (itostr, "%d", aur_pkg_get_votes (pkg_sync));
+					info = itostr; break;
 				default: ;
 			}
 			if (info)
@@ -192,6 +199,7 @@ void print_aur_package (const char * target, package_t * pkg_sync)
 
 void print_package (const char * target, int query, pmpkg_t * pkg_sync)
 {
+	if (config.quiet) return;
 	pmpkg_t * pkg_local;
 	char *format_cpy;
 	char *ptr;

@@ -28,11 +28,13 @@ typedef struct _aq_config
 {
 	char *myname;
 	unsigned short quiet;
-	unsigned short db_target;
+	unsigned short db_local;
+	unsigned short db_sync;
 	unsigned short aur;
 	unsigned short query;
 	unsigned short information;
 	unsigned short search;
+	unsigned short list;
 	char format_out[PATH_MAX];
 	char root_dir[PATH_MAX];
 	char db_path[PATH_MAX];
