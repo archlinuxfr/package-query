@@ -139,7 +139,7 @@ int _search_pkg_by (pmdb_t *db, alpm_list_t *targets, int query,
 				if (strcmp (pkg_name, compare_to) == 0)
 				{
 					ret++;
-					print_package (pkg_name, query, info);
+					print_package (pkg_name, query, info, alpm_get_str);
 					found = 1;
 				}
 			}
@@ -181,7 +181,7 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t *targets)
 		if (pkg_found != NULL)
 		{
 			ret++;
-			print_package (pkg_name, 0, pkg_found);
+			print_package (pkg_name, 0, pkg_found, alpm_get_str);
 		}
 	}
 	return ret;
@@ -199,9 +199,36 @@ int search_pkg (pmdb_t *db, alpm_list_t *targets)
 		char *ts;
 		ret++;
 		ts = concat_str_list (targets);
-		print_package (ts, 0, info);
+		print_package (ts, 0, info, alpm_get_str);
 		free(ts);
 	}
 	alpm_list_free (res);
 	return ret;
 }
+
+
+const char *alpm_get_str (void *p, unsigned char c)
+{
+	pmpkg_t *pkg = (pmpkg_t *) p;
+	static char *info=NULL;
+	static int free_info=0;
+	if (free_info)
+	{
+		free (info);
+		info = NULL;
+		free_info = 0;
+	}
+	switch (c)
+	{
+		case 'd': info = (char *) alpm_pkg_get_desc (pkg); break;
+		case 'g':
+			info = concat_str_list (alpm_pkg_get_groups (pkg)); 
+			free_info = 1;
+			break;
+		case 'n': info = (char *) alpm_pkg_get_name (pkg); break;
+		case 'r': info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg)); break;
+		case 'v': info = (char *) alpm_pkg_get_version (pkg); break;
+		default: return NULL; break;
+	}
+	return info;
+}	

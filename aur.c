@@ -324,7 +324,7 @@ int aur_request (alpm_list_t *targets, int type)
 				{
 					ret++;
 					package_t *pkg = alpm_list_getdata(p);
-					print_aur_package (target, pkg);
+					print_package (target, 0, pkg, aur_get_str);
 				}
 				alpm_list_free_inner (pkgs, (alpm_list_fn_free) package_free);
  				alpm_list_free (pkgs);
@@ -361,4 +361,45 @@ int aur_search (alpm_list_t *targets)
 {
 	return aur_request (targets, AUR_SEARCH);
 }
+
+const char *aur_get_str (void *p, unsigned char c)
+{
+	package_t *pkg = (package_t *) p;
+	static char *info=NULL;
+	static int free_info=0;
+	if (free_info)
+	{
+		free (info);
+		info = NULL;
+		free_info = 0;
+	}
+	switch (c)
+	{
+		case 'd': info = (char *) aur_pkg_get_desc (pkg); break;
+		case 'i': 
+			info = itostr (aur_pkg_get_id (pkg)); 
+			free_info = 1;
+			break;
+		case 'n': info = (char *) aur_pkg_get_name (pkg); break;
+		case 'o': 
+			info = itostr (aur_pkg_get_outofdate (pkg)); 
+			free_info = 1;
+			break;
+		case 'r': info = strdup ("aur"); free_info=1; break;
+		case 'u': 
+			info = (char *) malloc (sizeof (char) * (strlen (AUR_BASE_URL) + strlen (aur_pkg_get_urlpath (pkg))));
+			strcpy (info, AUR_BASE_URL);
+			strcat (info, aur_pkg_get_urlpath (pkg));
+			free_info = 1;
+			break;
+		case 'v': info = (char *) aur_pkg_get_version (pkg); break;
+		case 'w': 
+			info = itostr (aur_pkg_get_votes (pkg)); 
+			free_info = 1;
+			break;
+		default: return NULL; break;
+	}
+	return info;
+}
+
 

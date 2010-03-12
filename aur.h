@@ -57,4 +57,10 @@ unsigned short aur_pkg_get_outofdate (package_t * pkg);
 int aur_search (alpm_list_t *targets);
 int aur_info (alpm_list_t *targets);
 
+/*
+ * aur_get_str() get info for package
+ * str returned should not be passed to free
+ */
+const char *aur_get_str (void *p, unsigned char c);
+
 #endif

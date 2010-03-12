@@ -29,6 +29,7 @@ void init_config (const char *myname)
 	config.information = 0;
 	config.search = 0;
 	config.list = 0;
+	config.escape = 0;
 	strcpy (config.root_dir, ROOTDIR);
 	strcpy (config.db_path, DBPATH);
 	strcpy (config.config_file, CONFFILE);
@@ -52,8 +53,9 @@ void usage ()
 	fprintf(stderr, "Usage: %s [options] [targets ...]\n", config.myname);
 	fprintf(stderr, "\nwhere options include:");
 	fprintf(stderr, "\n\t-A query AUR database");
-	fprintf(stderr, "\n\t-c <configuration file> : default %s", CONFFILE);
 	fprintf(stderr, "\n\t-b <database path> : default %s", DBPATH);
+	fprintf(stderr, "\n\t-c <configuration file> : default %s", CONFFILE);
+	fprintf(stderr, "\n\t-e escape \" on output");
 	fprintf(stderr, "\n\t-f <format> : default %s", FORMAT_OUT_USAGE);
 	fprintf(stderr, "\n\t-i search by name");
 	fprintf(stderr, "\n\t-L list configured repository");
@@ -74,10 +76,12 @@ void usage ()
 	fprintf(stderr, "\n\ti: if AUR, show the ID");
 	fprintf(stderr, "\n\tl: local version");
 	fprintf(stderr, "\n\tn: name");
+	fprintf(stderr, "\n\to: out of date (0,1)");
 	fprintf(stderr, "\n\tr: repo name");
 	fprintf(stderr, "\n\tq: query");
 	fprintf(stderr, "\n\tt: target");
 	fprintf(stderr, "\n\tv: version, depends on search target");
+	fprintf(stderr, "\n\tw: votes from AUR");
 	fprintf(stderr, "\n");
 	exit (1);
 }
@@ -97,7 +101,7 @@ int main (int argc, char **argv)
 	init_config (argv[0]);
 
 	int opt;
-	while ((opt = getopt (argc, argv, "Ac:b:f:hiLQqr:Sst:")) != -1) 
+	while ((opt = getopt (argc, argv, "Ac:b:ef:hiLQqr:Sst:")) != -1) 
 	{
 		switch (opt) 
 		{
@@ -109,6 +113,9 @@ int main (int argc, char **argv)
 				break;
 			case 'b':
 				strcpy (config.db_path, optarg);
+				break;
+			case 'e':
+				config.escape = 1;
 				break;
 			case 'f':
 				strcpy (config.format_out, optarg);

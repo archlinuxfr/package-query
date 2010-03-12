@@ -35,6 +35,7 @@ typedef struct _aq_config
 	unsigned short information;
 	unsigned short search;
 	unsigned short list;
+	unsigned short escape;
 	char format_out[PATH_MAX];
 	char root_dir[PATH_MAX];
 	char db_path[PATH_MAX];
@@ -62,7 +63,10 @@ char *strtrim(char *str);
 void strins (char *dest, const char *src);
 char *concat_str_list (alpm_list_t *l);
 
-void print_aur_package (const char * target, package_t * pkg_sync);
-void print_package (const char * target, int query, pmpkg_t * pkg_sync);
+char * itostr (int i);
+void print_escape (const char *str);
+
+void print_package (const char * target, int query, 
+	void * pkg, const char *(*f)(void *p, unsigned char c));
 
 

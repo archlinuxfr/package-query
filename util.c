@@ -5,8 +5,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "util.h"
-#include "aur.h"
-#include "alpm-query.h"
 
 
 string_t *string_new ()
@@ -125,79 +123,27 @@ char *concat_str_list (alpm_list_t *l)
 	return ret;
 }
 
-
-void print_aur_package (const char * target, package_t * pkg_sync)
+void print_escape (const char *str)
 {
-	if (config.quiet) return;
-	pmpkg_t * pkg_local;
-	char *format_cpy;
-	char *ptr;
-	char *end;
-	char *c;
-	char *info, itostr[20];
-	int free_info = 0;
-	format_cpy = strdup (config.format_out);
-	ptr = format_cpy;
-	end = &(format_cpy[strlen(format_cpy)]);
-	while ((c=strchr (ptr, '%')))
+	const char *c=str;
+	while (*c!='\0')
 	{
-		if (&(c[1])==end)
-			break;
-		c[0] = '\0'; 
-		if (c[1] == '%' )
-		{
-			printf ("%s\%\%", ptr);
-		}
-		else
-		{
-			free_info = 0;
-			info = NULL;
-			switch (c[1])
-			{
-				case 'd': info = (char *) aur_pkg_get_desc (pkg_sync); break;
-				case 'i': 
-					sprintf (itostr, "%d", aur_pkg_get_id (pkg_sync));
-					info = itostr; break;
-				case 'l': 
-					pkg_local = alpm_db_get_pkg(alpm_option_get_localdb(), aur_pkg_get_name (pkg_sync));
-					if (pkg_local)
-						info = (char *) alpm_pkg_get_version (pkg_local); break;
-				case 'n': info = (char *) aur_pkg_get_name (pkg_sync); break;
-				case 'o': 
-					sprintf (itostr, "%d", aur_pkg_get_outofdate (pkg_sync));
-					info = itostr; break;
-				case 'r': info = strdup ("aur"); free_info=1; break;
-				case 't': info = (char *) target; break;
-				case 'u': 
-					info = (char *) malloc (sizeof (char) * (strlen (AUR_BASE_URL) + strlen (aur_pkg_get_urlpath (pkg_sync))));
-					strcpy (info, AUR_BASE_URL);
-					strcat (info, aur_pkg_get_urlpath (pkg_sync));
-					free_info = 1;
-					break;
-				case 'v': info = (char *) aur_pkg_get_version (pkg_sync); break;
-				case 'w': 
-					sprintf (itostr, "%d", aur_pkg_get_votes (pkg_sync));
-					info = itostr; break;
-				default: ;
-			}
-			if (info)
-				printf ("%s%s", ptr, info);
-			else
-				printf ("%s-", ptr);
-			if (free_info)
-				free (info);
-		}
-		ptr = &(c[2]);
+		if (*c == '"')
+			putchar ('\\');
+		putchar (*c);
+		c++;
 	}
-	if (ptr != end)
-		printf ("%s", ptr);
-	printf ("\n");
-		
 }
 
+char * itostr (int i)
+{
+	char is[20];
+	sprintf (is, "%d", i);
+	return strdup (is);
+}
 
-
-void print_package (const char * target, int query, pmpkg_t * pkg_sync)
+void print_package (const char * target, int query, 
+	void * pkg, const char *(*f)(void *p, unsigned char c))
 {
 	if (config.quiet) return;
 	pmpkg_t * pkg_local;
@@ -206,8 +152,7 @@ void print_package (const char * target, int query, pmpkg_t * pkg_sync)
 	char *end;
 	char *c;
 	char q[8] = {'d','\0', 'c', '\0', 'p', '\0', 'r', '\0'};
-	char *info;
-	int free_info = 0;
+	const char *info;
 	format_cpy = strdup (config.format_out);
 	ptr = format_cpy;
 	end = &(format_cpy[strlen(format_cpy)]);
@@ -222,32 +167,27 @@ void print_package (const char * target, int query, pmpkg_t * pkg_sync)
 		}
 		else
 		{
-			free_info = 0;
 			info = NULL;
 			switch (c[1])
 			{
-				case 'd': info = (char *) alpm_pkg_get_desc (pkg_sync); break;
-				case 'g':
-					info = concat_str_list (alpm_pkg_get_groups (pkg_sync)); 
-					free_info = 1;
-					break;
 				case 'l': 
-					pkg_local = alpm_db_get_pkg(alpm_option_get_localdb(), alpm_pkg_get_name (pkg_sync));
+					pkg_local = alpm_db_get_pkg(alpm_option_get_localdb(), f (pkg, 'n'));
 					if (pkg_local)
-						info = (char *) alpm_pkg_get_version (pkg_local); break;
-				case 'n': info = (char *) alpm_pkg_get_name (pkg_sync); break;
+						info = (const char *) alpm_pkg_get_version (pkg_local); break;
 				case 'q': if (query) info = &q[(query-1)*2]; break;
-				case 'r': info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg_sync)); break;
 				case 't': info = (char *) target; break;
-				case 'v': info = (char *) alpm_pkg_get_version (pkg_sync); break;
-				default: ;
+				default: info = f (pkg, c[1]);
 			}
+			printf ("%s", ptr);
 			if (info)
-				printf ("%s%s", ptr, info);
+			{
+				if (config.escape)
+					print_escape (info);
+				else
+					printf ("%s", info);
+			}
 			else
-				printf ("%s-", ptr);
-			if (free_info)
-				free (info);
+				printf ("-");
 		}
 		ptr = &(c[2]);
 	}
