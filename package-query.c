@@ -48,7 +48,7 @@ void init_path ()
 
 void usage ()
 {
-	fprintf(stderr, "Query alpm database\n");
+	fprintf(stderr, "Query alpm database and/or AUR\n");
 	fprintf(stderr, "Usage: %s [options] [targets ...]\n", config.myname);
 	fprintf(stderr, "\nwhere options include:");
 	fprintf(stderr, "\n\t-A query AUR database");
