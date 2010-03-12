@@ -14,7 +14,6 @@
 /*
  * AUR url
  */
-#define AUR_BASE_URL "http://aur.archlinux.org"
 #define AUR_RPC	"/rpc.php"
 #define AUR_RPC_SEARCH "?type=search&arg="
 #define AUR_RPC_INFO "?type=info&arg="
@@ -265,6 +264,7 @@ int aur_request (alpm_list_t *targets, int type)
 	string_t *res;
 	alpm_list_t *t;
 	const char *target;
+	char *aur_target = NULL;
 
 	if (targets == NULL)
 		return 0;
@@ -281,17 +281,27 @@ int aur_request (alpm_list_t *targets, int type)
 		strcat (aur_rpc, AUR_RPC_SEARCH);
 	else
 		strcat (aur_rpc, AUR_RPC_INFO);
-    hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) &pkg_json);
 	
 	for(t = targets; t; t = alpm_list_next(t)) 
 	{
 		target = alpm_list_getdata(t);
 		if (type == AUR_SEARCH)
+		{
+			if (strchr (target, '*'))
+			{
+				char *c;
+				aur_target = strdup (target);
+				while ((c = strchr (aur_target, '*')) != NULL)
+					*c='%';
+				target = aur_target;
+			}
 			aur_rpc[strlen(AUR_BASE_URL) + strlen(AUR_RPC) + strlen(AUR_RPC_SEARCH)] = '\0';
+		}
 		else
 			aur_rpc[strlen(AUR_BASE_URL) + strlen(AUR_RPC) + strlen(AUR_RPC_INFO)] = '\0';
 		strcat (aur_rpc, target);
 		res = string_new();
+    	hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) &pkg_json);
 		curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
 		curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
 		curl_easy_setopt (curl, CURLOPT_URL, aur_rpc);
@@ -318,6 +328,7 @@ int aur_request (alpm_list_t *targets, int type)
 				}
 				alpm_list_free_inner (pkgs, (alpm_list_fn_free) package_free);
  				alpm_list_free (pkgs);
+				pkgs=NULL;
 				pkg_json.pkg=NULL;
 			}
 		}
@@ -328,10 +339,16 @@ int aur_request (alpm_list_t *targets, int type)
 			fprintf(stderr, "curl error.\n");
 			return 0;
 		}
+		string_free (res);
+		yajl_free(hand);
+		if (aur_target)
+		{
+			free (aur_target);
+			aur_target = NULL;
+			target = NULL;
+		}
 	}
 
-    yajl_free(hand);
-	string_free (res);
 	return ret;
 }
 

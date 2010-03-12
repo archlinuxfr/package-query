@@ -16,6 +16,7 @@
 /*
  * Search Database
  */
+#define NONE 0
 #define LOCAL 1
 #define SYNC 2
 #define AUR	3

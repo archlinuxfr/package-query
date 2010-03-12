@@ -2,6 +2,9 @@
 #define _AUR_H
 #include <alpm_list.h>
 
+#define AUR_BASE_URL "http://aur.archlinux.org"
+
+
 /*
  * AUR package
  */

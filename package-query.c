@@ -10,7 +10,8 @@
 #include "alpm-query.h"
 #include "aur.h"
 
-#define FORMAT_OUT "%t (%q): %n %v [%l]"
+#define FORMAT_OUT "%r/%n %v [%l] (%g)\n\t%d"
+#define FORMAT_OUT_USAGE "%r/%n %v [%l] (%g)\\n\\t%d"
 
 extern char *optarg;
 extern int optind;
@@ -21,7 +22,7 @@ void init_config (const char *myname)
 	config.myname = strdup(basename(_myname));
 	free (_myname);
 	config.quiet = 0;
-	config.db_target = LOCAL;
+	config.db_target = NONE;
 	config.aur = 0;
 	config.query=ALL;
 	config.information = 0;
@@ -48,10 +49,11 @@ void usage ()
 	fprintf(stderr, "Query alpm database\n");
 	fprintf(stderr, "Usage: %s [options] [targets ...]\n", config.myname);
 	fprintf(stderr, "\nwhere options include:");
+	fprintf(stderr, "\n\t-A query AUR database");
 	fprintf(stderr, "\n\t-c <configuration file> : default %s", CONFFILE);
 	fprintf(stderr, "\n\t-b <database path> : default %s", DBPATH);
-	fprintf(stderr, "\n\t-f <format> : default %s", FORMAT_OUT);
-	fprintf(stderr, "\n\t-i <information> show information on targets");
+	fprintf(stderr, "\n\t-f <format> : default %s", FORMAT_OUT_USAGE);
+	fprintf(stderr, "\n\t-i search by name");
 	fprintf(stderr, "\n\t-q quiet");
 	fprintf(stderr, "\n\t-Q search in local database");
 	fprintf(stderr, "\n\t-r <root path> : default %s", ROOTDIR);
@@ -59,24 +61,20 @@ void usage ()
 	fprintf(stderr, "\n\t-S search in sync database");
 	fprintf(stderr, "\n\t-t query type");
 	fprintf(stderr, "\n\t-h this help");
-	fprintf(stderr, "\n\ninformation type: (one information by line)");
-	fprintf(stderr, "\n\tnone: display suits format");
-	fprintf(stderr, "\n\tdepends: depends");
-	fprintf(stderr, "\n\tconflicts: conflicts");
-	fprintf(stderr, "\n\tprovides: provides");
-	fprintf(stderr, "\n\treplaces: replaces");
 	fprintf(stderr, "\n\nquery type:");
 	fprintf(stderr, "\n\tdepends: depends on one of target");
 	fprintf(stderr, "\n\tconflicts: conflicts with one of target");
 	fprintf(stderr, "\n\tprovides: provides one of target");
 	fprintf(stderr, "\n\treplaces: replaces one of target");
 	fprintf(stderr, "\n\nformat:");
+	fprintf(stderr, "\n\td: description");
+	fprintf(stderr, "\n\ti: if AUR, show the ID");
 	fprintf(stderr, "\n\tl: local version");
 	fprintf(stderr, "\n\tn: name");
-	fprintf(stderr, "\n\tq: query");
 	fprintf(stderr, "\n\tr: repo name");
+	fprintf(stderr, "\n\tq: query");
 	fprintf(stderr, "\n\tt: target");
-	fprintf(stderr, "\n\tv: sync version");
+	fprintf(stderr, "\n\tv: version, depends on search target");
 	fprintf(stderr, "\n");
 	exit (1);
 }
@@ -88,6 +86,7 @@ void usage ()
 int main (int argc, char **argv)
 {
 	int ret=0;
+	int aur_passed=0;
 	pmdb_t *db;
 	alpm_list_t *targets=NULL;
 	alpm_list_t *dbs=NULL;
@@ -96,11 +95,11 @@ int main (int argc, char **argv)
 	init_config (argv[0]);
 
 	int opt;
-	while ((opt = getopt (argc, argv, "ac:b:f:hiQqr:Sst:")) != -1) 
+	while ((opt = getopt (argc, argv, "Ac:b:f:hiQqr:Sst:")) != -1) 
 	{
 		switch (opt) 
 		{
-			case 'a':
+			case 'A':
 				config.aur = 1;
 				break;
 			case 'c':
@@ -145,6 +144,11 @@ int main (int argc, char **argv)
 				usage ();
 		}
 	}
+	if ((config.search || config.information) && !config.aur && config.db_target == NONE)
+	{
+		fprintf(stderr, "search or information must have database target (-{Q,S,A}).\n");
+		exit(1);
+	}
 	int i;
 	for (i = optind; i < argc; i++)
 	{
@@ -183,14 +187,20 @@ int main (int argc, char **argv)
 		if (config.information)
 		{
 			ret += search_pkg_by_name (db, targets);
-			if (config.aur)
+			if (config.aur && !aur_passed)
+			{
 				ret += aur_info (targets);
+				aur_passed=1;
+			}
 		}
 		else if (config.search)
 		{
 			ret += search_pkg (db, targets);
-			if (config.aur)
+			if (config.aur && !aur_passed)
+			{
 				ret += aur_search (targets);
+				aur_passed=1;
+			}
 		}
 		else
 		{

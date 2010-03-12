@@ -5,6 +5,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "util.h"
+#include "aur.h"
 #include "alpm-query.h"
 
 
@@ -132,7 +133,7 @@ void print_aur_package (const char * target, package_t * pkg_sync)
 	char *ptr;
 	char *end;
 	char *c;
-	char *info;
+	char *info, itostr[20];
 	int free_info = 0;
 	format_cpy = strdup (config.format_out);
 	ptr = format_cpy;
@@ -153,14 +154,23 @@ void print_aur_package (const char * target, package_t * pkg_sync)
 			switch (c[1])
 			{
 				case 'd': info = (char *) aur_pkg_get_desc (pkg_sync); break;
-				case 'n': info = (char *) aur_pkg_get_name (pkg_sync); break;
-				case 'v': info = (char *) aur_pkg_get_version (pkg_sync); break;
+				case 'i': 
+					sprintf (itostr, "%d", aur_pkg_get_id (pkg_sync));
+					info = itostr; break;
 				case 'l': 
 					pkg_local = alpm_db_get_pkg(alpm_option_get_localdb(), aur_pkg_get_name (pkg_sync));
 					if (pkg_local)
 						info = (char *) alpm_pkg_get_version (pkg_local); break;
+				case 'n': info = (char *) aur_pkg_get_name (pkg_sync); break;
 				case 'r': info = strdup ("aur"); free_info=1; break;
 				case 't': info = (char *) target; break;
+				case 'u': 
+					info = (char *) malloc (sizeof (char) * (strlen (AUR_BASE_URL) + strlen (aur_pkg_get_urlpath (pkg_sync))));
+					strcpy (info, AUR_BASE_URL);
+					strcat (info, aur_pkg_get_urlpath (pkg_sync));
+					free_info = 1;
+					break;
+				case 'v': info = (char *) aur_pkg_get_version (pkg_sync); break;
 				default: ;
 			}
 			if (info)
@@ -209,19 +219,19 @@ void print_package (const char * target, int query, pmpkg_t * pkg_sync)
 			switch (c[1])
 			{
 				case 'd': info = (char *) alpm_pkg_get_desc (pkg_sync); break;
-				case 'n': info = (char *) alpm_pkg_get_name (pkg_sync); break;
 				case 'g':
 					info = concat_str_list (alpm_pkg_get_groups (pkg_sync)); 
 					free_info = 1;
 					break;
-				case 'v': info = (char *) alpm_pkg_get_version (pkg_sync); break;
 				case 'l': 
 					pkg_local = alpm_db_get_pkg(alpm_option_get_localdb(), alpm_pkg_get_name (pkg_sync));
 					if (pkg_local)
 						info = (char *) alpm_pkg_get_version (pkg_local); break;
+				case 'n': info = (char *) alpm_pkg_get_name (pkg_sync); break;
 				case 'q': if (query) info = &q[(query-1)*2]; break;
 				case 'r': info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg_sync)); break;
 				case 't': info = (char *) target; break;
+				case 'v': info = (char *) alpm_pkg_get_version (pkg_sync); break;
 				default: ;
 			}
 			if (info)
