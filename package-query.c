@@ -31,6 +31,7 @@ void init_config (const char *myname)
 	config.list = 0;
 	config.escape = 0;
 	config.just_one = 0;
+	config.updates = 0;
 	strcpy (config.root_dir, ROOTDIR);
 	strcpy (config.db_path, DBPATH);
 	strcpy (config.config_file, CONFFILE);
@@ -67,6 +68,7 @@ void usage ()
 	fprintf(stderr, "\n\t-s search");
 	fprintf(stderr, "\n\t-S search in sync database");
 	fprintf(stderr, "\n\t-t query type");
+	fprintf(stderr, "\n\t-u list updates available");
 	fprintf(stderr, "\n\t-h this help");
 	fprintf(stderr, "\n\nquery type:");
 	fprintf(stderr, "\n\tdepends: depends on one of target");
@@ -103,7 +105,7 @@ int main (int argc, char **argv)
 	init_config (argv[0]);
 
 	int opt;
-	while ((opt = getopt (argc, argv, "1Ac:b:ef:hiLQqr:Sst:")) != -1) 
+	while ((opt = getopt (argc, argv, "1Ac:b:ef:hiLQqr:Sst:u")) != -1) 
 	{
 		switch (opt) 
 		{
@@ -156,6 +158,9 @@ int main (int argc, char **argv)
 				else if (strcmp (optarg, "replaces")==0)
 					config.query = REPLACES;
 				break;
+			case 'u':
+				config.updates = 1;
+				break;
 			case 'h':
 			default: /* '?' */
 				usage ();
@@ -171,7 +176,7 @@ int main (int argc, char **argv)
 	{
 		targets = alpm_list_add(targets, strdup(argv[i]));
 	}
-	if (targets == NULL && !config.list)
+	if (targets == NULL && !config.list && !config.updates)
 	{
 		fprintf(stderr, "no targets specified.\n");
 		usage();
@@ -198,7 +203,7 @@ int main (int argc, char **argv)
 		fprintf(stderr, "unable to register local database.\n");
 		exit(1);
 	}
-	if (config.db_sync)
+	if (config.db_sync || config.updates)
 	{
 		if (!init_db_sync (config.config_file))
 		{
@@ -209,34 +214,39 @@ int main (int argc, char **argv)
 	}
 	if (config.db_local)
 		dbs = alpm_list_add(dbs, alpm_option_get_localdb());
-	for(t = dbs; t && (!config.just_one || ret==0); t = alpm_list_next(t))
+	if (config.updates)
+		search_updates ();
+	else
 	{
-		db = alpm_list_getdata(t);
-		if (config.information)
+		for(t = dbs; t && (!config.just_one || ret==0); t = alpm_list_next(t))
 		{
-			ret += search_pkg_by_name (db, targets);
-		}
-		else if (config.search)
-		{
-			ret += search_pkg (db, targets);
-		}
-		else
-		{
-			switch (config.query)
+			db = alpm_list_getdata(t);
+			if (config.information)
 			{
-				case ALL:
-				case DEPENDS: 
-					ret += search_pkg_by_depends (db, targets);
-					if (config.query != ALL) break;
-				case CONFLICTS: 
-					ret += search_pkg_by_conflicts (db, targets);
-					if (config.query != ALL) break;
-				case PROVIDES: 
-					ret += search_pkg_by_provides (db, targets);
-					if (config.query != ALL) break;
-				case REPLACES: 
-					ret += search_pkg_by_replaces (db, targets);
-					if (config.query != ALL) break;
+				ret += search_pkg_by_name (db, targets);
+			}
+			else if (config.search)
+			{
+				ret += search_pkg (db, targets);
+			}
+			else
+			{
+				switch (config.query)
+				{
+					case ALL:
+					case DEPENDS: 
+						ret += search_pkg_by_depends (db, targets);
+						if (config.query != ALL) break;
+					case CONFLICTS: 
+						ret += search_pkg_by_conflicts (db, targets);
+						if (config.query != ALL) break;
+					case PROVIDES: 
+						ret += search_pkg_by_provides (db, targets);
+						if (config.query != ALL) break;
+					case REPLACES: 
+						ret += search_pkg_by_replaces (db, targets);
+						if (config.query != ALL) break;
+				}
 			}
 		}
 	}

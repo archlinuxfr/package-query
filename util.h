@@ -37,6 +37,7 @@ typedef struct _aq_config
 	unsigned short list;
 	unsigned short escape;
 	unsigned short just_one;
+	unsigned short updates;
 	char format_out[PATH_MAX];
 	char root_dir[PATH_MAX];
 	char db_path[PATH_MAX];
@@ -67,6 +68,7 @@ char *concat_str_list (alpm_list_t *l);
 char * itostr (int i);
 void print_escape (const char *str);
 
+char *strreplace(const char *str, const char *needle, const char *replace);
 void print_package (const char * target, int query, 
 	void * pkg, const char *(*f)(void *p, unsigned char c));
 

@@ -52,7 +52,7 @@ unsigned short aur_pkg_get_outofdate (package_t * pkg);
 /*
  * AUR search function
  * Returns number of packages found
- * This function call print_aur_package()
+ * This function call print_package()
  */
 int aur_search (alpm_list_t *targets);
 int aur_info (alpm_list_t *targets);

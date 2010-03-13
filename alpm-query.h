@@ -23,7 +23,7 @@ int init_db_sync (const char * config_file);
 /*
  * ALPM search functions
  * Returns number of packages found
- * Those functions call print_alpm_package()
+ * Those functions call print_package()
  */
 int search_pkg_by_depends (pmdb_t *db, alpm_list_t *targets);
 int search_pkg_by_conflicts (pmdb_t *db, alpm_list_t *targets);
@@ -31,7 +31,10 @@ int search_pkg_by_provides (pmdb_t *db, alpm_list_t *targets);
 int search_pkg_by_replaces (pmdb_t *db, alpm_list_t *targets);
 
 int search_pkg_by_name (pmdb_t *db, alpm_list_t *targets);
+
 int search_pkg (pmdb_t *db, alpm_list_t *targets);
+
+int search_updates ();
 
 /*
  * alpm_get_str() get info for package

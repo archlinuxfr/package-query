@@ -101,10 +101,12 @@ char *concat_str_list (alpm_list_t *l)
 	{
 		for(i = l; i; i = alpm_list_next(i)) 
 		{
+			/* data's len + space for separator */
 			len += strlen (alpm_list_getdata (i)) + 1;
 		}
 		if (len)
 		{
+			len++; /* '\0' at the end */
 			ret = (char *) malloc (sizeof (char) * len);
 			strcpy (ret, "");
 			for(i = l; i; i = alpm_list_next(i)) 
@@ -141,6 +143,50 @@ char * itostr (int i)
 	sprintf (is, "%d", i);
 	return strdup (is);
 }
+/* Helper function for strreplace */
+static void _strnadd(char **str, const char *append, unsigned int count)
+{
+	if(*str) {
+		*str = realloc(*str, strlen(*str) + count + 1);
+	} else {
+		*str = calloc(sizeof(char), count + 1);
+	}
+
+	strncat(*str, append, count);
+}
+
+/* Replace all occurances of 'needle' with 'replace' in 'str', returning
+ * a new string (must be free'd) */
+char *strreplace(const char *str, const char *needle, const char *replace)
+{
+	const char *p, *q;
+	p = q = str;
+
+	char *newstr = NULL;
+	unsigned int needlesz = strlen(needle),
+							 replacesz = strlen(replace);
+
+	while (1) {
+		q = strstr(p, needle);
+		if(!q) { /* not found */
+			if(*p) {
+				/* add the rest of 'p' */
+				_strnadd(&newstr, p, strlen(p));
+			}
+			break;
+		} else { /* found match */
+			if(q > p){
+				/* add chars between this occurance and last occurance, if any */
+				_strnadd(&newstr, p, q - p);
+			}
+			_strnadd(&newstr, replace, replacesz);
+			p = q + needlesz;
+		}
+	}
+
+	return newstr;
+}
+
 
 void print_package (const char * target, int query, 
 	void * pkg, const char *(*f)(void *p, unsigned char c))

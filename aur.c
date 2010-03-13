@@ -387,7 +387,11 @@ const char *aur_get_str (void *p, unsigned char c)
 			break;
 		case 'r': info = strdup ("aur"); free_info=1; break;
 		case 'u': 
-			info = (char *) malloc (sizeof (char) * (strlen (AUR_BASE_URL) + strlen (aur_pkg_get_urlpath (pkg))));
+			info = (char *) malloc (sizeof (char) * 
+				(strlen (AUR_BASE_URL) + 
+				strlen (aur_pkg_get_urlpath (pkg)) +
+				1 /* '/' separate url and filename */
+				));
 			strcpy (info, AUR_BASE_URL);
 			strcat (info, aur_pkg_get_urlpath (pkg));
 			free_info = 1;
