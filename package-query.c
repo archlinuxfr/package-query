@@ -30,6 +30,7 @@ void init_config (const char *myname)
 	config.search = 0;
 	config.list = 0;
 	config.escape = 0;
+	config.just_one = 0;
 	strcpy (config.root_dir, ROOTDIR);
 	strcpy (config.db_path, DBPATH);
 	strcpy (config.config_file, CONFFILE);
@@ -52,6 +53,7 @@ void usage ()
 	fprintf(stderr, "Query alpm database and/or AUR\n");
 	fprintf(stderr, "Usage: %s [options] [targets ...]\n", config.myname);
 	fprintf(stderr, "\nwhere options include:");
+	fprintf(stderr, "\n\t-1 show the first answer only");
 	fprintf(stderr, "\n\t-A query AUR database");
 	fprintf(stderr, "\n\t-b <database path> : default %s", DBPATH);
 	fprintf(stderr, "\n\t-c <configuration file> : default %s", CONFFILE);
@@ -101,10 +103,13 @@ int main (int argc, char **argv)
 	init_config (argv[0]);
 
 	int opt;
-	while ((opt = getopt (argc, argv, "Ac:b:ef:hiLQqr:Sst:")) != -1) 
+	while ((opt = getopt (argc, argv, "1Ac:b:ef:hiLQqr:Sst:")) != -1) 
 	{
 		switch (opt) 
 		{
+			case '1':
+				config.just_one = 1;
+				break;
 			case 'A':
 				config.aur = 1;
 				break;
@@ -204,14 +209,7 @@ int main (int argc, char **argv)
 	}
 	if (config.db_local)
 		dbs = alpm_list_add(dbs, alpm_option_get_localdb());
-	if (config.aur)
-	{
-		if (config.information)
-			ret += aur_info (targets);
-		else if (config.search)
-			ret += aur_search (targets);
-	}
-	for(t = dbs; t; t = alpm_list_next(t))
+	for(t = dbs; t && (!config.just_one || ret==0); t = alpm_list_next(t))
 	{
 		db = alpm_list_getdata(t);
 		if (config.information)
@@ -241,6 +239,13 @@ int main (int argc, char **argv)
 					if (config.query != ALL) break;
 			}
 		}
+	}
+	if (config.aur && (!config.just_one || ret==0))
+	{
+		if (config.information)
+			ret += aur_info (targets);
+		else if (config.search)
+			ret += aur_search (targets);
 	}
 	alpm_list_free (dbs);
 	//alpm_db_unregister_all();
