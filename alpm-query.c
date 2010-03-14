@@ -134,11 +134,18 @@ int _search_pkg_by (pmdb_t *db, alpm_list_t *targets, int query,
 		pmpkg_t *info = alpm_list_getdata(i);
 		for(j = f(info); j; j = alpm_list_next(j)) 
 		{
+			int len=0;
 			const char *compare_to = g(alpm_list_getdata(j));
+			const char *c = strchr (compare_to, '<');
+			if (!c)	c = strchr (compare_to, '>');
+			if (!c)	c = strchr (compare_to, '=');
+			if (c)
+				len = (c-compare_to) / sizeof (char);
 			for(t = targets; t; t = alpm_list_next(t)) 
 			{
 				char *pkg_name = alpm_list_getdata(t);
-				if (strcmp (pkg_name, compare_to) == 0)
+				if ((len && strncmp (pkg_name, compare_to, len) == 0) ||
+					(strcmp (pkg_name, compare_to) == 0))
 				{
 					ret++;
 					print_package (pkg_name, query, info, alpm_get_str);
