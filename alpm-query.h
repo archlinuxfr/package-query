@@ -39,6 +39,8 @@ int search_pkg (pmdb_t *db, alpm_list_t *targets);
 
 int search_updates ();
 
+int list_db (pmdb_t *db, alpm_list_t *targets);
+
 /*
  * alpm_get_str() get info for package
  * str returned should not be passed to free

@@ -265,6 +265,43 @@ int search_updates ()
 }
 
 
+int list_db (pmdb_t *db, alpm_list_t *targets)
+{
+	int ret=0;
+	const char *db_name = alpm_db_get_name (db);
+	const char *target=NULL;
+	int db_present=0;
+	alpm_list_t *t;
+	alpm_list_t *i;
+
+	if (targets)
+	{
+		for (t=targets; t; t = alpm_list_next (t))
+		{
+			target = alpm_list_getdata (t);
+			if (strcmp (db_name, target) == 0)
+			{
+				db_present=1;
+				break;
+			}
+		}
+	}
+	else
+		db_present=1;
+	if (!db_present) return 0;
+	for(i = alpm_db_get_pkgcache(db); i; i = alpm_list_next(i)) 
+	{
+		pmpkg_t *info = alpm_list_getdata(i);
+		if (target)
+			print_package (target, 0, info, alpm_get_str);
+		else
+			print_package ("", 0, info, alpm_get_str);
+		ret++;
+	}
+	return ret;
+}
+
+
 const char *alpm_get_str (void *p, unsigned char c)
 {
 	pmpkg_t *pkg = (pmpkg_t *) p;

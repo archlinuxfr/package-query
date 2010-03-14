@@ -29,6 +29,7 @@ void init_config (const char *myname)
 	config.information = 0;
 	config.search = 0;
 	config.list = 0;
+	config.list_repo = 0;
 	config.escape = 0;
 	config.just_one = 0;
 	config.updates = 0;
@@ -105,7 +106,7 @@ int main (int argc, char **argv)
 	init_config (argv[0]);
 
 	int opt;
-	while ((opt = getopt (argc, argv, "1Ac:b:ef:hiLQqr:Sst:u")) != -1) 
+	while ((opt = getopt (argc, argv, "1Ac:b:ef:hiLlQqr:Sst:u")) != -1) 
 	{
 		switch (opt) 
 		{
@@ -132,6 +133,9 @@ int main (int argc, char **argv)
 				break;
 			case 'L':
 				config.list = 1;
+				break;
+			case 'l':
+				config.list_repo = 1;
 				break;
 			case 'Q':
 				config.db_local = 1;
@@ -176,7 +180,12 @@ int main (int argc, char **argv)
 	{
 		targets = alpm_list_add(targets, strdup(argv[i]));
 	}
-	if (targets == NULL && !config.list && !config.updates)
+	if (targets == NULL && config.search)
+	{
+		config.search = 0;
+		config.list_repo = 1;
+	}
+	if (targets == NULL && !config.list && !config.updates && !config.list_repo)
 	{
 		fprintf(stderr, "no targets specified.\n");
 		usage();
@@ -221,10 +230,14 @@ int main (int argc, char **argv)
 		search_updates ();
 	else
 	{
-		for(t = dbs; t && targets ; t = alpm_list_next(t))
+		for(t = dbs; t && (targets || config.list_repo); t = alpm_list_next(t))
 		{
 			db = alpm_list_getdata(t);
-			if (config.information)
+			if (config.list_repo)
+			{
+				ret += list_db (db, targets);
+			}
+			else if (config.information)
 			{
 				ret += search_pkg_by_name (db, &targets, config.just_one);
 			}
