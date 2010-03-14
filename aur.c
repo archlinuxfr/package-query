@@ -18,6 +18,10 @@
 #define AUR_RPC_SEARCH "?type=search&arg="
 #define AUR_RPC_INFO "?type=info&arg="
 
+/*
+ * AUR repo name
+ */
+#define AUR_REPO "aur"
 
 /*
  * AUR package information
@@ -263,7 +267,7 @@ int aur_request (alpm_list_t *targets, int type)
 	char aur_rpc[PATH_MAX];
 	string_t *res;
 	alpm_list_t *t;
-	const char *target;
+	const char *target, *pkg_name;
 	char *aur_target = NULL;
 
 	if (targets == NULL)
@@ -285,6 +289,7 @@ int aur_request (alpm_list_t *targets, int type)
 	for(t = targets; t; t = alpm_list_next(t)) 
 	{
 		target = alpm_list_getdata(t);
+		pkg_name = target;
 		if (type == AUR_SEARCH)
 		{
 			if (strchr (target, '*'))
@@ -293,13 +298,26 @@ int aur_request (alpm_list_t *targets, int type)
 				aur_target = strdup (target);
 				while ((c = strchr (aur_target, '*')) != NULL)
 					*c='%';
-				target = aur_target;
+				pkg_name = aur_target;
 			}
 			aur_rpc[strlen(AUR_BASE_URL) + strlen(AUR_RPC) + strlen(AUR_RPC_SEARCH)] = '\0';
 		}
 		else
+		{
+			const char *c = strchr (target, '/');
+			if (c)
+			{
+				/* package name include db ("db/pkg") */
+				int len = (c-target) / sizeof(char);
+				if (strlen (AUR_REPO) != len || strncmp (target, AUR_REPO, len)!=0)
+				{
+					continue;
+				}
+				pkg_name = ++c;
+			}
 			aur_rpc[strlen(AUR_BASE_URL) + strlen(AUR_RPC) + strlen(AUR_RPC_INFO)] = '\0';
-		strcat (aur_rpc, target);
+		}
+		strcat (aur_rpc, pkg_name);
 		res = string_new();
     	hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) &pkg_json);
 		curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
@@ -385,7 +403,7 @@ const char *aur_get_str (void *p, unsigned char c)
 			info = itostr (aur_pkg_get_outofdate (pkg)); 
 			free_info = 1;
 			break;
-		case 'r': info = strdup ("aur"); free_info=1; break;
+		case 'r': info = strdup (AUR_REPO); free_info=1; break;
 		case 'u': 
 			info = (char *) malloc (sizeof (char) * 
 				(strlen (AUR_BASE_URL) + 

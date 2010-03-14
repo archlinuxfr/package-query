@@ -189,8 +189,10 @@ int main (int argc, char **argv)
 		{
 			for(t = dbs; t; t = alpm_list_next(t))
 				printf ("%s\n", (char *)alpm_list_getdata(t));
+			FREELIST (dbs);
 		}
-		FREELIST (dbs);
+		/* TODO: some cleanup function ! */
+		free (config.myname);
 		exit (0);
 	}
 	if (!init_alpm (config.root_dir, config.db_path))
@@ -210,7 +212,8 @@ int main (int argc, char **argv)
 			fprintf(stderr, "unable to register sync database.\n");
 			exit(1);
 		}
-		dbs = alpm_option_get_syncdbs();
+		/* we can add local to dbs, so copy the list instead of just get alpm's one */
+		dbs = alpm_list_copy (alpm_option_get_syncdbs());
 	}
 	if (config.db_local)
 		dbs = alpm_list_add(dbs, alpm_option_get_localdb());
@@ -218,12 +221,12 @@ int main (int argc, char **argv)
 		search_updates ();
 	else
 	{
-		for(t = dbs; t && (!config.just_one || ret==0); t = alpm_list_next(t))
+		for(t = dbs; t && targets ; t = alpm_list_next(t))
 		{
 			db = alpm_list_getdata(t);
 			if (config.information)
 			{
-				ret += search_pkg_by_name (db, targets);
+				ret += search_pkg_by_name (db, &targets, config.just_one);
 			}
 			else if (config.search)
 			{
@@ -250,16 +253,21 @@ int main (int argc, char **argv)
 			}
 		}
 	}
-	if (config.aur && (!config.just_one || ret==0))
+	if (config.aur && targets)
 	{
 		if (config.information)
 			ret += aur_info (targets);
 		else if (config.search)
 			ret += aur_search (targets);
 	}
+
+	/* Some cleanups */
 	alpm_list_free (dbs);
-	//alpm_db_unregister_all();
+	if (alpm_release()==-1)
+		fprintf (stderr, alpm_strerrorlast());
 	FREELIST(targets);
+	free (config.myname);
+	/* Anything left ? */
 	if (ret != 0)
 		return 0;
 	else

@@ -239,6 +239,7 @@ void print_package (const char * target, int query,
 	}
 	if (ptr != end)
 		printf ("%s", ptr);
+	free (format_cpy);
 	printf ("\n");
 		
 }

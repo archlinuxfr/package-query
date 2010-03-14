@@ -30,7 +30,10 @@ int search_pkg_by_conflicts (pmdb_t *db, alpm_list_t *targets);
 int search_pkg_by_provides (pmdb_t *db, alpm_list_t *targets);
 int search_pkg_by_replaces (pmdb_t *db, alpm_list_t *targets);
 
-int search_pkg_by_name (pmdb_t *db, alpm_list_t *targets);
+/* search by name or db/name and if modify is true, 
+ * remove found items from targets.
+ */
+int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify);
 
 int search_pkg (pmdb_t *db, alpm_list_t *targets);
 
