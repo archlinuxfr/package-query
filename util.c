@@ -241,5 +241,6 @@ void print_package (const char * target, int query,
 		printf ("%s", ptr);
 	free (format_cpy);
 	printf ("\n");
+	fflush (NULL);
 		
 }
