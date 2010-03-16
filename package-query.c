@@ -33,6 +33,7 @@ void init_config (const char *myname)
 	config.escape = 0;
 	config.just_one = 0;
 	config.updates = 0;
+	config.foreign = 0;
 	strcpy (config.root_dir, ROOTDIR);
 	strcpy (config.db_path, DBPATH);
 	strcpy (config.config_file, CONFFILE);
@@ -63,6 +64,8 @@ void usage ()
 	fprintf(stderr, "\n\t-f <format> : default %s", FORMAT_OUT_USAGE);
 	fprintf(stderr, "\n\t-i search by name");
 	fprintf(stderr, "\n\t-L list configured repository");
+	fprintf(stderr, "\n\t-l list repository content");
+	fprintf(stderr, "\n\t-m search if foreign package exist in AUR (-AQm)");
 	fprintf(stderr, "\n\t-q quiet");
 	fprintf(stderr, "\n\t-Q search in local database");
 	fprintf(stderr, "\n\t-r <root path> : default %s", ROOTDIR);
@@ -106,7 +109,7 @@ int main (int argc, char **argv)
 	init_config (argv[0]);
 
 	int opt;
-	while ((opt = getopt (argc, argv, "1Ac:b:ef:hiLlQqr:Sst:u")) != -1) 
+	while ((opt = getopt (argc, argv, "1Ac:b:ef:hiLlmQqr:Sst:u")) != -1) 
 	{
 		switch (opt) 
 		{
@@ -136,6 +139,10 @@ int main (int argc, char **argv)
 				break;
 			case 'l':
 				config.list_repo = 1;
+				break;
+			case 'm':
+				config.db_sync = 1;
+				config.foreign = 1;
 				break;
 			case 'Q':
 				config.db_local = 1;
@@ -185,7 +192,7 @@ int main (int argc, char **argv)
 		config.search = 0;
 		config.list_repo = 1;
 	}
-	if (targets == NULL && !config.list && !config.updates && !config.list_repo)
+	if (targets == NULL && !config.list && !config.updates && !config.list_repo && !config.foreign)
 	{
 		fprintf(stderr, "no targets specified.\n");
 		usage();
@@ -222,13 +229,13 @@ int main (int argc, char **argv)
 			exit(1);
 		}
 		/* we can add local to dbs, so copy the list instead of just get alpm's one */
-		dbs = alpm_list_copy (alpm_option_get_syncdbs());
+		if (!config.foreign) dbs = alpm_list_copy (alpm_option_get_syncdbs());
 	}
 	if (config.db_local)
 		dbs = alpm_list_add(dbs, alpm_option_get_localdb());
 	if (config.updates)
 		search_updates ();
-	else
+	else if (!config.foreign)
 	{
 		for(t = dbs; t && (targets || config.list_repo); t = alpm_list_next(t))
 		{
@@ -266,9 +273,15 @@ int main (int argc, char **argv)
 			}
 		}
 	}
-	if (config.aur && targets)
+	if (config.aur && (targets || config.foreign))
 	{
-		if (config.information)
+		if (config.foreign)
+		{
+			FREELIST (targets);
+			targets = search_foreign();
+			ret += aur_info_none (targets);
+		}
+		else if (config.information)
 			ret += aur_info (targets);
 		else if (config.search)
 			ret += aur_search (targets);

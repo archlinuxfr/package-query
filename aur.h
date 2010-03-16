@@ -56,6 +56,8 @@ unsigned short aur_pkg_get_outofdate (package_t * pkg);
  */
 int aur_search (alpm_list_t *targets);
 int aur_info (alpm_list_t *targets);
+/* aur_info_none print infomation even if package is not found */
+int aur_info_none (alpm_list_t *targets);
 
 /*
  * aur_get_str() get info for package

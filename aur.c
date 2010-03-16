@@ -46,6 +46,7 @@
  */
 #define AUR_INFO	1
 #define AUR_SEARCH	2
+#define AUR_INFO_P	3
 
 
 alpm_list_t *pkgs=NULL;
@@ -344,6 +345,13 @@ int aur_request (alpm_list_t *targets, int type)
 					package_t *pkg = alpm_list_getdata(p);
 					print_package (target, 0, pkg, aur_get_str);
 				}
+				if (AUR_INFO_P && pkgs == NULL)
+				{
+					package_t *pkg = package_new();
+					pkg->name = strdup (target);
+					print_package (target, 0, pkg, aur_get_str);
+					package_free (pkg);
+				}
 				alpm_list_free_inner (pkgs, (alpm_list_fn_free) package_free);
  				alpm_list_free (pkgs);
 				pkgs=NULL;
@@ -366,6 +374,7 @@ int aur_request (alpm_list_t *targets, int type)
 			target = NULL;
 		}
 	}
+	curl_easy_cleanup(curl);
 
 	return ret;
 }
@@ -378,6 +387,12 @@ int aur_info (alpm_list_t *targets)
 int aur_search (alpm_list_t *targets)
 {
 	return aur_request (targets, AUR_SEARCH);
+}
+
+
+int aur_info_none (alpm_list_t *targets)
+{
+	return aur_request (targets, AUR_INFO_P);
 }
 
 const char *aur_get_str (void *p, unsigned char c)

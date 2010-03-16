@@ -46,4 +46,11 @@ int list_db (pmdb_t *db, alpm_list_t *targets);
  * str returned should not be passed to free
  */
 const char *alpm_get_str (void *p, unsigned char c);
-	
+
+
+/*
+ * Functions that return a list
+ */
+
+/* search_foreign() return list of package name */
+alpm_list_t *search_foreign ();

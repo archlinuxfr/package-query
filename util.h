@@ -39,6 +39,7 @@ typedef struct _aq_config
 	unsigned short escape;
 	unsigned short just_one;
 	unsigned short updates;
+	unsigned short foreign;
 	char format_out[PATH_MAX];
 	char root_dir[PATH_MAX];
 	char db_path[PATH_MAX];

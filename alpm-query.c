@@ -247,6 +247,29 @@ int search_pkg (pmdb_t *db, alpm_list_t *targets)
 }
 
 
+alpm_list_t *search_foreign ()
+{
+	int found=0;
+	alpm_list_t *res=NULL;
+	alpm_list_t *i,*j;
+	const char *pkg_name;
+
+	for(i = alpm_db_get_pkgcache(alpm_option_get_localdb()); i; i = alpm_list_next(i)) 
+	{
+		pkg_name = alpm_pkg_get_name (alpm_list_getdata(i));
+		found = 0;
+		for (j = alpm_option_get_syncdbs(); j && !found; j = alpm_list_next (j))
+		{
+			if (alpm_db_get_pkg (alpm_list_getdata (j), pkg_name) != NULL)
+				found = 1;
+		}
+		if (!found)
+			res = alpm_list_add (res, strdup (pkg_name));
+	}
+	return res;
+}
+
+
 int search_updates ()
 {
 	int ret=0;
@@ -263,6 +286,7 @@ int search_updates ()
 	}
 	return ret;
 }
+
 
 
 int list_db (pmdb_t *db, alpm_list_t *targets)
@@ -300,6 +324,7 @@ int list_db (pmdb_t *db, alpm_list_t *targets)
 	}
 	return ret;
 }
+
 
 
 const char *alpm_get_str (void *p, unsigned char c)
