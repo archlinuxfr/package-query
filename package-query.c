@@ -170,6 +170,7 @@ int main (int argc, char **argv)
 					config.query = REPLACES;
 				break;
 			case 'u':
+				config.db_sync = 1;
 				config.updates = 1;
 				break;
 			case 'h':
@@ -221,7 +222,7 @@ int main (int argc, char **argv)
 		fprintf(stderr, "unable to register local database.\n");
 		exit(1);
 	}
-	if (config.db_sync || config.updates)
+	if (config.db_sync)
 	{
 		if (!init_db_sync (config.config_file))
 		{
@@ -252,23 +253,18 @@ int main (int argc, char **argv)
 			{
 				ret += search_pkg (db, targets);
 			}
-			else
+			else if (config.query)
 			{
 				switch (config.query)
 				{
-					case ALL:
 					case DEPENDS: 
-						ret += search_pkg_by_depends (db, targets);
-						if (config.query != ALL) break;
+						ret += search_pkg_by_depends (db, targets); break;
 					case CONFLICTS: 
-						ret += search_pkg_by_conflicts (db, targets);
-						if (config.query != ALL) break;
+						ret += search_pkg_by_conflicts (db, targets); break;
 					case PROVIDES: 
-						ret += search_pkg_by_provides (db, targets);
-						if (config.query != ALL) break;
+						ret += search_pkg_by_provides (db, targets); break;
 					case REPLACES: 
-						ret += search_pkg_by_replaces (db, targets);
-						if (config.query != ALL) break;
+						ret += search_pkg_by_replaces (db, targets); break;
 				}
 			}
 		}

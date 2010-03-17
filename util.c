@@ -125,6 +125,46 @@ char *concat_str_list (alpm_list_t *l)
 	return ret;
 }
 
+void split_dep_str (const char *dep, char **name, pmdepmod_t *mod, char **ver)
+{
+	char *c;
+	if ((c=strstr (dep, "<=")) != NULL)
+	{
+		*mod=PM_DEP_MOD_LE;
+		*ver=strdup (&(c[2]));
+	}
+	else if ((c=strstr (dep, ">=")) != NULL)
+	{
+		*mod=PM_DEP_MOD_GE;
+		*ver=strdup (&(c[2]));
+	}
+	else if ((c=strchr (dep, '<')) != NULL)
+	{
+		*mod=PM_DEP_MOD_LT;
+		*ver=strdup (&(c[1]));
+	}
+	else if ((c=strchr (dep, '>')) != NULL)
+	{
+		*mod=PM_DEP_MOD_GT;
+		*ver=strdup (&(c[1]));
+	}
+	else if ((c=strchr (dep, '=')) != NULL)
+	{
+		*mod=PM_DEP_MOD_EQ;
+		*ver=strdup (&(c[1]));
+	}
+	else
+	{
+		*mod=PM_DEP_MOD_ANY;
+		*ver=NULL;
+	}
+	if (c)
+		*name=strndup (dep, (c-dep) / sizeof(char));
+	else
+		*name=strdup (dep);
+}
+
+
 void print_escape (const char *str)
 {
 	const char *c=str;

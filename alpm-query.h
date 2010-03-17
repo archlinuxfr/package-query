@@ -1,3 +1,5 @@
+#ifndef _ALPM_QUERY_H
+#define _ALPM_QUERY_H
 #include <alpm.h>
 #include <alpm_list.h>
 
@@ -54,3 +56,5 @@ const char *alpm_get_str (void *p, unsigned char c);
 
 /* search_foreign() return list of package name */
 alpm_list_t *search_foreign ();
+
+#endif

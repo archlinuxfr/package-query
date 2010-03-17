@@ -1,3 +1,5 @@
+#ifndef _UTIL_H
+#define _UTIL_H
 #include <alpm.h>
 #include <alpm_list.h>
 #include "aur.h"
@@ -40,6 +42,7 @@ typedef struct _aq_config
 	unsigned short just_one;
 	unsigned short updates;
 	unsigned short foreign;
+	unsigned short check;
 	char format_out[PATH_MAX];
 	char root_dir[PATH_MAX];
 	char db_path[PATH_MAX];
@@ -65,13 +68,21 @@ string_t *string_ncat (string_t *dest, char *src, size_t n);
 
 char *strtrim(char *str);
 void strins (char *dest, const char *src);
+char *strreplace(const char *str, const char *needle, const char *replace);
 char *concat_str_list (alpm_list_t *l);
 
+/* Split a dependance like string ("x{<=,>=,<,>,=}y") into:
+ * name=x, mod={<=,>=,<,>,=}, ver=y
+ */
+void split_dep_str (const char *dep, char **name, pmdepmod_t *mod, char **ver);
+
+/* integer to string */
 char * itostr (int i);
+
+/* escape " */
 void print_escape (const char *str);
 
-char *strreplace(const char *str, const char *needle, const char *replace);
 void print_package (const char * target, int query, 
 	void * pkg, const char *(*f)(void *p, unsigned char c));
 
-
+#endif

@@ -14,14 +14,14 @@
 
 
 	
-const char *ret_char (void *data)
+char *ret_char (void *data)
 {
-	return (const char *) data;
+	return strdup ((char *) data);
 }
 
-const char *ret_depname (void *data)
+char *ret_depname (void *data)
 {
-	return alpm_dep_get_name (data);
+	return alpm_dep_compute_string (data);
 }
 		
 
@@ -123,7 +123,7 @@ int init_db_sync (const char * config_file)
 
 int _search_pkg_by (pmdb_t *db, alpm_list_t *targets, int query, 
 	alpm_list_t *(*f)(pmpkg_t *), 
-	const char *(*g) (void *))
+	char *(*g) (void *))
 {
 	int ret=0;
 	alpm_list_t *t;
@@ -131,26 +131,43 @@ int _search_pkg_by (pmdb_t *db, alpm_list_t *targets, int query,
 
 	for(i = alpm_db_get_pkgcache(db); i; i = alpm_list_next(i)) 
 	{
-		pmpkg_t *info = alpm_list_getdata(i);
-		for(j = f(info); j; j = alpm_list_next(j)) 
+		pmpkg_t *pkg = alpm_list_getdata(i);
+		for(j = f(pkg); j; j = alpm_list_next(j)) 
 		{
-			int len=0;
-			const char *compare_to = g(alpm_list_getdata(j));
-			const char *c = strchr (compare_to, '<');
-			if (!c)	c = strchr (compare_to, '>');
-			if (!c)	c = strchr (compare_to, '=');
-			if (c)
-				len = (c-compare_to) / sizeof (char);
+			char *str = g(alpm_list_getdata(j));
+			char *name, *ver;
+			pmdepmod_t mod;
+			split_dep_str (str, &name, &mod, &ver);
+			free (str);
 			for(t = targets; t; t = alpm_list_next(t)) 
 			{
-				char *pkg_name = alpm_list_getdata(t);
-				if ((len && strncmp (pkg_name, compare_to, len) == 0) ||
-					(strcmp (pkg_name, compare_to) == 0))
+				char *name_c, *ver_c;
+				pmdepmod_t mod_c;
+				split_dep_str(alpm_list_getdata(t), &name_c, &mod_c, &ver_c);
+				if ((mod_c != PM_DEP_MOD_EQ && mod_c != PM_DEP_MOD_ANY) 
+					|| (mod_c == PM_DEP_MOD_EQ && ver_c == NULL))
+				{
+					free (name_c);
+					free (ver_c);
+					continue;
+				}
+				if (strcmp (name, name_c) == 0
+					&& (mod == PM_DEP_MOD_ANY || mod_c == PM_DEP_MOD_ANY
+					|| (mod == PM_DEP_MOD_EQ && alpm_pkg_vercmp (ver_c, ver) == 0)
+					|| (mod == PM_DEP_MOD_GE && alpm_pkg_vercmp (ver_c, ver) >= 0)
+					|| (mod == PM_DEP_MOD_GT && alpm_pkg_vercmp (ver_c, ver) > 0)
+					|| (mod == PM_DEP_MOD_LE && alpm_pkg_vercmp (ver_c, ver) <= 0)
+					|| (mod == PM_DEP_MOD_LT && alpm_pkg_vercmp (ver_c, ver) < 0)))
+					
 				{
 					ret++;
-					print_package (pkg_name, query, info, alpm_get_str);
+					print_package (alpm_list_getdata(t), query, pkg, alpm_get_str);
 				}
+				free (name_c);
+				free (ver_c);
 			}
+			free (name);
+			free (ver);
 		}
 	}
 	return ret;
@@ -268,7 +285,6 @@ alpm_list_t *search_foreign ()
 	}
 	return res;
 }
-
 
 int search_updates ()
 {

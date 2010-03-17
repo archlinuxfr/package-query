@@ -8,7 +8,7 @@
 /*
  * AUR package
  */
-typedef struct _package_t
+typedef struct _aurpkg_t
 {
 	unsigned int id;
 	char *name;
@@ -21,7 +21,7 @@ typedef struct _package_t
 	char *license;
 	unsigned int votes;
 	unsigned short outofdate;
-} package_t;
+} aurpkg_t;
 
 #define AUR_ID_LEN 	20
 
@@ -30,22 +30,24 @@ typedef struct _package_t
  */
 typedef struct _package_json_t
 {
-	package_t *pkg;
+	aurpkg_t *pkg;
 	char current_key[AUR_ID_LEN];
 } package_json_t;
 
-package_t *package_new ();
-package_t *package_free (package_t *pkg);
+aurpkg_t *aur_pkg_new ();
+aurpkg_t *aur_pkg_free (aurpkg_t *pkg);
+aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg);
+int aur_pkg_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2);
 
-unsigned int aur_pkg_get_id (package_t * pkg);
-const char * aur_pkg_get_name (package_t * pkg);
-const char * aur_pkg_get_version (package_t * pkg);
-const char * aur_pkg_get_desc (package_t * pkg);
-const char * aur_pkg_get_url (package_t * pkg);
-const char * aur_pkg_get_urlpath (package_t * pkg);
-const char * aur_pkg_get_license (package_t * pkg);
-unsigned int aur_pkg_get_votes (package_t * pkg);
-unsigned short aur_pkg_get_outofdate (package_t * pkg);
+unsigned int aur_pkg_get_id (const aurpkg_t * pkg);
+const char * aur_pkg_get_name (const aurpkg_t * pkg);
+const char * aur_pkg_get_version (const aurpkg_t * pkg);
+const char * aur_pkg_get_desc (const aurpkg_t * pkg);
+const char * aur_pkg_get_url (const aurpkg_t * pkg);
+const char * aur_pkg_get_urlpath (const aurpkg_t * pkg);
+const char * aur_pkg_get_license (const aurpkg_t * pkg);
+unsigned int aur_pkg_get_votes (const aurpkg_t * pkg);
+unsigned short aur_pkg_get_outofdate (const aurpkg_t * pkg);
 
 
 
