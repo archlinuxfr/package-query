@@ -244,6 +244,51 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
 	return ret;
 }
 
+
+int search_pkg_by_grp (pmdb_t *db, alpm_list_t **targets, int modify)
+{
+	int ret=0;
+	alpm_list_t *t, *i, *targets_copy=*targets;
+	pmgrp_t *grp;
+	alpm_list_t *pkgs;
+	int targets_copied=0;
+	for(t = *targets; t; t = alpm_list_next(t)) 
+	{
+		const char *grp_name = alpm_list_getdata(t);
+		if (strchr (grp_name, '/'))
+			continue;
+		grp = alpm_db_readgrp (db, grp_name);
+		pkgs = alpm_grp_get_pkgs (grp);
+		if (pkgs != NULL)
+		{
+			for(i = pkgs; i; i = alpm_list_next(i)) 
+			{
+				ret++;
+				print_package (grp_name, 0, alpm_list_getdata(i), alpm_get_str);
+			}
+			if (modify)
+			{
+				if (!targets_copied)
+				{
+					targets_copy = alpm_list_copy (*targets);
+					targets_copied = 1;
+				}
+				char *data;
+				targets_copy = alpm_list_remove_str (targets_copy, grp_name, &data);
+				if (data)
+					free (data);
+			}
+		}
+	}
+	if (modify)
+	{
+		if (targets_copied)
+			alpm_list_free (*targets);
+		*targets=targets_copy;
+	}
+	return ret;
+}
+
 int search_pkg (pmdb_t *db, alpm_list_t *targets)
 {
 	int ret=0;

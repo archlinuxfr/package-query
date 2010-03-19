@@ -36,6 +36,7 @@ int search_pkg_by_replaces (pmdb_t *db, alpm_list_t *targets);
  * remove found items from targets.
  */
 int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify);
+int search_pkg_by_grp (pmdb_t *db, alpm_list_t **targets, int modify);
 
 int search_pkg (pmdb_t *db, alpm_list_t *targets);
 

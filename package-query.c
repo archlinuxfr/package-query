@@ -248,6 +248,7 @@ int main (int argc, char **argv)
 			else if (config.information)
 			{
 				ret += search_pkg_by_name (db, &targets, config.just_one);
+				ret += search_pkg_by_grp (db, &targets, config.just_one);
 			}
 			else if (config.search)
 			{
