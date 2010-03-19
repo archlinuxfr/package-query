@@ -36,7 +36,7 @@ int search_pkg_by_replaces (pmdb_t *db, alpm_list_t *targets);
  * remove found items from targets.
  */
 int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify);
-int search_pkg_by_grp (pmdb_t *db, alpm_list_t **targets, int modify);
+int search_pkg_by_grp (pmdb_t *db, alpm_list_t **targets, int modify, int listp);
 
 int search_pkg (pmdb_t *db, alpm_list_t *targets);
 
@@ -45,10 +45,12 @@ int search_updates ();
 int list_db (pmdb_t *db, alpm_list_t *targets);
 
 /*
- * alpm_get_str() get info for package
+ * alpm_pkg_get_str() get info for package
+ * alpm_grp_get_str() get info for group
  * str returned should not be passed to free
  */
-const char *alpm_get_str (void *p, unsigned char c);
+const char *alpm_pkg_get_str (void *p, unsigned char c);
+const char *alpm_grp_get_str (void *p, unsigned char c);
 
 
 /*

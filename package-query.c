@@ -30,6 +30,7 @@ void init_config (const char *myname)
 	config.search = 0;
 	config.list = 0;
 	config.list_repo = 0;
+	config.list_group = 0;
 	config.escape = 0;
 	config.just_one = 0;
 	config.updates = 0;
@@ -109,7 +110,7 @@ int main (int argc, char **argv)
 	init_config (argv[0]);
 
 	int opt;
-	while ((opt = getopt (argc, argv, "1Ac:b:ef:hiLlmQqr:Sst:u")) != -1) 
+	while ((opt = getopt (argc, argv, "1Ac:b:ef:ghiLlmQqr:Sst:u")) != -1) 
 	{
 		switch (opt) 
 		{
@@ -130,6 +131,10 @@ int main (int argc, char **argv)
 				break;
 			case 'f':
 				strcpy (config.format_out, optarg);
+				break;
+			case 'g':
+				config.information = 1;
+				config.list_group = 1;
 				break;
 			case 'i':
 				config.information = 1;
@@ -248,7 +253,7 @@ int main (int argc, char **argv)
 			else if (config.information)
 			{
 				ret += search_pkg_by_name (db, &targets, config.just_one);
-				ret += search_pkg_by_grp (db, &targets, config.just_one);
+				ret += search_pkg_by_grp (db, &targets, config.just_one, config.list_group);
 			}
 			else if (config.search)
 			{

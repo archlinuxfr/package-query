@@ -161,7 +161,7 @@ int _search_pkg_by (pmdb_t *db, alpm_list_t *targets, int query,
 					
 				{
 					ret++;
-					print_package (alpm_list_getdata(t), query, pkg, alpm_get_str);
+					print_package (alpm_list_getdata(t), query, pkg, alpm_pkg_get_str);
 				}
 				free (name_c);
 				free (ver_c);
@@ -220,7 +220,7 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
 		if (pkg_found != NULL)
 		{
 			ret++;
-			print_package (target, 0, pkg_found, alpm_get_str);
+			print_package (target, 0, pkg_found, alpm_pkg_get_str);
 			if (modify)
 			{
 				if (!targets_copied)
@@ -245,12 +245,11 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
 }
 
 
-int search_pkg_by_grp (pmdb_t *db, alpm_list_t **targets, int modify)
+int search_pkg_by_grp (pmdb_t *db, alpm_list_t **targets, int modify, int listp)
 {
 	int ret=0;
-	alpm_list_t *t, *i, *targets_copy=*targets;
+	alpm_list_t *t, *targets_copy=*targets;
 	pmgrp_t *grp;
-	alpm_list_t *pkgs;
 	int targets_copied=0;
 	for(t = *targets; t; t = alpm_list_next(t)) 
 	{
@@ -258,14 +257,17 @@ int search_pkg_by_grp (pmdb_t *db, alpm_list_t **targets, int modify)
 		if (strchr (grp_name, '/'))
 			continue;
 		grp = alpm_db_readgrp (db, grp_name);
-		pkgs = alpm_grp_get_pkgs (grp);
-		if (pkgs != NULL)
+		if (grp)
 		{
-			for(i = pkgs; i; i = alpm_list_next(i)) 
+			ret++;
+			if (listp)
 			{
-				ret++;
-				print_package (grp_name, 0, alpm_list_getdata(i), alpm_get_str);
+				alpm_list_t *i;
+				for (i=alpm_grp_get_pkgs (grp); i; i=alpm_list_next (i))
+					print_package (grp_name, 0, alpm_list_getdata(i), alpm_pkg_get_str);
 			}
+			else
+				print_package (grp_name, 0, grp, alpm_grp_get_str);
 			if (modify)
 			{
 				if (!targets_copied)
@@ -301,7 +303,7 @@ int search_pkg (pmdb_t *db, alpm_list_t *targets)
 		char *ts;
 		ret++;
 		ts = concat_str_list (targets);
-		print_package (ts, 0, info, alpm_get_str);
+		print_package (ts, 0, info, alpm_pkg_get_str);
 		free(ts);
 	}
 	alpm_list_free (res);
@@ -342,7 +344,7 @@ int search_updates ()
 		if ((pkg = alpm_sync_newversion(alpm_list_getdata(i), alpm_option_get_syncdbs())) != NULL)
 		{
 			ret++;
-			print_package ("", 0, pkg, alpm_get_str);
+			print_package ("", 0, pkg, alpm_pkg_get_str);
 		}
 	}
 	return ret;
@@ -378,9 +380,9 @@ int list_db (pmdb_t *db, alpm_list_t *targets)
 	{
 		pmpkg_t *info = alpm_list_getdata(i);
 		if (target)
-			print_package (target, 0, info, alpm_get_str);
+			print_package (target, 0, info, alpm_pkg_get_str);
 		else
-			print_package ("", 0, info, alpm_get_str);
+			print_package ("", 0, info, alpm_pkg_get_str);
 		ret++;
 	}
 	return ret;
@@ -388,7 +390,7 @@ int list_db (pmdb_t *db, alpm_list_t *targets)
 
 
 
-const char *alpm_get_str (void *p, unsigned char c)
+const char *alpm_pkg_get_str (void *p, unsigned char c)
 {
 	pmpkg_t *pkg = (pmpkg_t *) p;
 	static char *info=NULL;
@@ -424,3 +426,24 @@ const char *alpm_get_str (void *p, unsigned char c)
 	}
 	return info;
 }	
+
+
+
+const char *alpm_grp_get_str (void *p, unsigned char c)
+{
+	pmgrp_t *grp = (pmgrp_t *) p;
+	static char *info=NULL;
+	static int free_info=0;
+	if (free_info)
+	{
+		free (info);
+		info = NULL;
+		free_info = 0;
+	}
+	switch (c)
+	{
+		case 'n': info = (char *) alpm_grp_get_name (grp); break;
+		default: return NULL; break;
+	}
+	return info;
+}

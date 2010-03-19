@@ -38,6 +38,7 @@ typedef struct _aq_config
 	unsigned short search;
 	unsigned short list;
 	unsigned short list_repo;
+	unsigned short list_group;
 	unsigned short escape;
 	unsigned short just_one;
 	unsigned short updates;
