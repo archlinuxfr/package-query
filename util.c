@@ -238,7 +238,8 @@ void print_package (const char * target, int query,
 	char *end;
 	char *c;
 	char q[8] = {'d','\0', 'c', '\0', 'p', '\0', 'r', '\0'};
-	const char *info;
+	char *info;
+	int free_info=0;
 	format_cpy = strdup (config.format_out);
 	ptr = format_cpy;
 	end = &(format_cpy[strlen(format_cpy)]);
@@ -259,10 +260,22 @@ void print_package (const char * target, int query,
 				case 'l': 
 					pkg_local = alpm_db_get_pkg(alpm_option_get_localdb(), f (pkg, 'n'));
 					if (pkg_local)
-						info = (const char *) alpm_pkg_get_version (pkg_local); break;
+						info = (char *) alpm_pkg_get_version (pkg_local); break;
 				case 'q': if (query) info = &q[(query-1)*2]; break;
 				case 't': info = (char *) target; break;
-				default: info = f (pkg, c[1]);
+				case '1':
+					pkg_local = alpm_db_get_pkg(alpm_option_get_localdb(), f (pkg, 'n'));
+					if (pkg_local)
+					{
+						time_t idate;
+						idate = alpm_pkg_get_installdate(pkg_local);
+						if (!idate) break;
+						info = (char *) malloc (sizeof (char) * 50);
+						strftime(info, 50, "%s", localtime(&idate));
+						free_info=1;
+					}
+					break;
+				default: info = (char *) f (pkg, c[1]);
 			}
 			printf ("%s", ptr);
 			if (info)
@@ -271,6 +284,11 @@ void print_package (const char * target, int query,
 					print_escape (info);
 				else
 					printf ("%s", info);
+				if (free_info)
+				{
+					free_info=0;
+					free (info);
+				}
 			}
 			else
 				printf ("-");
