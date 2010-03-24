@@ -1,3 +1,21 @@
+/*
+ *  package-query.c
+ *
+ *  Copyright (c) 2010 Tuxce <tuxce.net@gmail.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
@@ -9,6 +27,8 @@
 #include "util.h"
 #include "alpm-query.h"
 #include "aur.h"
+
+#define _VERSION "0.1"
 
 #define FORMAT_OUT "%r/%n %v [%l] (%g)\n\t%d"
 #define FORMAT_OUT_USAGE "%r/%n %v [%l] (%g)\\n\\t%d"
@@ -51,6 +71,11 @@ void init_path ()
 }
 
 
+void version ()
+{
+	printf ("%s %s\n", config.myname, _VERSION);
+	exit (0);
+}
 
 void usage ()
 {
@@ -110,7 +135,7 @@ int main (int argc, char **argv)
 	init_config (argv[0]);
 
 	int opt;
-	while ((opt = getopt (argc, argv, "1Ac:b:ef:ghiLlmQqr:Sst:u")) != -1) 
+	while ((opt = getopt (argc, argv, "1Ac:b:ef:ghiLlmQqr:Sst:uv")) != -1) 
 	{
 		switch (opt) 
 		{
@@ -178,6 +203,8 @@ int main (int argc, char **argv)
 				config.db_sync = 1;
 				config.updates = 1;
 				break;
+			case 'v':
+				version(); break;
 			case 'h':
 			default: /* '?' */
 				usage ();
