@@ -113,6 +113,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\tprovides: provides one of target");
 	fprintf(stderr, "\n\treplaces: replaces one of target");
 	fprintf(stderr, "\n\nformat:");
+	fprintf(stderr, "\n\ta: arch");
 	fprintf(stderr, "\n\td: description");
 	fprintf(stderr, "\n\tc: conflicts");
 	fprintf(stderr, "\n\ti: if AUR, show the ID");

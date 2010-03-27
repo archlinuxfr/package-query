@@ -421,6 +421,7 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 	}
 	switch (c)
 	{
+		case 'a': info = (char *) alpm_pkg_get_arch (pkg); break;
 		case 'c': 
 			info = concat_str_list (alpm_pkg_get_conflicts (pkg)); 
 			free_info = 1;
