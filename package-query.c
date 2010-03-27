@@ -47,6 +47,7 @@ void init_config (const char *myname)
 	config.aur = 0;
 	config.query=ALL;
 	config.information = 0;
+	config.is_file = 0;
 	config.search = 0;
 	config.list = 0;
 	config.list_repo = 0;
@@ -77,7 +78,7 @@ void version ()
 	exit (0);
 }
 
-void usage ()
+void usage (unsigned short _error)
 {
 	fprintf(stderr, "Query alpm database and/or AUR\n");
 	fprintf(stderr, "Usage: %s [options] [targets ...]\n", config.myname);
@@ -92,6 +93,7 @@ void usage ()
 	fprintf(stderr, "\n\t-L list configured repository");
 	fprintf(stderr, "\n\t-l list repository content");
 	fprintf(stderr, "\n\t-m search if foreign package exist in AUR (-AQm)");
+	fprintf(stderr, "\n\t-p query file package");
 	fprintf(stderr, "\n\t-q quiet");
 	fprintf(stderr, "\n\t-Q search in local database");
 	fprintf(stderr, "\n\t-r <root path> : default %s", ROOTDIR);
@@ -99,7 +101,12 @@ void usage ()
 	fprintf(stderr, "\n\t-S search in sync database");
 	fprintf(stderr, "\n\t-t query type");
 	fprintf(stderr, "\n\t-u list updates available");
-	fprintf(stderr, "\n\t-h this help");
+	fprintf(stderr, "\n\t-h show help");
+	if (_error)
+	{
+		fprintf(stderr, "\n");
+		exit (1);
+	}
 	fprintf(stderr, "\n\nquery type:");
 	fprintf(stderr, "\n\tdepends: depends on one of target");
 	fprintf(stderr, "\n\tconflicts: conflicts with one of target");
@@ -107,6 +114,7 @@ void usage ()
 	fprintf(stderr, "\n\treplaces: replaces one of target");
 	fprintf(stderr, "\n\nformat:");
 	fprintf(stderr, "\n\td: description");
+	fprintf(stderr, "\n\tc: conflicts");
 	fprintf(stderr, "\n\ti: if AUR, show the ID");
 	fprintf(stderr, "\n\tl: local version");
 	fprintf(stderr, "\n\tn: name");
@@ -117,7 +125,7 @@ void usage ()
 	fprintf(stderr, "\n\tv: version, depends on search target");
 	fprintf(stderr, "\n\tw: votes from AUR");
 	fprintf(stderr, "\n");
-	exit (1);
+	exit (0);
 }
 
 
@@ -135,7 +143,7 @@ int main (int argc, char **argv)
 	init_config (argv[0]);
 
 	int opt;
-	while ((opt = getopt (argc, argv, "1Ac:b:ef:ghiLlmQqr:Sst:uv")) != -1) 
+	while ((opt = getopt (argc, argv, "1Ac:b:ef:ghiLlmpQqr:Sst:uv")) != -1) 
 	{
 		switch (opt) 
 		{
@@ -174,6 +182,9 @@ int main (int argc, char **argv)
 				config.db_sync = 1;
 				config.foreign = 1;
 				break;
+			case 'p':
+				config.is_file = 1;
+				break;
 			case 'Q':
 				config.db_local = 1;
 				break;
@@ -205,9 +216,9 @@ int main (int argc, char **argv)
 				break;
 			case 'v':
 				version(); break;
-			case 'h':
+			case 'h': usage (0); break;
 			default: /* '?' */
-				usage ();
+				usage (1);
 		}
 	}
 	if ((config.search || config.information) && !config.aur && !config.db_local && !config.db_sync)
@@ -228,7 +239,7 @@ int main (int argc, char **argv)
 	if (targets == NULL && !config.list && !config.updates && !config.list_repo && !config.foreign)
 	{
 		fprintf(stderr, "no targets specified.\n");
-		usage();
+		usage(1);
 	}
 	init_path ();
 	if (config.list)
@@ -264,7 +275,21 @@ int main (int argc, char **argv)
 		/* we can add local to dbs, so copy the list instead of just get alpm's one */
 		if (!config.foreign) dbs = alpm_list_copy (alpm_option_get_syncdbs());
 	}
-	if (config.db_local)
+	if (config.is_file)
+	{
+		for(t = targets; t; t = alpm_list_next(t))
+		{
+			pmpkg_t *pkg;
+			const char *filename = alpm_list_getdata(t);
+			if (alpm_pkg_load (filename, 0, &pkg)!=0)
+			{
+				fprintf(stderr, "unable to read %s.\n", filename);
+				continue;
+			}
+			print_package (filename, 0, pkg, alpm_pkg_get_str);
+		}
+	}
+	else if (config.db_local)
 		dbs = alpm_list_add(dbs, alpm_option_get_localdb());
 	if (config.updates)
 		search_updates ();
@@ -302,7 +327,7 @@ int main (int argc, char **argv)
 			}
 		}
 	}
-	if (config.aur && (targets || config.foreign))
+	if (config.aur && (targets || config.foreign) && !config.is_file)
 	{
 		if (config.foreign)
 		{
