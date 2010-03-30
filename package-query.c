@@ -23,6 +23,7 @@
 #include <alpm_list.h>
 #include <limits.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #include "util.h"
 #include "alpm-query.h"
@@ -54,8 +55,8 @@ void init_config (const char *myname)
 	config.list_group = 0;
 	config.escape = 0;
 	config.just_one = 0;
-	config.updates = 0;
-	config.foreign = 0;
+	config.filter = 0;
+	strcpy (config.csep, " ");
 	strcpy (config.root_dir, ROOTDIR);
 	strcpy (config.db_path, DBPATH);
 	strcpy (config.config_file, CONFFILE);
@@ -82,31 +83,31 @@ void usage (unsigned short _error)
 {
 	fprintf(stderr, "Query alpm database and/or AUR\n");
 	fprintf(stderr, "Usage: %s [options] [targets ...]\n", config.myname);
-	fprintf(stderr, "\nwhere options include:");
-	fprintf(stderr, "\n\t-1 show the first answer only");
-	fprintf(stderr, "\n\t-A query AUR database");
-	fprintf(stderr, "\n\t-b <database path> : default %s", DBPATH);
-	fprintf(stderr, "\n\t-c <configuration file> : default %s", CONFFILE);
-	fprintf(stderr, "\n\t-e escape \" on output");
-	fprintf(stderr, "\n\t-f <format> : default %s", FORMAT_OUT_USAGE);
-	fprintf(stderr, "\n\t-i search by name");
-	fprintf(stderr, "\n\t-L list configured repository");
-	fprintf(stderr, "\n\t-l list repository content");
-	fprintf(stderr, "\n\t-m search if foreign package exist in AUR (-AQm)");
-	fprintf(stderr, "\n\t-p query file package");
-	fprintf(stderr, "\n\t-q quiet");
-	fprintf(stderr, "\n\t-Q search in local database");
-	fprintf(stderr, "\n\t-r <root path> : default %s", ROOTDIR);
-	fprintf(stderr, "\n\t-s search");
-	fprintf(stderr, "\n\t-S search in sync database");
-	fprintf(stderr, "\n\t-t query type");
-	fprintf(stderr, "\n\t-u list updates available");
-	fprintf(stderr, "\n\t-h show help");
 	if (_error)
 	{
-		fprintf(stderr, "\n");
+		fprintf(stderr, "More information: %s --help\n\n", config.myname);
 		exit (1);
 	}
+	fprintf(stderr, "\nwhere options include:");
+	fprintf(stderr, "\n\t-1 --just-one show the first answer only");
+	fprintf(stderr, "\n\t-A --aur query AUR database");
+	fprintf(stderr, "\n\t-b --dbpath <database path> : default %s", DBPATH);
+	fprintf(stderr, "\n\t-c --config <configuration file> : default %s", CONFFILE);
+	fprintf(stderr, "\n\t-x --escape escape \" on output");
+	fprintf(stderr, "\n\t-f --format <format> : default %s", FORMAT_OUT_USAGE);
+	fprintf(stderr, "\n\t-i --info search by name");
+	fprintf(stderr, "\n\t-L --list-repo list configured repository");
+	fprintf(stderr, "\n\t-l --list list repository content");
+	fprintf(stderr, "\n\t-m --foreign search if foreign package exist in AUR (-AQm)");
+	fprintf(stderr, "\n\t-p --file query file package");
+	fprintf(stderr, "\n\t-q --quiet quiet");
+	fprintf(stderr, "\n\t-Q --query search in local database");
+	fprintf(stderr, "\n\t-r --root <root path> : default %s", ROOTDIR);
+	fprintf(stderr, "\n\t-s --search search");
+	fprintf(stderr, "\n\t-S --sync search in sync database");
+	fprintf(stderr, "\n\t--query-type query type");
+	fprintf(stderr, "\n\t-u --upgrades list updates available");
+	fprintf(stderr, "\n\t-h --help show help");
 	fprintf(stderr, "\n\nquery type:");
 	fprintf(stderr, "\n\tdepends: depends on one of target");
 	fprintf(stderr, "\n\tconflicts: conflicts with one of target");
@@ -114,6 +115,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\treplaces: replaces one of target");
 	fprintf(stderr, "\n\nformat:");
 	fprintf(stderr, "\n\ta: arch");
+	fprintf(stderr, "\n\tb: backups");
 	fprintf(stderr, "\n\td: description");
 	fprintf(stderr, "\n\tc: conflicts");
 	fprintf(stderr, "\n\ti: if AUR, show the ID");
@@ -122,6 +124,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\to: out of date (0,1)");
 	fprintf(stderr, "\n\tr: repo name");
 	fprintf(stderr, "\n\tq: query");
+	fprintf(stderr, "\n\ts: (sync) repo name");
 	fprintf(stderr, "\n\tt: target");
 	fprintf(stderr, "\n\tv: version, depends on search target");
 	fprintf(stderr, "\n\tw: votes from AUR");
@@ -144,7 +147,41 @@ int main (int argc, char **argv)
 	init_config (argv[0]);
 
 	int opt;
-	while ((opt = getopt (argc, argv, "1Ac:b:ef:ghiLlmpQqr:Sst:uv")) != -1) 
+	int opt_index=0;
+	static struct option opts[] =
+	{
+		{"query",      no_argument,       0, 'Q'},
+		{"sync",       no_argument,       0, 'S'},
+		{"dbpath",     required_argument, 0, 'b'},
+		{"deps",       no_argument,       0, 'd'},
+		{"explicit",   no_argument,       0, 'e'},
+		{"groups",     no_argument,       0, 'g'},
+		{"help",       no_argument,       0, 'h'},
+		{"info",       no_argument,       0, 'i'},
+		{"list",       no_argument,       0, 'l'},
+		{"foreign",    no_argument,       0, 'm'},
+		{"file",       no_argument,       0, 'p'},
+		{"quiet",      no_argument,       0, 'q'},
+		{"root",       required_argument, 0, 'r'},
+		{"search",     no_argument,       0, 's'},
+		{"unrequired", no_argument,       0, 't'},
+		{"upgrades",   no_argument,       0, 'u'},
+		{"config",     required_argument, 0, 'c'},
+		{"just-one",     no_argument, 0, '1'},
+		{"aur",     no_argument, 0, 'A'},
+		{"escape",     no_argument, 0, 'x'},
+		{"format",     required_argument, 0, 'f'},
+		{"list-repo",     required_argument, 0, 'L'},
+		{"query-type",     required_argument, 0, 1000},
+		{"csep",     required_argument, 0, 1001},
+		{"version",     required_argument, 0, 'v'},
+
+		{0, 0, 0, 0}
+	};
+
+	
+//	while ((opt = getopt (argc, argv, "1Ac:b:ef:ghiLlmpQqr:Sst:uv")) != -1) 
+	while ((opt = getopt_long (argc, argv, "1Ac:b:def:ghiLlmpQqr:Sstuvx", opts, &opt_index)) != -1) 
 	{
 		switch (opt) 
 		{
@@ -160,7 +197,13 @@ int main (int argc, char **argv)
 			case 'b':
 				strcpy (config.db_path, optarg);
 				break;
+			case 'd':
+				config.filter |= F_DEPS;
+				break;
 			case 'e':
+				config.filter |= F_EXPLICIT;
+				break;
+			case 'x':
 				config.escape = 1;
 				break;
 			case 'f':
@@ -169,6 +212,7 @@ int main (int argc, char **argv)
 			case 'g':
 				config.information = 1;
 				config.list_group = 1;
+				config.filter |= F_GROUP;
 				break;
 			case 'i':
 				config.information = 1;
@@ -181,7 +225,7 @@ int main (int argc, char **argv)
 				break;
 			case 'm':
 				config.db_sync = 1;
-				config.foreign = 1;
+				config.filter |= F_FOREIGN;
 				break;
 			case 'p':
 				config.is_file = 1;
@@ -202,6 +246,9 @@ int main (int argc, char **argv)
 				config.db_sync = 1;
 				break;
 			case 't':
+				config.filter |= F_UNREQUIRED;
+				break;
+			case 1000:
 				if (strcmp (optarg, "depends")==0)
 					config.query = DEPENDS;
 				else if (strcmp (optarg, "conflicts")==0)
@@ -211,9 +258,12 @@ int main (int argc, char **argv)
 				else if (strcmp (optarg, "replaces")==0)
 					config.query = REPLACES;
 				break;
+			case 1001:
+				strncpy (config.csep, optarg, SEP_LEN);
+				break;
 			case 'u':
 				config.db_sync = 1;
-				config.updates = 1;
+				config.filter |= F_UPGRADES;
 				break;
 			case 'v':
 				version(); break;
@@ -237,7 +287,7 @@ int main (int argc, char **argv)
 		config.search = 0;
 		config.list_repo = 1;
 	}
-	if (targets == NULL && !config.list && !config.updates && !config.list_repo && !config.foreign)
+	if (targets == NULL && !config.list && !config.list_repo && !config.filter && !config.db_local)
 	{
 		fprintf(stderr, "no targets specified.\n");
 		usage(1);
@@ -274,7 +324,7 @@ int main (int argc, char **argv)
 			exit(1);
 		}
 		/* we can add local to dbs, so copy the list instead of just get alpm's one */
-		if (!config.foreign) dbs = alpm_list_copy (alpm_option_get_syncdbs());
+		dbs = alpm_list_copy (alpm_option_get_syncdbs());
 	}
 	if (config.is_file)
 	{
@@ -292,9 +342,7 @@ int main (int argc, char **argv)
 	}
 	else if (config.db_local)
 		dbs = alpm_list_add(dbs, alpm_option_get_localdb());
-	if (config.updates)
-		search_updates ();
-	else if (!config.foreign)
+	if  (targets || config.list_repo)
 	{
 		for(t = dbs; t && (targets || config.list_repo); t = alpm_list_next(t))
 		{
@@ -328,18 +376,23 @@ int main (int argc, char **argv)
 			}
 		}
 	}
-	if (config.aur && (targets || config.foreign) && !config.is_file)
+	if (config.aur && (targets || (config.filter & F_FOREIGN)) && !config.is_file)
 	{
-		if (config.foreign)
+		if (config.filter & F_FOREIGN)
 		{
 			FREELIST (targets);
-			targets = search_foreign();
+			targets=NULL;
+			alpm_search_local (&targets);
 			ret += aur_info_none (targets);
 		}
 		else if (config.information)
 			ret += aur_info (targets);
 		else if (config.search)
 			ret += aur_search (targets);
+	}
+	else if (!targets && !config.just_one)
+	{
+		ret += alpm_search_local (NULL);
 	}
 
 	/* Some cleanups */

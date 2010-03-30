@@ -41,6 +41,9 @@
 #define SYNC 2
 #define AUR	3
 
+
+#define SEP_LEN 10
+
 /*
  * General config
  */
@@ -61,8 +64,9 @@ typedef struct _aq_config
 	unsigned short escape;
 	unsigned short just_one;
 	unsigned short updates;
-	unsigned short foreign;
+	unsigned short filter;
 	unsigned short check;
+	char csep[SEP_LEN];
 	char format_out[PATH_MAX];
 	char root_dir[PATH_MAX];
 	char db_path[PATH_MAX];

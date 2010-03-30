@@ -25,6 +25,16 @@
 #define DBPATH "var/lib/pacman"
 #define CONFFILE "etc/pacman.conf"
 
+/*
+ * Filter
+ */
+#define F_FOREIGN 1
+#define F_EXPLICIT 2
+#define F_DEPS	4
+#define F_UNREQUIRED 8
+#define F_UPGRADES 16
+#define F_GROUP 32
+
 
 /*
  * Init alpm
@@ -56,11 +66,10 @@ int search_pkg_by_replaces (pmdb_t *db, alpm_list_t *targets);
 int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify);
 int search_pkg_by_grp (pmdb_t *db, alpm_list_t **targets, int modify, int listp);
 
+
 int search_pkg (pmdb_t *db, alpm_list_t *targets);
-
-int search_updates ();
-
 int list_db (pmdb_t *db, alpm_list_t *targets);
+int alpm_search_local (alpm_list_t **res);
 
 /*
  * alpm_pkg_get_str() get info for package
@@ -75,7 +84,5 @@ const char *alpm_grp_get_str (void *p, unsigned char c);
  * Functions that return a list
  */
 
-/* search_foreign() return list of package name */
-alpm_list_t *search_foreign ();
 
 #endif

@@ -120,7 +120,7 @@ char *concat_str_list (alpm_list_t *l)
 		for(i = l; i; i = alpm_list_next(i)) 
 		{
 			/* data's len + space for separator */
-			len += strlen (alpm_list_getdata (i)) + 1;
+			len += strlen (alpm_list_getdata (i)) + strlen (config.csep);
 		}
 		if (len)
 		{
@@ -130,13 +130,13 @@ char *concat_str_list (alpm_list_t *l)
 			for(i = l; i; i = alpm_list_next(i)) 
 			{
 				strcat (ret, alpm_list_getdata (i));
-				strcat (ret, " ");
+				strcat (ret, config.csep);
 			}
 		}
 		else
 		{
 			ret = (char *) malloc (sizeof (char) * 2);
-			strcpy (ret, "+");			
+			strcpy (ret, "-");
 		}
 	}
 	strtrim (ret);
