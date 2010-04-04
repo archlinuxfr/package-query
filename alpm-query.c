@@ -504,3 +504,9 @@ const char *alpm_grp_get_str (void *p, unsigned char c)
 	}
 	return info;
 }
+
+void alpm_cleanup ()
+{
+	alpm_pkg_get_str (NULL, 0);
+	alpm_grp_get_str (NULL, 0);
+}

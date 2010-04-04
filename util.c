@@ -201,6 +201,14 @@ char * itostr (int i)
 	sprintf (is, "%d", i);
 	return strdup (is);
 }
+
+char * ltostr (long i)
+{
+	char is[20];
+	sprintf (is, "%ld", i);
+	return strdup (is);
+}
+
 /* Helper function for strreplace */
 static void _strnadd(char **str, const char *append, unsigned int count)
 {
@@ -290,6 +298,15 @@ void print_package (const char * target, int query,
 						if (!idate) break;
 						info = (char *) malloc (sizeof (char) * 50);
 						strftime(info, 50, "%s", localtime(&idate));
+						free_info=1;
+					}
+					break;
+				case '2':
+					pkg_local = alpm_db_get_pkg(alpm_option_get_localdb(), f (pkg, 'n'));
+					if (pkg_local)
+					{
+						off_t isize = alpm_pkg_get_isize(pkg_local);
+						info = ltostr (isize);
 						free_info=1;
 					}
 					break;

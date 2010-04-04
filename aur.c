@@ -452,7 +452,7 @@ int aur_request (alpm_list_t *targets, int type)
 		}
 		if (curl_code != CURLE_OK)
 		{
-			fprintf(stderr, "curl error.\n");
+			fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
 			curl_easy_cleanup(curl);
 			return 0;
 		}
@@ -530,4 +530,7 @@ const char *aur_get_str (void *p, unsigned char c)
 	return info;
 }
 
-
+void aur_cleanup ()
+{
+	aur_get_str (NULL, 0);
+}

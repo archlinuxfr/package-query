@@ -85,4 +85,5 @@ int aur_info_none (alpm_list_t *targets);
  */
 const char *aur_get_str (void *p, unsigned char c);
 
+void aur_cleanup ();
 #endif

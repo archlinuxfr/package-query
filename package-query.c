@@ -401,6 +401,8 @@ int main (int argc, char **argv)
 		fprintf (stderr, alpm_strerrorlast());
 	FREELIST(targets);
 	free (config.myname);
+	alpm_cleanup ();
+	aur_cleanup ();
 	/* Anything left ? */
 	if (ret != 0)
 		return 0;

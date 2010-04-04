@@ -80,9 +80,6 @@ const char *alpm_pkg_get_str (void *p, unsigned char c);
 const char *alpm_grp_get_str (void *p, unsigned char c);
 
 
-/*
- * Functions that return a list
- */
-
+void alpm_cleanup ();
 
 #endif
