@@ -16,6 +16,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#define _GNU_SOURCE
 #include <string.h>
 #include <alpm_list.h>
 
@@ -116,7 +117,6 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->category = pkg->category;
 	pkg_ret->desc = strdup (pkg->desc);
 	pkg_ret->location = pkg->location;
-	pkg_ret->desc = strdup (pkg->desc);
 	pkg_ret->url = strdup (pkg->url);
 	pkg_ret->urlpath = strdup (pkg->urlpath);
 	pkg_ret->license = strdup (pkg->license);
@@ -306,7 +306,7 @@ static yajl_callbacks callbacks = {
 int aur_request (alpm_list_t *targets, int type)
 {
 	int ret=0;
-	alpm_list_t *list_p=NULL;
+	alpm_list_t *list_t=NULL;
 	CURL *curl;
 	CURLcode curl_code;
 	yajl_handle hand;
@@ -331,7 +331,11 @@ int aur_request (alpm_list_t *targets, int type)
 	strcpy (aur_rpc, AUR_BASE_URL);
 	strcat (aur_rpc, AUR_RPC);
 	if (type == AUR_SEARCH)
+	{
 		strcat (aur_rpc, AUR_RPC_SEARCH);
+		list_t = targets;
+		targets = alpm_list_add (NULL, strdup (alpm_list_getdata (list_t)));
+	}
 	else
 		strcat (aur_rpc, AUR_RPC_INFO);
 	
@@ -402,40 +406,24 @@ int aur_request (alpm_list_t *targets, int type)
 					alpm_list_free_inner (pkgs, (alpm_list_fn_free) aur_pkg_free);
 					alpm_list_free (pkgs);
 				}
-				else if (type == AUR_SEARCH && pkgs == NULL)
-				{
-					alpm_list_free_inner (list_p, (alpm_list_fn_free) aur_pkg_free);
- 					alpm_list_free (list_p);
-					list_p = NULL;
-				}
 				else if (type == AUR_SEARCH && pkgs)
 				{
-					if (!list_p)
+					alpm_list_t *l,*p;
+					char *ts = concat_str_list (list_t);
+					int found;
+					for (p = pkgs; p; p = alpm_list_next(p))
 					{
-						for (p = pkgs; p; p = alpm_list_next(p))
-							list_p = alpm_list_add (list_p, aur_pkg_dup (alpm_list_getdata (p)));
-					}
-					else
-					{
-						alpm_list_t *l;
-						alpm_list_t *left=NULL;
-						for (l = list_p; l; l = alpm_list_next (l))
+						found=1;
+						for (l = alpm_list_next (list_t); l && found; l = alpm_list_next (l))
 						{
-							aurpkg_t *pkg_left = alpm_list_getdata (l);
-							int found = 0;
-							for (p = pkgs; p && !found; p = alpm_list_next(p))
-							{
-								if (aur_pkg_cmp (pkg_left, alpm_list_getdata (p)) == 0)
-								{
-									left = alpm_list_add (left, aur_pkg_dup (pkg_left));
-									found = 1;
-								}
-							}
+							if (strcasestr (aur_pkg_get_name (alpm_list_getdata (p)), alpm_list_getdata (l))==NULL &&
+								strcasestr (aur_pkg_get_desc (alpm_list_getdata (p)), alpm_list_getdata (l))==NULL)
+								found=0;
 						}
-						alpm_list_free_inner (list_p, (alpm_list_fn_free) aur_pkg_free);
-						alpm_list_free (list_p);
-						list_p = left;
+						if (found)
+							print_package (ts, 0, alpm_list_getdata (p), aur_get_str);
 					}
+					free (ts);
 					alpm_list_free_inner (pkgs, (alpm_list_fn_free) aur_pkg_free);
 					alpm_list_free (pkgs);
 				}
@@ -459,12 +447,10 @@ int aur_request (alpm_list_t *targets, int type)
 	}
 	curl_easy_cleanup(curl);
 
-	if (list_p)
+	if (list_t)
 	{
-		char *ts = concat_str_list (targets);
-		for (t = list_p; t; t = alpm_list_next(t))
-			print_package (ts, 0, alpm_list_getdata (t), aur_get_str);
-		free (ts);
+		FREELIST(targets);
+		targets=list_t;
 	}
 
 	return ret;
