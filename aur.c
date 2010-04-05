@@ -199,7 +199,7 @@ unsigned short aur_pkg_get_outofdate (const aurpkg_t * pkg)
 }
 
 
-int curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
+size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
 {
 	string_t *s = (string_t *) userdata;
 	string_ncat (s, data, nmemb);
