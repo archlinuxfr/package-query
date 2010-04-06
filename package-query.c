@@ -48,6 +48,7 @@ void init_config (const char *myname)
 	config.aur = 0;
 	config.query=ALL;
 	config.information = 0;
+	config.init_sync_db = 0;
 	config.is_file = 0;
 	config.search = 0;
 	config.list = 0;
@@ -207,6 +208,9 @@ int main (int argc, char **argv)
 				break;
 			case 'f':
 				strcpy (config.format_out, optarg);
+				if (strstr (config.format_out, "%s") ||
+					strstr (config.format_out, "%4"))
+					config.init_sync_db = 1;
 				break;
 			case 'g':
 				config.information = 1;
@@ -223,7 +227,7 @@ int main (int argc, char **argv)
 				config.list_repo = 1;
 				break;
 			case 'm':
-				config.db_sync = 1;
+				config.init_sync_db = 1;
 				config.filter |= F_FOREIGN;
 				break;
 			case 'p':
@@ -242,6 +246,7 @@ int main (int argc, char **argv)
 				config.search = 1;
 				break;
 			case 'S':
+				config.init_sync_db = 1;
 				config.db_sync = 1;
 				break;
 			case 't':
@@ -261,7 +266,7 @@ int main (int argc, char **argv)
 				strncpy (config.csep, optarg, SEP_LEN);
 				break;
 			case 'u':
-				config.db_sync = 1;
+				config.init_sync_db = 1;
 				config.filter |= F_UPGRADES;
 				break;
 			case 'v':
@@ -315,7 +320,7 @@ int main (int argc, char **argv)
 		fprintf(stderr, "unable to register local database.\n");
 		exit(1);
 	}
-	if (config.db_sync)
+	if (config.init_sync_db)
 	{
 		if (!init_db_sync (config.config_file))
 		{
@@ -323,7 +328,8 @@ int main (int argc, char **argv)
 			exit(1);
 		}
 		/* we can add local to dbs, so copy the list instead of just get alpm's one */
-		dbs = alpm_list_copy (alpm_option_get_syncdbs());
+		if (config.db_sync)
+			dbs = alpm_list_copy (alpm_option_get_syncdbs());
 	}
 	if (config.is_file)
 	{

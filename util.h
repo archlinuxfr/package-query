@@ -56,6 +56,7 @@ typedef struct _aq_config
 	unsigned short aur;
 	unsigned short query;
 	unsigned short information;
+	unsigned short init_sync_db;
 	unsigned short is_file;
 	unsigned short search;
 	unsigned short list;

@@ -495,6 +495,7 @@ const char *aur_get_str (void *p, unsigned char c)
 			info = itostr (aur_pkg_get_outofdate (pkg)); 
 			free_info = 1;
 			break;
+		case 's':
 		case 'r': info = strdup (AUR_REPO); free_info=1; break;
 		case 'u': 
 			info = (char *) malloc (sizeof (char) * 

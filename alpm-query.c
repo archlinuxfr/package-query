@@ -140,6 +140,54 @@ int init_db_sync (const char * config_file)
 	return _get_db_sync (NULL, config_file, 1, 1);
 }
 
+int filter (pmpkg_t *pkg, unsigned int _filter)
+{
+	int found=0;
+	if (_filter & F_FOREIGN)
+	{
+		const char *pkg_name = alpm_pkg_get_name (pkg);
+		alpm_list_t *i;
+		for (i = alpm_option_get_syncdbs(); i && !found; i = alpm_list_next (i))
+		{
+			if (alpm_db_get_pkg (alpm_list_getdata (i), pkg_name) != NULL)
+				found = 1;
+		}
+		if (found) return 0;
+	}
+	if ((_filter & F_EXPLICIT) == F_EXPLICIT && alpm_pkg_get_reason(pkg) != PM_PKG_REASON_EXPLICIT)
+		return 0;
+	if ((_filter & F_DEPS) == F_DEPS && alpm_pkg_get_reason(pkg) != PM_PKG_REASON_DEPEND)
+		return 0;
+	if (_filter & F_UNREQUIRED)
+	{
+		alpm_list_t *requiredby = alpm_pkg_compute_requiredby(pkg);
+		if (requiredby)
+		{
+			FREELIST(requiredby);
+			return 0;
+		}
+	}
+	if (_filter & F_UPGRADES)
+		if (!alpm_sync_newversion (pkg, alpm_option_get_syncdbs()))
+			return 0;
+	if (_filter & F_GROUP)
+		if (!alpm_pkg_get_groups (pkg))
+			return 0;
+	return 1;
+}
+int filter_state (pmpkg_t *pkg)
+{
+	int ret=0;
+	if (filter (pkg, F_FOREIGN)) ret |= F_FOREIGN;
+	if (filter (pkg, F_EXPLICIT)) ret |= F_EXPLICIT;
+	if (filter (pkg, F_DEPS)) ret |= F_DEPS;
+	if (filter (pkg, F_UNREQUIRED)) ret |= F_UNREQUIRED;
+	if (filter (pkg, F_UPGRADES)) ret |= F_UPGRADES;
+	if (filter (pkg, F_GROUP)) ret |= F_GROUP;
+	return ret;
+}
+
+
 int _search_pkg_by (pmdb_t *db, alpm_list_t *targets,  
 	alpm_list_t *(*f)(pmpkg_t *), 
 	char *(*g) (void *))
@@ -179,8 +227,11 @@ int _search_pkg_by (pmdb_t *db, alpm_list_t *targets,
 					|| (mod == PM_DEP_MOD_LT && alpm_pkg_vercmp (ver_c, ver) < 0)))
 					
 				{
-					ret++;
-					print_package (alpm_list_getdata(t), pkg, alpm_pkg_get_str);
+					if (filter (pkg, config.filter))
+					{
+						ret++;
+						print_package (alpm_list_getdata(t), pkg, alpm_pkg_get_str);
+					}
 				}
 				free (name_c);
 				free (ver_c);
@@ -236,7 +287,7 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
 			pkg_name = ++c;
 		}
 		pkg_found = alpm_db_get_pkg (db, pkg_name);
-		if (pkg_found != NULL)
+		if (pkg_found != NULL && filter (pkg_found, config.filter))
 		{
 			ret++;
 			print_package (target, pkg_found, alpm_pkg_get_str);
@@ -319,6 +370,7 @@ int search_pkg (pmdb_t *db, alpm_list_t *targets)
 	for(t = res; t; t = alpm_list_next(t)) 
 	{
 		pmpkg_t *info = alpm_list_getdata(t);
+		if (!filter (info, config.filter)) continue;
 		char *ts;
 		ret++;
 		ts = concat_str_list (targets);
@@ -328,54 +380,6 @@ int search_pkg (pmdb_t *db, alpm_list_t *targets)
 	alpm_list_free (res);
 	return ret;
 }
-
-int filter (pmpkg_t *pkg, unsigned int _filter)
-{
-	int found=0;
-	if (_filter & F_FOREIGN)
-	{
-		const char *pkg_name = alpm_pkg_get_name (pkg);
-		alpm_list_t *i;
-		for (i = alpm_option_get_syncdbs(); i && !found; i = alpm_list_next (i))
-		{
-			if (alpm_db_get_pkg (alpm_list_getdata (i), pkg_name) != NULL)
-				found = 1;
-		}
-		if (found) return 0;
-	}
-	if ((_filter & F_EXPLICIT) == F_EXPLICIT && alpm_pkg_get_reason(pkg) != PM_PKG_REASON_EXPLICIT)
-		return 0;
-	if ((_filter & F_DEPS) == F_DEPS && alpm_pkg_get_reason(pkg) != PM_PKG_REASON_DEPEND)
-		return 0;
-	if (_filter & F_UNREQUIRED)
-	{
-		alpm_list_t *requiredby = alpm_pkg_compute_requiredby(pkg);
-		if (requiredby)
-		{
-			FREELIST(requiredby);
-			return 0;
-		}
-	}
-	if (_filter & F_UPGRADES)
-		if (!alpm_sync_newversion (pkg, alpm_option_get_syncdbs()))
-			return 0;
-	if (_filter & F_GROUP)
-		if (!alpm_pkg_get_groups (pkg))
-			return 0;
-	return 1;
-}
-int filter_state (pmpkg_t *pkg)
-{
-	int ret=0;
-	if (filter (pkg, F_FOREIGN)) ret |= F_FOREIGN;
-	if (filter (pkg, F_EXPLICIT)) ret |= F_EXPLICIT;
-	if (filter (pkg, F_DEPS)) ret |= F_DEPS;
-	if (filter (pkg, F_UNREQUIRED)) ret |= F_UNREQUIRED;
-	if (filter (pkg, F_UPGRADES)) ret |= F_UPGRADES;
-	if (filter (pkg, F_GROUP)) ret |= F_GROUP;
-	return ret;
-}
-
 
 int alpm_search_local (alpm_list_t **res)
 {
@@ -465,7 +469,7 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 		case 'r': info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg)); break;
 		case 's': 
 			info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg));
-			if (config.db_sync && strcmp ("local", info)==0)
+			if (config.init_sync_db && strcmp ("local", info)==0)
 			{
 				alpm_list_t *i;
 				int found=0;
