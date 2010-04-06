@@ -22,7 +22,9 @@
 #include <limits.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "util.h"
+#include "alpm-query.h"
 
 
 string_t *string_new ()
@@ -254,18 +256,15 @@ char *strreplace(const char *str, const char *needle, const char *replace)
 }
 
 
-void print_package (const char * target, int query, 
+void print_package (const char * target, 
 	void * pkg, const char *(*f)(void *p, unsigned char c))
 {
 	if (config.quiet) return;
-	pmpkg_t * pkg_local;
 	char *format_cpy;
 	char *ptr;
 	char *end;
 	char *c;
-	char q[8] = {'d','\0', 'c', '\0', 'p', '\0', 'r', '\0'};
-	char *info;
-	int free_info=0;
+	const char *info;
 	format_cpy = strdup (config.format_out);
 	ptr = format_cpy;
 	end = &(format_cpy[strlen(format_cpy)]);
@@ -281,37 +280,12 @@ void print_package (const char * target, int query,
 		else
 		{
 			info = NULL;
-			switch (c[1])
-			{
-				case 'l': 
-					pkg_local = alpm_db_get_pkg(alpm_option_get_localdb(), f (pkg, 'n'));
-					if (pkg_local)
-						info = (char *) alpm_pkg_get_version (pkg_local); break;
-				case 'q': if (query) info = &q[(query-1)*2]; break;
-				case 't': info = (char *) target; break;
-				case '1':
-					pkg_local = alpm_db_get_pkg(alpm_option_get_localdb(), f (pkg, 'n'));
-					if (pkg_local)
-					{
-						time_t idate;
-						idate = alpm_pkg_get_installdate(pkg_local);
-						if (!idate) break;
-						info = (char *) malloc (sizeof (char) * 50);
-						strftime(info, 50, "%s", localtime(&idate));
-						free_info=1;
-					}
-					break;
-				case '2':
-					pkg_local = alpm_db_get_pkg(alpm_option_get_localdb(), f (pkg, 'n'));
-					if (pkg_local)
-					{
-						off_t isize = alpm_pkg_get_isize(pkg_local);
-						info = ltostr (isize);
-						free_info=1;
-					}
-					break;
-				default: info = (char *) f (pkg, c[1]);
-			}
+			if (strchr ("l1234", c[1]))
+				info = alpm_local_pkg_get_str (f(pkg, 'n'), c[1]);
+			else if (c[1]=='t')
+				info = target; 
+			else
+				info = f (pkg, c[1]);
 			printf ("%s", ptr);
 			if (info)
 			{
@@ -319,11 +293,6 @@ void print_package (const char * target, int query,
 					print_escape (info);
 				else
 					printf ("%s", info);
-				if (free_info)
-				{
-					free_info=0;
-					free (info);
-				}
 			}
 			else
 				printf ("-");

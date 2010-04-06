@@ -100,13 +100,14 @@ char *concat_str_list (alpm_list_t *l);
  */
 void split_dep_str (const char *dep, char **name, pmdepmod_t *mod, char **ver);
 
-/* integer to string */
+/* integer/long to string */
 char * itostr (int i);
+char * ltostr (long i);
 
 /* escape " */
 void print_escape (const char *str);
 
-void print_package (const char * target, int query, 
+void print_package (const char * target, 
 	void * pkg, const char *(*f)(void *p, unsigned char c));
 
 #endif

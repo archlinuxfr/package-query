@@ -77,6 +77,7 @@ int alpm_search_local (alpm_list_t **res);
  * str returned should not be passed to free
  */
 const char *alpm_pkg_get_str (void *p, unsigned char c);
+const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c);
 const char *alpm_grp_get_str (void *p, unsigned char c);
 
 

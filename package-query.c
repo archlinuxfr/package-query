@@ -123,7 +123,6 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\tn: name");
 	fprintf(stderr, "\n\to: out of date (0,1)");
 	fprintf(stderr, "\n\tr: repo name");
-	fprintf(stderr, "\n\tq: query");
 	fprintf(stderr, "\n\ts: (sync) repo name");
 	fprintf(stderr, "\n\tt: target");
 	fprintf(stderr, "\n\tv: version, depends on search target");
@@ -337,7 +336,7 @@ int main (int argc, char **argv)
 				fprintf(stderr, "unable to read %s.\n", filename);
 				continue;
 			}
-			print_package (filename, 0, pkg, alpm_pkg_get_str);
+			print_package (filename, pkg, alpm_pkg_get_str);
 		}
 	}
 	else if (config.db_local)

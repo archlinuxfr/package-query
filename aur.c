@@ -386,7 +386,7 @@ int aur_request (alpm_list_t *targets, int type)
 				yajl_free_error(hand, str);
 				string_free (res);
 				yajl_free(hand);
-				return 0;
+				break;
 			}
 			else
 			{
@@ -395,12 +395,12 @@ int aur_request (alpm_list_t *targets, int type)
 				if (type != AUR_SEARCH)
 				{
 					for (p = pkgs; p; p = alpm_list_next(p))
-						print_package (target, 0, alpm_list_getdata (p), aur_get_str);
+						print_package (target, alpm_list_getdata (p), aur_get_str);
 					if (type == AUR_INFO_P && pkgs == NULL)
 					{
 						aurpkg_t *pkg = aur_pkg_new();
 						pkg->name = strdup (target);
-						print_package (target, 0, pkg, aur_get_str);
+						print_package (target, pkg, aur_get_str);
 						aur_pkg_free (pkg);
 					}
 					alpm_list_free_inner (pkgs, (alpm_list_fn_free) aur_pkg_free);
@@ -421,7 +421,7 @@ int aur_request (alpm_list_t *targets, int type)
 								found=0;
 						}
 						if (found)
-							print_package (ts, 0, alpm_list_getdata (p), aur_get_str);
+							print_package (ts, alpm_list_getdata (p), aur_get_str);
 					}
 					free (ts);
 					alpm_list_free_inner (pkgs, (alpm_list_fn_free) aur_pkg_free);
@@ -441,11 +441,11 @@ int aur_request (alpm_list_t *targets, int type)
 		if (curl_code != CURLE_OK)
 		{
 			fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
-			curl_easy_cleanup(curl);
-			return 0;
+			break;
 		}
 	}
 	curl_easy_cleanup(curl);
+	curl_global_cleanup();
 
 	if (list_t)
 	{
