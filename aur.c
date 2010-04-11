@@ -318,6 +318,7 @@ int aur_request (alpm_list_t *targets, int type)
 	alpm_list_t *t;
 	const char *target, *pkg_name;
 	char *aur_target = NULL;
+	target_t *t1=NULL;
 
 	if (targets == NULL)
 		return 0;
@@ -357,17 +358,10 @@ int aur_request (alpm_list_t *targets, int type)
 		}
 		else
 		{
-			const char *c = strchr (target, '/');
-			if (c)
-			{
-				/* package name include db ("db/pkg") */
-				int len = (c-target) / sizeof(char);
-				if (strlen (AUR_REPO) != len || strncmp (target, AUR_REPO, len)!=0)
-				{
-					continue;
-				}
-				pkg_name = ++c;
-			}
+			t1 = target_parse (target);
+			if (t1->db && strcmp (t1->db, AUR_REPO)!=0)
+				continue;
+			pkg_name = t1->name;
 			aur_rpc[strlen(AUR_BASE_URL) + strlen(AUR_RPC) + strlen(AUR_RPC_INFO)] = '\0';
 		}
 		strcat (aur_rpc, pkg_name);
@@ -384,6 +378,7 @@ int aur_request (alpm_list_t *targets, int type)
 				unsigned char * str = yajl_get_error(hand, 1, (const unsigned char *) res->s, strlen (res->s));
 				fprintf(stderr, (const char *) str);
 				yajl_free_error(hand, str);
+				target_free (t1);
 				string_free (res);
 				yajl_free(hand);
 				break;
@@ -395,7 +390,10 @@ int aur_request (alpm_list_t *targets, int type)
 				if (type != AUR_SEARCH)
 				{
 					for (p = pkgs; p; p = alpm_list_next(p))
-						print_package (target, alpm_list_getdata (p), aur_get_str);
+					{
+						if (target_check_version (t1, aur_pkg_get_version (alpm_list_getdata (p))))
+							print_package (target, alpm_list_getdata (p), aur_get_str);
+					}
 					if (type == AUR_INFO_P && pkgs == NULL)
 					{
 						aurpkg_t *pkg = aur_pkg_new();
@@ -430,6 +428,8 @@ int aur_request (alpm_list_t *targets, int type)
 				pkgs = NULL;
 			}
 		}
+		if (type != AUR_SEARCH)
+			target_free (t1);
 		string_free (res);
 		yajl_free(hand);
 		if (aur_target)

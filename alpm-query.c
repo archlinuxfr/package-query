@@ -202,42 +202,19 @@ int _search_pkg_by (pmdb_t *db, alpm_list_t *targets,
 		for(j = f(pkg); j; j = alpm_list_next(j)) 
 		{
 			char *str = g(alpm_list_getdata(j));
-			char *name, *ver;
-			pmdepmod_t mod;
-			split_dep_str (str, &name, &mod, &ver);
+			target_t *t1 = target_parse (str);
 			free (str);
 			for(t = targets; t; t = alpm_list_next(t)) 
 			{
-				char *name_c, *ver_c;
-				pmdepmod_t mod_c;
-				split_dep_str(alpm_list_getdata(t), &name_c, &mod_c, &ver_c);
-				if ((mod_c != PM_DEP_MOD_EQ && mod_c != PM_DEP_MOD_ANY) 
-					|| (mod_c == PM_DEP_MOD_EQ && ver_c == NULL))
+				target_t *t2 = target_parse (alpm_list_getdata(t));
+				if (target_compatible (t1, t2) && filter (pkg, config.filter))
 				{
-					free (name_c);
-					free (ver_c);
-					continue;
+					ret++;
+					print_package (alpm_list_getdata(t), pkg, alpm_pkg_get_str);
 				}
-				if (strcmp (name, name_c) == 0
-					&& (mod == PM_DEP_MOD_ANY || mod_c == PM_DEP_MOD_ANY
-					|| (mod == PM_DEP_MOD_EQ && alpm_pkg_vercmp (ver_c, ver) == 0)
-					|| (mod == PM_DEP_MOD_GE && alpm_pkg_vercmp (ver_c, ver) >= 0)
-					|| (mod == PM_DEP_MOD_GT && alpm_pkg_vercmp (ver_c, ver) > 0)
-					|| (mod == PM_DEP_MOD_LE && alpm_pkg_vercmp (ver_c, ver) <= 0)
-					|| (mod == PM_DEP_MOD_LT && alpm_pkg_vercmp (ver_c, ver) < 0)))
-					
-				{
-					if (filter (pkg, config.filter))
-					{
-						ret++;
-						print_package (alpm_list_getdata(t), pkg, alpm_pkg_get_str);
-					}
-				}
-				free (name_c);
-				free (ver_c);
+				target_free (t2);
 			}
-			free (name);
-			free (ver);
+			target_free (t1);
 		}
 	}
 	return ret;
@@ -273,21 +250,14 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
 	const char *db_name = alpm_db_get_name (db);
 	for(t = *targets; t; t = alpm_list_next(t)) 
 	{
-		const char *target = alpm_list_getdata(t);
-		const char *pkg_name = target;
-		const char *c = strchr (target, '/');
-		if (c)
-		{
-			/* package name include db ("db/pkg") */
-			int len = (c-target) / sizeof(char);
-			if (strlen (db_name) != len || strncmp (target, db_name, len)!=0)
-			{
-				continue;
-			}
-			pkg_name = ++c;
-		}
-		pkg_found = alpm_db_get_pkg (db, pkg_name);
-		if (pkg_found != NULL && filter (pkg_found, config.filter))
+		const char *target=alpm_list_getdata(t);
+		target_t *t1 = target_parse (target);
+		if (t1->db && strcmp (t1->db, db_name)!=0)
+			continue;
+		pkg_found = alpm_db_get_pkg (db, t1->name);
+		if (pkg_found != NULL 
+			&& filter (pkg_found, config.filter)
+			&& target_check_version (t1, alpm_pkg_get_version (pkg_found)))
 		{
 			ret++;
 			print_package (target, pkg_found, alpm_pkg_get_str);
@@ -299,7 +269,7 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
 					targets_copied = 1;
 				}
 				char *data;
-				targets_copy = alpm_list_remove_str (targets_copy, pkg_name, &data);
+				targets_copy = alpm_list_remove_str (targets_copy, t1->name, &data);
 				if (data)
 					free (data);
 			}			

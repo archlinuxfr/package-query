@@ -27,6 +27,100 @@
 #include "alpm-query.h"
 
 
+target_t *target_parse (const char *str)
+{
+	target_t *ret=NULL;
+	char *c, *s=(char *)str;
+	if ((ret = malloc (sizeof (target_t))) == NULL)
+	{
+		perror ("malloc");
+		exit (1);
+	}
+
+	if ((c = strchr (s, '/')) != NULL)
+	{
+		/* target include db ("db/pkg*") */
+		ret->db = strndup (s, (c-s) / sizeof(char));
+		s = ++c;
+	}
+	else 
+		ret->db = NULL;
+
+	if ((c=strstr (s, "<=")) != NULL)
+	{
+		ret->mod=PM_DEP_MOD_LE;
+		ret->ver=strdup (&(c[2]));
+	}
+	else if ((c=strstr (s, ">=")) != NULL)
+	{
+		ret->mod=PM_DEP_MOD_GE;
+		ret->ver=strdup (&(c[2]));
+	}
+	else if ((c=strchr (s, '<')) != NULL)
+	{
+		ret->mod=PM_DEP_MOD_LT;
+		ret->ver=strdup (&(c[1]));
+	}
+	else if ((c=strchr (s, '>')) != NULL)
+	{
+		ret->mod=PM_DEP_MOD_GT;
+		ret->ver=strdup (&(c[1]));
+	}
+	else if ((c=strchr (s, '=')) != NULL)
+	{
+		ret->mod=PM_DEP_MOD_EQ;
+		ret->ver=strdup (&(c[1]));
+	}
+	else
+	{
+		ret->mod=PM_DEP_MOD_ANY;
+		ret->ver=NULL;
+	}
+	if (c)
+		ret->name=strndup (s, (c-s) / sizeof(char));
+	else
+		ret->name=strdup (s);
+	return ret;
+}
+
+target_t* target_free (target_t *t)
+{
+	if (t == NULL)
+		return NULL;
+	free (t->db);
+	free (t->name);
+	free (t->ver);
+	free (t);
+	return NULL;
+}
+	
+int target_check_version (target_t *t, const char *ver)
+{
+	int ret;
+	if (t->mod==PM_DEP_MOD_ANY) return 1;
+	ret = alpm_pkg_vercmp (ver, t->ver);
+	switch (t->mod)
+	{
+		case PM_DEP_MOD_LE: return (ret<=0);
+		case PM_DEP_MOD_GE: return (ret>=0);
+		case PM_DEP_MOD_LT: return (ret<0);
+		case PM_DEP_MOD_GT: return (ret>0);
+		case PM_DEP_MOD_EQ: return (ret==0);
+		default: return 1;
+	}
+}
+
+int target_compatible (target_t *t1, target_t *t2)
+{
+	if (t2->mod != PM_DEP_MOD_EQ && t2->mod != PM_DEP_MOD_ANY)
+		return 0;
+	if (strcmp (t1->name, t2->name) == 0 &&
+		(t1->mod == PM_DEP_MOD_ANY || t2->mod == PM_DEP_MOD_ANY ||
+		target_check_version (t1, t2->ver)))
+			return 1;
+	return 0;
+}
+
 string_t *string_new ()
 {
 	string_t *str = NULL;
@@ -143,45 +237,6 @@ char *concat_str_list (alpm_list_t *l)
 	}
 	strtrim (ret);
 	return ret;
-}
-
-void split_dep_str (const char *dep, char **name, pmdepmod_t *mod, char **ver)
-{
-	char *c;
-	if ((c=strstr (dep, "<=")) != NULL)
-	{
-		*mod=PM_DEP_MOD_LE;
-		*ver=strdup (&(c[2]));
-	}
-	else if ((c=strstr (dep, ">=")) != NULL)
-	{
-		*mod=PM_DEP_MOD_GE;
-		*ver=strdup (&(c[2]));
-	}
-	else if ((c=strchr (dep, '<')) != NULL)
-	{
-		*mod=PM_DEP_MOD_LT;
-		*ver=strdup (&(c[1]));
-	}
-	else if ((c=strchr (dep, '>')) != NULL)
-	{
-		*mod=PM_DEP_MOD_GT;
-		*ver=strdup (&(c[1]));
-	}
-	else if ((c=strchr (dep, '=')) != NULL)
-	{
-		*mod=PM_DEP_MOD_EQ;
-		*ver=strdup (&(c[1]));
-	}
-	else
-	{
-		*mod=PM_DEP_MOD_ANY;
-		*ver=NULL;
-	}
-	if (c)
-		*name=strndup (dep, (c-dep) / sizeof(char));
-	else
-		*name=strdup (dep);
 }
 
 

@@ -78,6 +78,25 @@ aq_config config;
 
 void init_config (const char *myname);
 
+/*
+ * Target type
+ */
+typedef struct _target_t
+{
+	char *db;
+	char *name;
+	pmdepmod_t mod;
+	char *ver;
+} target_t;
+
+/* Split a target search like "db/name{<=,>=,<,>,=}ver" into
+ * a target_t.
+ */
+target_t *target_parse (const char *str);
+
+target_t *target_free (target_t *t);
+int target_check_version (target_t *t, const char *ver);
+int target_compatible (target_t *t1, target_t *t2);
 
 /*
  * String for curl usage
@@ -100,6 +119,9 @@ char *concat_str_list (alpm_list_t *l);
  * name=x, mod={<=,>=,<,>,=}, ver=y
  */
 void split_dep_str (const char *dep, char **name, pmdepmod_t *mod, char **ver);
+typedef const char * (*pkg_get_version)(void *);
+int check_version (void *pkg, pmdepmod_t mod, const char *ver,
+	pkg_get_version f);
 
 /* integer/long to string */
 char * itostr (int i);
