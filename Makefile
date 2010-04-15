@@ -1,11 +1,11 @@
-CC=gcc -Wall #-g
-all: package-query
+SUBDIRS=src doc
 
-package-query: aur.o alpm-query.o util.o package-query.o
-	$(CC) *.o -o package-query -lalpm -lyajl -lcurl
+all:
+	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} all ) ; done
 
-install: package-query
-	install -m 755 package-query $(DESTDIR)/usr/bin/package-query
+install:
+	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} install ) ; done
+
 clean:
-	rm *.o package-query
+	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} clean ) ; done
 

@@ -1,0 +1,234 @@
+'\" t
+.\"     Title: package-query
+.\"    Author: [see the "Authors" section]
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 2010-04-15
+.\"    Manual: Package-query Manual
+.\"    Source: Package-query 0.2
+.\"  Language: English
+.\"
+.TH "PACKAGE\-QUERY" "8" "2010\-04\-15" "Package\-query 0\&.2" "Package\-query Manual"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+package-query \- Query alpm database and/or AUR
+.SH "SYNOPSIS"
+.sp
+\fIpackage\-query\fR <options> [targets \&...]
+.SH "DESCRIPTION"
+.sp
+Package\-query query Alpm and AUR with the possibility to format output\&.
+.SH "OPTIONS"
+.PP
+\fB\-A, \-\-aur\fR
+.RS 4
+Query AUR database\&.
+.RE
+.PP
+\fB\-L, \-\-list\-repo\fR
+.RS 4
+List configured repositories\&.
+.RE
+.PP
+\fB\-Q, \-\-query\fR
+.RS 4
+Query local database\&.
+.RE
+.PP
+\fB\-S, \-\-sync\fR
+.RS 4
+Query sync database\&.
+.RE
+.PP
+\fB\-v, \-\-version\fR
+.RS 4
+Display version and exit\&.
+.RE
+.PP
+\fB\-h, \-\-help\fR
+.RS 4
+Show help\&.
+.RE
+.PP
+\fB\-b, \-\-dbpath <database path>\fR
+.RS 4
+Specify new database location, default to <root>/var/lib/pacman\&.
+.RE
+.PP
+\fB\-c, \-\-config <configuration file>\fR
+.RS 4
+Specify a custom config, default to <root>/etc:pacman\&.conf\&.
+.RE
+.PP
+\fB\-r, \-\-root <root path>\fR
+.RS 4
+Specify a new root, default to /\&.
+.RE
+.PP
+\fB\-f, \-\-format <format>\fR
+.RS 4
+Format output, see
+Format options\&.
+.RE
+.PP
+\fB\-p, \-\-file <file>\fR
+.RS 4
+Query file\&.
+.RE
+.PP
+\fB\-q, \-\-quiet\fR
+.RS 4
+No output, return 0 if packages found, else 1\&.
+.RE
+.PP
+\fB\-u, \-\-upgrades\fR
+.RS 4
+List updates available\&.
+.RE
+.PP
+\fB\-x, \-\-escape\fR
+.RS 4
+Escape \e" in output\&.
+.RE
+.PP
+\fB\-1, \-\-just\-one\fR
+.RS 4
+Show first answer for each target\&.
+.RE
+.SH "COMMON SEARCH OPTIONS"
+.PP
+\fB\-i, \-\-info\fR
+.RS 4
+Search by name\&.
+.RE
+.PP
+\fB\-g, \-\-groups\fR
+.RS 4
+Filter to packages that are part of group\&.
+.RE
+.PP
+\fB\-s, \-\-search\fR
+.RS 4
+Regex search for ALPM and SQL search for AUR\&.
+.RE
+.SH "LOCAL DB SEARCH"
+.PP
+\fB\-m, \-\-foreign\fR
+.RS 4
+Filter result to packages that were not found in the sync database(s)\&. With
+\fI\-A\fR
+search if foreign packages exist in AUR\&.
+.RE
+.PP
+\fB\-e, \-\-explicit\fR
+.RS 4
+Only show packages explicitly installed\&.
+.RE
+.PP
+\fB\-d, \-\-deps\fR
+.RS 4
+Restrict output to packages installed as dependencie\&.
+.RE
+.PP
+\fB\-t, \-\-unrequired\fR
+.RS 4
+Restrict output to packages that are no more required\&.
+.RE
+.PP
+\fB\-\-query\-type <action>\fR
+.RS 4
+Query packages which <action> one of targets, where <action> can be
+\fIdepends\fR,
+\fIprovides\fR,
+\fIreplaces\fR
+or
+\fIconflicts\fR\&.
+.RE
+.SH "SYNC DB SEARCH"
+.PP
+\fB\-l, \-\-list\fR
+.RS 4
+List repository content\&.
+.RE
+.SH "FORMAT OPTIONS"
+.sp
+Format can contain:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+%a: architecture
+%b: backups file
+%d: description
+%c: conflicts
+%i: AUR ID
+%l: local version
+%n: name
+%o: only for AUR, out of date
+%r: repository, \'local\' for local packages
+%s: sync repository, respect linkman:pacman\&.conf[5] order\&.
+%t: target submitted with command
+%v: version, depends on DB
+%w: AUR votes
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+%1: install date
+%2: theorical size
+%3: real size
+%4: package state\&. Show a combination of the following states:
+        1: foreign
+        2: explicitly installed
+        4: installed as dependency
+        8: unrequired
+        16: update available
+        32: package part of group
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Default format: \fI%r/%n %v [%l] (%g)\en\et%d\fR
+.PP
+\fB\-\-csep <sep>\fR
+.RS 4
+For format like
+\fI%g\fR,
+\fI%c\fR
+\&..., define separator\&. Default to space\&.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBpacman\fR(8), \fBpacman.conf\fR(5)
+.SH "BUGS"
+.sp
+http://bugs\&.archlinux\&.fr
+.SH "AUTHORS"
+.sp
+Current maintainers:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Tuxce <tuxce\&.net@gmail\&.com>
+.RE

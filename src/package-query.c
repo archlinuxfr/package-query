@@ -174,7 +174,7 @@ int main (int argc, char **argv)
 		{"list-repo",     required_argument, 0, 'L'},
 		{"query-type",     required_argument, 0, 1000},
 		{"csep",     required_argument, 0, 1001},
-		{"version",     required_argument, 0, 'v'},
+		{"version",     no_argument, 0, 'v'},
 
 		{0, 0, 0, 0}
 	};
