@@ -458,8 +458,9 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			const char *dburl= alpm_db_get_url((alpm_pkg_get_db (pkg)));
 			if (!dburl) return NULL;
 			const char *pkgfilename = alpm_pkg_get_filename (pkg);
-			info = (char *) malloc (sizeof (char) * (strlen (dburl) + strlen(pkgfilename) + 1));
+			info = (char *) malloc (sizeof (char) * (strlen (dburl) + strlen(pkgfilename) + 2));
 			strcpy (info, dburl);
+			strcat (info, "/");
 			strcat (info, pkgfilename);
 			free_info = 1;
 			}
