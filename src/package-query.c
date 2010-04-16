@@ -335,9 +335,9 @@ int main (int argc, char **argv)
 	{
 		for(t = targets; t; t = alpm_list_next(t))
 		{
-			pmpkg_t *pkg;
+			pmpkg_t *pkg=NULL;
 			const char *filename = alpm_list_getdata(t);
-			if (alpm_pkg_load (filename, 0, &pkg)!=0)
+			if (alpm_pkg_load (filename, 0, &pkg)!=0 || pkg==NULL)
 			{
 				fprintf(stderr, "unable to read %s.\n", filename);
 				continue;

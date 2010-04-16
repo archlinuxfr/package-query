@@ -439,7 +439,7 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 		case 'r': info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg)); break;
 		case 's': 
 			info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg));
-			if (config.init_sync_db && strcmp ("local", info)==0)
+			if (config.init_sync_db && info!=NULL && strcmp ("local", info)==0)
 			{
 				alpm_list_t *i;
 				int found=0;
