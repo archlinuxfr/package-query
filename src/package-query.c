@@ -395,7 +395,7 @@ int main (int argc, char **argv)
 		else if (config.search)
 			ret += aur_search (targets);
 	}
-	else if (!targets && !config.just_one)
+	else if (!targets && !config.just_one && !config.list_repo)
 	{
 		ret += alpm_search_local (NULL);
 	}

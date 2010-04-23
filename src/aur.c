@@ -367,6 +367,7 @@ int aur_request (alpm_list_t *targets, int type)
 		strcat (aur_rpc, pkg_name);
 		res = string_new();
     	hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) &pkg_json);
+		curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
 		curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
 		curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
 		curl_easy_setopt (curl, CURLOPT_URL, aur_rpc);
