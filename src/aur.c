@@ -131,6 +131,14 @@ int aur_pkg_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
 	return strcmp (aur_pkg_get_name (pkg1), aur_pkg_get_name (pkg2));
 }
 
+int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
+{
+	if (pkg1->votes > pkg2->votes) 
+		return 1;
+	else if (pkg1->votes < pkg2->votes)
+		return -1;
+	return 0;
+}
 
 
 
@@ -410,6 +418,19 @@ int aur_request (alpm_list_t *targets, int type)
 					alpm_list_t *l,*p;
 					char *ts = concat_str_list (list_t);
 					int found;
+					/* Sort results */
+					switch (config.sort)
+					{
+						case 'n': pkgs = alpm_list_msort (pkgs, 
+									alpm_list_count (pkgs), 
+									(alpm_list_fn_cmp) aur_pkg_cmp);
+						     break;
+						case 'v': pkgs = alpm_list_msort (pkgs, 
+									alpm_list_count (pkgs), 
+									(alpm_list_fn_cmp) aur_pkg_votes_cmp);
+						     break;
+					}
+					/* Filter results with others targets without making more queries */
 					for (p = pkgs; p; p = alpm_list_next(p))
 					{
 						found=1;

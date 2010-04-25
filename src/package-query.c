@@ -57,6 +57,7 @@ void init_config (const char *myname)
 	config.escape = 0;
 	config.just_one = 0;
 	config.filter = 0;
+	config.sort = AUR_SORT;
 	strcpy (config.csep, " ");
 	strcpy (config.root_dir, ROOTDIR);
 	strcpy (config.db_path, DBPATH);
@@ -106,6 +107,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-r --root <root path> : default %s", ROOTDIR);
 	fprintf(stderr, "\n\t-s --search search");
 	fprintf(stderr, "\n\t-S --sync search in sync database");
+	fprintf(stderr, "\n\t--sort [n,v] sort aur search by name or votes");
 	fprintf(stderr, "\n\t--query-type query type");
 	fprintf(stderr, "\n\t-u --upgrades list updates available");
 	fprintf(stderr, "\n\t-h --help show help");
@@ -174,6 +176,7 @@ int main (int argc, char **argv)
 		{"list-repo",     required_argument, 0, 'L'},
 		{"query-type",     required_argument, 0, 1000},
 		{"csep",     required_argument, 0, 1001},
+		{"sort",     required_argument, 0, 1002},
 		{"version",     no_argument, 0, 'v'},
 
 		{0, 0, 0, 0}
@@ -264,6 +267,9 @@ int main (int argc, char **argv)
 				break;
 			case 1001:
 				strncpy (config.csep, optarg, SEP_LEN);
+				break;
+			case 1002:
+				config.sort = optarg[0];
 				break;
 			case 'u':
 				config.init_sync_db = 1;

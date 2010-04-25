@@ -21,7 +21,7 @@
 #include <alpm_list.h>
 
 #define AUR_BASE_URL "http://aur.archlinux.org"
-
+#define AUR_SORT 'n'
 
 /*
  * AUR package
@@ -56,6 +56,7 @@ aurpkg_t *aur_pkg_new ();
 aurpkg_t *aur_pkg_free (aurpkg_t *pkg);
 aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg);
 int aur_pkg_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2);
+int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2);
 
 unsigned int aur_pkg_get_id (const aurpkg_t * pkg);
 const char * aur_pkg_get_name (const aurpkg_t * pkg);
