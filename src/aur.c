@@ -372,7 +372,11 @@ int aur_request (alpm_list_t *targets, int type)
 			pkg_name = t1->name;
 			aur_rpc[strlen(AUR_BASE_URL) + strlen(AUR_RPC) + strlen(AUR_RPC_INFO)] = '\0';
 		}
-		strcat (aur_rpc, pkg_name);
+		char *pkg_name_encode=curl_easy_escape(curl, pkg_name, 0);
+		if (pkg_name_encode==NULL) 
+			continue;
+		strcat (aur_rpc, pkg_name_encode);
+		curl_free (pkg_name_encode);
 		res = string_new();
     	hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) &pkg_json);
 		curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
