@@ -66,12 +66,14 @@ typedef struct _aq_config
 	unsigned short just_one;
 	unsigned short updates;
 	unsigned short filter;
+	unsigned short yaourt;
 	char sort;
 	char csep[SEP_LEN];
 	char format_out[PATH_MAX];
 	char root_dir[PATH_MAX];
 	char db_path[PATH_MAX];
 	char config_file[PATH_MAX];
+	char **colors;
 } aq_config;
 
 aq_config config;

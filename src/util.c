@@ -22,6 +22,8 @@
 #include <limits.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 
 #include "util.h"
 #include "alpm-query.h"
@@ -208,8 +210,7 @@ char *concat_str_list (alpm_list_t *l)
 	alpm_list_t *i;
 	if (!l)
 	{
-		ret = (char *) malloc (sizeof (char) * 2);
-		strcpy (ret, "-");
+		return NULL;
 	}
 	else
 	{
@@ -231,8 +232,7 @@ char *concat_str_list (alpm_list_t *l)
 		}
 		else
 		{
-			ret = (char *) malloc (sizeof (char) * 2);
-			strcpy (ret, "-");
+			return NULL;
 		}
 	}
 	strtrim (ret);
@@ -310,10 +310,139 @@ char *strreplace(const char *str, const char *needle, const char *replace)
 	return newstr;
 }
 
+int getcols(void)
+{
+	if(!isatty(1)) {
+		/* We will default to 80 columns if we're not a tty
+		 * this seems a fairly standard file width.
+		 */
+		return 80;
+	} else {
+#ifdef TIOCGSIZE
+		struct ttysize win;
+		if(ioctl(1, TIOCGSIZE, &win) == 0) {
+			return win.ts_cols;
+		}
+#elif defined(TIOCGWINSZ)
+		struct winsize win;
+		if(ioctl(1, TIOCGWINSZ, &win) == 0) {
+			return win.ws_col;
+		}
+#endif
+		/* If we can't figure anything out, we'll just assume 80 columns */
+		/* TODO any problems caused by this assumption? */
+		return 80;
+	}
+	/* Original envvar way - prone to display issues
+	const char *cenv = getenv("COLUMNS");
+	if(cenv != NULL) {
+		return atoi(cenv);
+	}
+	return -1;
+	*/
+}
+
+void indent (const char *str)
+{
+	char *s=NULL;
+	char *c=NULL, *c1=NULL;
+	int cur_col=4, cols;
+	if (!str)
+		return;
+	s=strdup (str);
+	c=s;
+	cols=getcols();
+	printf ("%-*s", 4, "");
+	while ((c1=strchr (c, ' ')) != NULL)
+	{
+		c1[0]='\0';
+		cur_col+=strlen (c)+1;
+		if (cur_col >= cols)
+		{
+			printf ("\n%-*s%s ", 4, "", c);
+			cur_col=4+strlen(c)+1;
+		}
+		else
+			printf ("%s ", c);
+		c=&c1[1];
+	}
+	cur_col+=strlen (c);
+	if (cur_col >= cols && c!=s)
+		printf ("\n%-*s%s\n", 4, "", c);
+	else
+		printf ("%s\n", c);
+	free (s);
+}
+
+void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
+{
+	static char cstr[PATH_MAX];
+	const char *info, *lver;
+	char **colors=config.colors;
+	cstr[0]='\0';
+	info = f(p, 's');
+	fprintf (stderr, "%s/", info);
+	if (strcmp (info, "testing")==0 || strcmp (info, "core")==0)
+		strcpy (cstr, colors[4]);
+	else if (strcmp (info, "local")==0)
+		strcpy (cstr, colors[5]);
+	else if (strcmp (info, "extra")==0)
+		strcpy (cstr, colors[6]);
+	else if (strcmp (info, "community")==0)
+		strcpy (cstr, colors[7]);
+	else
+		strcpy (cstr, colors[7]);
+	strcat (cstr, info);
+	strcat (cstr, "/"); strcat (cstr, colors[0]); strcat (cstr, colors[1]);
+	info=f(p, 'n');
+	fprintf (stderr, "%s\n", info);
+	strcat (cstr, info);
+	strcat (cstr, " "); strcat (cstr, colors[6]);
+	lver = alpm_local_pkg_get_str (info, 'l');
+	info = f(p, 'v');
+	strcat (cstr, info); strcat (cstr, colors[0]);
+	if (lver && strcmp (f(p, 'r'), "local")!=0)
+	{
+		strcat (cstr, " "); strcat (cstr, colors[3]); strcat (cstr, colors[5]); strcat (cstr, "[");
+		if (strcmp (info, lver)!=0)
+		{
+			strcat (cstr, colors[4]);
+			strcat (cstr, lver);
+			strcat (cstr, colors[5]); strcat (cstr, " ");
+		}
+		strcat (cstr, "installed]"); strcat (cstr, colors[0]);
+	}
+	info = f(p, 'g');
+	if (info)
+	{
+		strcat (cstr, " "); strcat (cstr, colors[8]);
+		strcat (cstr, "("); strcat (cstr, info);
+		strcat (cstr, ")"); strcat (cstr, colors[0]);
+	}
+	info = f(p, 'o');
+	if (info && info[0]=='1')
+	{
+		strcat (cstr, " "); strcat (cstr, colors[3]); strcat (cstr, colors[5]);
+		strcat (cstr, "(Out of date)"); strcat (cstr, colors[0]);
+	}
+	info = f(p, 'w');
+	if (info)
+	{
+		strcat (cstr, " ");strcat (cstr, colors[3]); strcat (cstr, colors[5]);
+		strcat (cstr, "("); strcat (cstr, info); strcat (cstr, ")");
+		strcat (cstr, colors[0]);
+	}
+	printf ("%s\n", cstr);
+	if (!config.db_sync) return;
+	printf ("%s", colors[2]);
+	indent (f(p, 'd'));
+	printf ("%s", colors[2]);
+}
 
 void print_package (const char * target, 
 	void * pkg, const char *(*f)(void *p, unsigned char c))
 {
+	if (config.yaourt) {yaourt_print_package (pkg, f); return; }
 	if (config.quiet) return;
 	char *format_cpy;
 	char *ptr;

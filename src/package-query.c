@@ -36,6 +36,9 @@
 
 extern char *optarg;
 extern int optind;
+char *colors_yes[9] = {"\e[0m","\e[1m", "\e[3m", "\e[7m", "\e[1;31m","\e[1;33m",
+		"\e[1;32m", "\e[1;35m", "\e[1;34m"};
+char *colors_no[9] = {"","", "", "", "","","", "", ""};
 
 void init_config (const char *myname)
 {
@@ -58,6 +61,11 @@ void init_config (const char *myname)
 	config.just_one = 0;
 	config.filter = 0;
 	config.sort = AUR_SORT;
+	config.yaourt = 0;
+	if (isatty (fileno (stdout)))
+		config.colors = colors_yes;
+	else
+		config.colors = colors_no;
 	strcpy (config.csep, " ");
 	strcpy (config.root_dir, ROOTDIR);
 	strcpy (config.db_path, DBPATH);
@@ -177,6 +185,7 @@ int main (int argc, char **argv)
 		{"query-type",     required_argument, 0, 1000},
 		{"csep",     required_argument, 0, 1001},
 		{"sort",     required_argument, 0, 1002},
+		{"yaourt",     no_argument, 0, 1003},
 		{"version",     no_argument, 0, 'v'},
 
 		{0, 0, 0, 0}
@@ -270,6 +279,10 @@ int main (int argc, char **argv)
 				break;
 			case 1002:
 				config.sort = optarg[0];
+				break;
+			case 1003:
+				config.yaourt = 1;
+				config.init_sync_db = 1;
 				break;
 			case 'u':
 				config.init_sync_db = 1;
