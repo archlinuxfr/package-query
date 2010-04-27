@@ -24,6 +24,8 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <libintl.h>
+
 
 #include "util.h"
 #include "alpm-query.h"
@@ -410,7 +412,8 @@ void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 			strcat (cstr, lver);
 			strcat (cstr, colors[5]); strcat (cstr, " ");
 		}
-		strcat (cstr, "installed]"); strcat (cstr, colors[0]);
+		strcat (cstr, dgettext ("yaourt", "installed")); 
+		strcat (cstr, "]"); strcat (cstr, colors[0]);
 	}
 	info = f(p, 'g');
 	if (info)
@@ -423,7 +426,9 @@ void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 	if (info && info[0]=='1')
 	{
 		strcat (cstr, " "); strcat (cstr, colors[3]); strcat (cstr, colors[5]);
-		strcat (cstr, "(Out of date)"); strcat (cstr, colors[0]);
+		strcat (cstr, "(");
+		strcat (cstr, dgettext ("yaourt", "Out of Date"));
+		strcat (cstr, ")"); strcat (cstr, colors[0]);
 	}
 	info = f(p, 'w');
 	if (info)
@@ -433,7 +438,7 @@ void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 		strcat (cstr, colors[0]);
 	}
 	printf ("%s\n", cstr);
-	if (!config.db_sync) return;
+	if (!config.db_sync && !config.aur) return;
 	printf ("%s", colors[2]);
 	indent (f(p, 'd'));
 	printf ("%s", colors[2]);

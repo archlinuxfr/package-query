@@ -24,6 +24,8 @@
 #include <limits.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <locale.h>
+#include <libintl.h>
 
 #include "util.h"
 #include "alpm-query.h"
@@ -283,6 +285,9 @@ int main (int argc, char **argv)
 			case 1003:
 				config.yaourt = 1;
 				config.init_sync_db = 1;
+				setlocale (LC_ALL, "");
+				bindtextdomain ("yaourt", "/usr/share/locale");
+				textdomain ("yaourt");
 				break;
 			case 'u':
 				config.init_sync_db = 1;
