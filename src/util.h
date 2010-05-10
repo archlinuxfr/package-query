@@ -56,7 +56,6 @@ typedef struct _aq_config
 	unsigned short aur;
 	unsigned short query;
 	unsigned short information;
-	unsigned short init_sync_db;
 	unsigned short is_file;
 	unsigned short search;
 	unsigned short list;
@@ -70,7 +69,8 @@ typedef struct _aq_config
 	char csep[SEP_LEN];
 	char format_out[PATH_MAX];
 	char root_dir[PATH_MAX];
-	char db_path[PATH_MAX];
+	char dbpath[PATH_MAX];
+	unsigned short custom_dbpath;
 	char config_file[PATH_MAX];
 } aq_config;
 
