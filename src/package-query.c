@@ -207,7 +207,6 @@ int main (int argc, char **argv)
 				strcpy (config.format_out, optarg);
 				break;
 			case 'g':
-				config.information = 1;
 				config.list_group = 1;
 				config.filter |= F_GROUP;
 				break;
@@ -287,7 +286,8 @@ int main (int argc, char **argv)
 		config.search = 0;
 		config.list_repo = 1;
 	}
-	if (targets == NULL && !config.list && !config.list_repo && !config.db_local)
+	if (targets == NULL && !config.list && !config.list_repo &&
+		!config.db_local && !config.list_group)
 	{
 		fprintf(stderr, "no targets specified.\n");
 		usage(1);
@@ -328,9 +328,9 @@ int main (int argc, char **argv)
 	}
 	else if (config.db_local)
 		dbs = alpm_list_add(dbs, alpm_option_get_localdb());
-	if  (targets || config.list_repo)
+	if  (targets || config.list_repo || config.list_group)
 	{
-		for(t = dbs; t && (targets || config.list_repo); t = alpm_list_next(t))
+		for(t = dbs; t && (targets || config.list_repo || config.list_group); t = alpm_list_next(t))
 		{
 			db = alpm_list_getdata(t);
 			if (config.list_repo)
@@ -340,11 +340,14 @@ int main (int argc, char **argv)
 			else if (config.information)
 			{
 				ret += search_pkg_by_name (db, &targets, config.just_one);
-				ret += search_pkg_by_grp (db, &targets, config.just_one, config.list_group);
 			}
 			else if (config.search)
 			{
 				ret += search_pkg (db, targets);
+			}
+			else if (config.list_group)
+			{
+				ret += list_grp (db, targets,  (targets!=NULL));
 			}
 			else if (config.query)
 			{
@@ -376,7 +379,7 @@ int main (int argc, char **argv)
 		else if (config.search)
 			ret += aur_search (targets);
 	}
-	else if (!targets && !config.just_one && !config.list_repo)
+	else if (config.db_local && !targets && !config.just_one && !config.list_repo && !config.list_group)
 	{
 		ret += alpm_search_local (NULL);
 	}

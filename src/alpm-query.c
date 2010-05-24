@@ -338,52 +338,46 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
 	return ret;
 }
 
+void print_grp (pmgrp_t *grp, int listp)
+{
+	if (listp)
+	{
+		alpm_list_t *i;
+		for (i=alpm_grp_get_pkgs (grp); i; i=alpm_list_next (i))
+			print_package (alpm_grp_get_name (grp), alpm_list_getdata(i), alpm_pkg_get_str);
+	}
+	else
+		print_package ("", grp, alpm_grp_get_str);
+}
 
-int search_pkg_by_grp (pmdb_t *db, alpm_list_t **targets, int modify, int listp)
+int list_grp (pmdb_t *db, alpm_list_t *targets, int listp)
 {
 	int ret=0;
-	alpm_list_t *t, *targets_copy=*targets;
 	pmgrp_t *grp;
-	int targets_copied=0;
-	for(t = *targets; t; t = alpm_list_next(t)) 
+	alpm_list_t *t;
+	if (targets)
 	{
-		const char *grp_name = alpm_list_getdata(t);
-		if (strchr (grp_name, '/'))
-			continue;
-		grp = alpm_db_readgrp (db, grp_name);
-		if (grp)
+		for (t=targets; t; t = alpm_list_next (t))
 		{
-			ret++;
-			if (listp)
+			const char *grp_name = alpm_list_getdata (t);
+			grp = alpm_db_readgrp (db, grp_name);
+			if (grp) 
 			{
-				alpm_list_t *i;
-				for (i=alpm_grp_get_pkgs (grp); i; i=alpm_list_next (i))
-					print_package (grp_name, alpm_list_getdata(i), alpm_pkg_get_str);
-			}
-			else
-				print_package (grp_name, grp, alpm_grp_get_str);
-			if (modify)
-			{
-				if (!targets_copied)
-				{
-					targets_copy = alpm_list_copy (*targets);
-					targets_copied = 1;
-				}
-				char *data;
-				targets_copy = alpm_list_remove_str (targets_copy, grp_name, &data);
-				if (data)
-					free (data);
+				ret++;
+				print_grp (grp, listp);
 			}
 		}
 	}
-	if (modify)
+	else
 	{
-		if (targets_copied)
-			alpm_list_free (*targets);
-		*targets=targets_copy;
+		for(t = alpm_db_get_grpcache(db); t; t = alpm_list_next(t)) 
+		{
+			ret++;
+			print_grp (alpm_list_getdata(t), listp);
+		}
 	}
 	return ret;
-}
+}	
 
 int search_pkg (pmdb_t *db, alpm_list_t *targets)
 {
