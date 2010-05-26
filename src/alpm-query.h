@@ -39,15 +39,16 @@
 /*
  * Init alpm
  */
-int init_alpm (const char *root_dir, const char *db_path);
+int init_alpm ();
 int init_db_local ();
 
 /*
  * Parse pacman config to find sync databases
  */
 /* get_db_sync() returns new list, use FREELIST() to free the list */
-alpm_list_t *get_db_sync (const char * config_file);
-int init_db_sync (const char * config_file);
+alpm_list_t *get_db_sync ();
+/* init_db_sync()  register sync database */
+int init_db_sync ();
 
 
 /*
@@ -64,7 +65,8 @@ int search_pkg_by_replaces (pmdb_t *db, alpm_list_t *targets);
  * remove found items from targets.
  */
 int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify);
-int search_pkg_by_grp (pmdb_t *db, alpm_list_t **targets, int modify, int listp);
+
+int list_grp (pmdb_t *db, alpm_list_t *targets, int listp);
 
 
 int search_pkg (pmdb_t *db, alpm_list_t *targets);

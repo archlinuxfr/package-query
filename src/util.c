@@ -208,7 +208,7 @@ void strins (char *dest, const char *src)
 char *concat_str_list (alpm_list_t *l)
 {
 	char *ret;
-	int len=0;
+	int len=0, j=0;
 	alpm_list_t *i;
 	if (!l)
 	{
@@ -228,8 +228,8 @@ char *concat_str_list (alpm_list_t *l)
 			strcpy (ret, "");
 			for(i = l; i; i = alpm_list_next(i)) 
 			{
+				if (j++>0) strcat (ret, config.csep);
 				strcat (ret, alpm_list_getdata (i));
-				strcat (ret, config.csep);
 			}
 		}
 		else
@@ -237,7 +237,6 @@ char *concat_str_list (alpm_list_t *l)
 			return NULL;
 		}
 	}
-	strtrim (ret);
 	return ret;
 }
 
