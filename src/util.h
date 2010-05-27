@@ -66,6 +66,7 @@ typedef struct _aq_config
 	unsigned short updates;
 	unsigned short filter;
 	unsigned short yaourt;
+	unsigned short yaourt_n;
 	char sort;
 	char csep[SEP_LEN];
 	char format_out[PATH_MAX];

@@ -63,7 +63,8 @@ void init_config (const char *myname)
 	config.filter = 0;
 	config.sort = AUR_SORT;
 	config.yaourt = 0;
-	if (isatty (fileno (stdout)))
+	config.yaourt_n = 0;
+	if (isatty (fileno (stderr)))
 		config.colors = colors_yes;
 	else
 		config.colors = colors_no;
@@ -181,6 +182,7 @@ int main (int argc, char **argv)
 		{"csep",     required_argument, 0, 1001},
 		{"sort",     required_argument, 0, 1002},
 		{"yaourt",     no_argument, 0, 1003},
+		{"yaourt_n",     no_argument, 0, 1004},
 		{"version",     no_argument, 0, 'v'},
 
 		{0, 0, 0, 0}
@@ -277,6 +279,9 @@ int main (int argc, char **argv)
 				setlocale (LC_ALL, "");
 				bindtextdomain ("yaourt", "/usr/share/locale");
 				textdomain ("yaourt");
+				break;
+			case 1004:
+				config.yaourt_n = 1;
 				break;
 			case 'u':
 				config.filter |= F_UPGRADES;

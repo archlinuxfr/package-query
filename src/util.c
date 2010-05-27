@@ -313,7 +313,7 @@ char *strreplace(const char *str, const char *needle, const char *replace)
 
 int getcols(void)
 {
-	if(!isatty(1)) {
+	if (!isatty (2)) {
 		/* We will default to 80 columns if we're not a tty
 		 * this seems a fairly standard file width.
 		 */
@@ -321,12 +321,12 @@ int getcols(void)
 	} else {
 #ifdef TIOCGSIZE
 		struct ttysize win;
-		if(ioctl(1, TIOCGSIZE, &win) == 0) {
+		if(ioctl(2, TIOCGSIZE, &win) == 0) {
 			return win.ts_cols;
 		}
 #elif defined(TIOCGWINSZ)
 		struct winsize win;
-		if(ioctl(1, TIOCGWINSZ, &win) == 0) {
+		if(ioctl(2, TIOCGWINSZ, &win) == 0) {
 			return win.ws_col;
 		}
 #endif
@@ -353,36 +353,37 @@ void indent (const char *str)
 	s=strdup (str);
 	c=s;
 	cols=getcols();
-	printf ("%-*s", 4, "");
+	fprintf (stderr, "%-*s", 4, "");
 	while ((c1=strchr (c, ' ')) != NULL)
 	{
 		c1[0]='\0';
 		cur_col+=strlen (c)+1;
 		if (cur_col >= cols)
 		{
-			printf ("\n%-*s%s ", 4, "", c);
+			fprintf (stderr, "\n%-*s%s ", 4, "", c);
 			cur_col=4+strlen(c)+1;
 		}
 		else
-			printf ("%s ", c);
+			fprintf (stderr, "%s ", c);
 		c=&c1[1];
 	}
 	cur_col+=strlen (c);
 	if (cur_col >= cols && c!=s)
-		printf ("\n%-*s%s\n", 4, "", c);
+		fprintf (stderr, "\n%-*s%s\n", 4, "", c);
 	else
-		printf ("%s\n", c);
+		fprintf (stderr, "%s\n", c);
 	free (s);
 }
 
 void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 {
 	static char cstr[PATH_MAX];
+	static int number=0;
 	const char *info, *lver;
 	char **colors=config.colors;
 	cstr[0]='\0';
 	info = f(p, 's');
-	fprintf (stderr, "%s/", info);
+	fprintf (stdout, "%s/", info);
 	if (strcmp (info, "testing")==0 || strcmp (info, "core")==0)
 		strcpy (cstr, colors[4]);
 	else if (strcmp (info, "local")==0)
@@ -396,7 +397,7 @@ void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 	strcat (cstr, info);
 	strcat (cstr, "/"); strcat (cstr, colors[0]); strcat (cstr, colors[1]);
 	info=f(p, 'n');
-	fprintf (stderr, "%s\n", info);
+	fprintf (stdout, "%s\n", info);
 	strcat (cstr, info);
 	strcat (cstr, " "); strcat (cstr, colors[6]);
 	lver = alpm_local_pkg_get_str (info, 'l');
@@ -436,11 +437,14 @@ void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 		strcat (cstr, "("); strcat (cstr, info); strcat (cstr, ")");
 		strcat (cstr, colors[0]);
 	}
-	printf ("%s\n", cstr);
-	if (!config.db_sync && !config.aur) return;
-	printf ("%s", colors[2]);
+	fprintf (stderr, "%s", colors[0]);
+	if (config.yaourt_n)
+		fprintf (stderr, "%s%s%d%s ", colors[3], colors[5], ++number, colors[0]);
+	fprintf (stderr, "%s\n", cstr);
+	if (!config.search) return;
+	fprintf (stderr, "%s", colors[2]);
 	indent (f(p, 'd'));
-	printf ("%s", colors[2]);
+	fprintf (stderr, "%s", colors[2]);
 }
 
 void print_package (const char * target, 
