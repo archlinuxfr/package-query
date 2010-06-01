@@ -29,7 +29,7 @@
 #include "alpm-query.h"
 #include "aur.h"
 
-#define _VERSION "0.2"
+#define _VERSION "0.3"
 
 #define FORMAT_OUT "%r/%n %v [%l] (%g)\n\t%d"
 #define FORMAT_OUT_USAGE "%r/%n %v [%l] (%g)\\n\\t%d"
