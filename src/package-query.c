@@ -38,9 +38,6 @@
 
 extern char *optarg;
 extern int optind;
-char *colors_yes[9] = {"\e[0m","\e[1m", "\e[3m", "\e[7m", "\e[1;31m","\e[1;33m",
-		"\e[1;32m", "\e[1;35m", "\e[1;34m"};
-char *colors_no[9] = {"","", "", "", "","","", "", ""};
 
 void init_config (const char *myname)
 {
@@ -64,10 +61,7 @@ void init_config (const char *myname)
 	config.sort = AUR_SORT;
 	config.yaourt = 0;
 	config.yaourt_n = 0;
-	if (isatty (fileno (stderr)))
-		config.colors = colors_yes;
-	else
-		config.colors = colors_no;
+	config.colors = 0; 
 	strcpy (config.csep, " ");
 	strcpy (config.root_dir, "");
 	strcpy (config.dbpath, "");
@@ -275,7 +269,18 @@ int main (int argc, char **argv)
 				config.sort = optarg[0];
 				break;
 			case 1003:
-				config.yaourt = 1;
+				config.yaourt=1;
+				if (isatty (fileno (stderr)))
+				{
+					const char *colormode = getenv ("COLORMODE");
+					if (colormode)
+					{
+						if (!strcmp (colormode, "normal") || !strcmp (colormode, ""))
+							config.colors = 1;
+						else if (!strcmp (colormode, "lightbg"))
+							config.colors = 2;
+					}
+				}
 				setlocale (LC_ALL, "");
 				bindtextdomain ("yaourt", "/usr/share/locale");
 				textdomain ("yaourt");
@@ -307,6 +312,10 @@ int main (int argc, char **argv)
 	{
 		config.search = 0;
 		config.list_repo = 1;
+	}
+	if (targets == NULL && config.list_group)
+	{
+		config.list_group++;
 	}
 	if (targets == NULL && !config.list && !config.list_repo &&
 		!config.db_local && !config.list_group)

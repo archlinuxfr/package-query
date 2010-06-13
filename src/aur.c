@@ -337,8 +337,7 @@ int aur_request (alpm_list_t *targets, int type)
 		perror ("curl");
 		return 0;
 	}
-	strcpy (aur_rpc, AUR_BASE_URL);
-	strcat (aur_rpc, AUR_RPC);
+	sprintf (aur_rpc, "%s%s", AUR_BASE_URL, AUR_RPC);
 	if (type == AUR_SEARCH)
 	{
 		strcat (aur_rpc, AUR_RPC_SEARCH);

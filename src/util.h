@@ -18,6 +18,7 @@
  */
 #ifndef _UTIL_H
 #define _UTIL_H
+#include <limits.h>
 #include <alpm.h>
 #include <alpm_list.h>
 #include "aur.h"
@@ -74,7 +75,7 @@ typedef struct _aq_config
 	char dbpath[PATH_MAX];
 	unsigned short custom_dbpath;
 	char config_file[PATH_MAX];
-	char **colors;
+	unsigned short colors;
 } aq_config;
 
 aq_config config;

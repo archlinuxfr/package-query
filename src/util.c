@@ -29,6 +29,7 @@
 
 #include "util.h"
 #include "alpm-query.h"
+#include "color.h"
 
 
 target_t *target_parse (const char *str)
@@ -380,71 +381,66 @@ void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 	static char cstr[PATH_MAX];
 	static int number=0;
 	const char *info, *lver;
-	char **colors=config.colors;
+	char *pcstr;
 	cstr[0]='\0';
+	pcstr = cstr;
+	if (config.yaourt_n)
+	{
+		pcstr += sprintf (pcstr, "%s%d%s ", color (C_NB), ++number, color (C_SPACE));
+	}
 	info = f(p, 's');
-	fprintf (stdout, "%s/", info);
-	if (strcmp (info, "testing")==0 || strcmp (info, "core")==0)
-		strcpy (cstr, colors[4]);
-	else if (strcmp (info, "local")==0)
-		strcpy (cstr, colors[5]);
-	else if (strcmp (info, "extra")==0)
-		strcpy (cstr, colors[6]);
-	else if (strcmp (info, "community")==0)
-		strcpy (cstr, colors[7]);
-	else
-		strcpy (cstr, colors[7]);
-	strcat (cstr, info);
-	strcat (cstr, "/"); strcat (cstr, colors[0]); strcat (cstr, colors[1]);
+	if (info)
+	{
+		fprintf (stdout, "%s/", info);
+		if (strcmp (info, "testing")==0 || strcmp (info, "core")==0)
+			pcstr += sprintf (pcstr, "%s%s/", color (C_TESTING), info);
+		else if (strcmp (info, "local")==0)
+			pcstr += sprintf (pcstr, "%s%s/", color (C_LOCAL), info);
+		else if (strcmp (info, "extra")==0)
+			pcstr += sprintf (pcstr, "%s%s/", color (C_EXTRA), info);
+		else
+			pcstr += sprintf (pcstr, "%s%s/", color (C_OTHER), info);
+	}
 	info=f(p, 'n');
 	fprintf (stdout, "%s\n", info);
-	strcat (cstr, info);
-	strcat (cstr, " "); strcat (cstr, colors[6]);
+	pcstr += sprintf (pcstr, "%s%s ", color(C_PKG), info);
+	if (config.list_group>1)
+	{
+		fprintf (stderr, "%s\n", cstr);
+		return;
+	}
 	lver = alpm_local_pkg_get_str (info, 'l');
 	info = f(p, 'v');
-	strcat (cstr, info); strcat (cstr, colors[0]);
+	pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), info, color (C_SPACE));
 	if (lver && strcmp (f(p, 'r'), "local")!=0)
 	{
-		strcat (cstr, " "); strcat (cstr, colors[3]); strcat (cstr, colors[5]); strcat (cstr, "[");
+		pcstr += sprintf (pcstr, " %s[", color(C_INSTALLED));
 		if (strcmp (info, lver)!=0)
 		{
-			strcat (cstr, colors[4]);
-			strcat (cstr, lver);
-			strcat (cstr, colors[5]); strcat (cstr, " ");
+			pcstr += sprintf (pcstr, "%s%s%s ", color(C_LVER), lver, color(C_INSTALLED));
 		}
-		strcat (cstr, dgettext ("yaourt", "installed")); 
-		strcat (cstr, "]"); strcat (cstr, colors[0]);
+		pcstr += sprintf (pcstr, "%s]%s", dgettext ("yaourt", "installed"), color(C_SPACE));
 	}
+	
 	info = f(p, 'g');
 	if (info)
 	{
-		strcat (cstr, " "); strcat (cstr, colors[8]);
-		strcat (cstr, "("); strcat (cstr, info);
-		strcat (cstr, ")"); strcat (cstr, colors[0]);
+		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_GRP), info, color(C_SPACE));
 	}
 	info = f(p, 'o');
 	if (info && info[0]=='1')
 	{
-		strcat (cstr, " "); strcat (cstr, colors[3]); strcat (cstr, colors[5]);
-		strcat (cstr, "(");
-		strcat (cstr, dgettext ("yaourt", "Out of Date"));
-		strcat (cstr, ")"); strcat (cstr, colors[0]);
+		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_OD), dgettext ("yaourt", "Out of Date"), color(C_SPACE));
 	}
 	info = f(p, 'w');
 	if (info)
 	{
-		strcat (cstr, " ");strcat (cstr, colors[3]); strcat (cstr, colors[5]);
-		strcat (cstr, "("); strcat (cstr, info); strcat (cstr, ")");
-		strcat (cstr, colors[0]);
+		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_VOTES), info, color(C_SPACE));
 	}
-	fprintf (stderr, "%s", colors[0]);
-	if (config.yaourt_n)
-		fprintf (stderr, "%s%s%d%s ", colors[3], colors[5], ++number, colors[0]);
 	fprintf (stderr, "%s\n", cstr);
-	if (!config.search) return;
-	fprintf (stderr, "%s", colors[2]);
+	if ((config.db_local && !config.search && !config.list_repo) || config.list_group) return;
+	fprintf (stderr, "%s", color(C_DSC));
 	indent (f(p, 'd'));
-	fprintf (stderr, "%s", colors[2]);
 }
 
 void print_package (const char * target, 
