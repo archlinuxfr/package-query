@@ -386,34 +386,59 @@ void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 	pcstr = cstr;
 	if (config.yaourt_n)
 	{
+		/* yaourt interactive list */
 		pcstr += sprintf (pcstr, "%s%d%s ", color (C_NB), ++number, color (C_SPACE));
 	}
-	info = f(p, 's');
-	if (info)
+	if (config.aur && config.filter & F_FOREIGN)
 	{
-		fprintf (stdout, "%s/", info);
-		if (strcmp (info, "testing")==0 || strcmp (info, "core")==0)
-			pcstr += sprintf (pcstr, "%s%s/", color (C_TESTING), info);
-		else if (strcmp (info, "local")==0)
-			pcstr += sprintf (pcstr, "%s%s/", color (C_LOCAL), info);
-		else if (strcmp (info, "extra")==0)
-			pcstr += sprintf (pcstr, "%s%s/", color (C_EXTRA), info);
-		else
-			pcstr += sprintf (pcstr, "%s%s/", color (C_OTHER), info);
+		fprintf (stdout, "local/");
+	}
+	else
+	{
+		info = f(p, 's');
+		if (info)
+		{
+			fprintf (stdout, "%s/", info);
+			if (strcmp (info, "testing")==0 || strcmp (info, "core")==0)
+				pcstr += sprintf (pcstr, "%s%s/", color (C_TESTING), info);
+			else if (strcmp (info, "local")==0)
+				pcstr += sprintf (pcstr, "%s%s/", color (C_LOCAL), info);
+			else if (strcmp (info, "extra")==0)
+				pcstr += sprintf (pcstr, "%s%s/", color (C_EXTRA), info);
+			else
+				pcstr += sprintf (pcstr, "%s%s/", color (C_OTHER), info);
+		}
 	}
 	info=f(p, 'n');
 	fprintf (stdout, "%s\n", info);
 	pcstr += sprintf (pcstr, "%s%s ", color(C_PKG), info);
 	if (config.list_group>1)
 	{
+		/* no more output for -[S,Q]g and no targets */
 		fprintf (stderr, "%s\n", cstr);
 		return;
 	}
 	lver = alpm_local_pkg_get_str (info, 'l');
 	info = f(p, 'v');
+	if (config.aur && config.filter & F_FOREIGN)
+	{
+		/* show foreign package */
+		pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), lver, color (C_SPACE));
+		if (info)
+		{
+			/* package found in AUR */
+			if (alpm_pkg_vercmp (info, lver)>0)
+				pcstr += sprintf (pcstr, " ( aur: %s )", info);
+			fprintf (stderr, "%saur/%s\n", color (C_OTHER), cstr);
+		}
+		else
+			fprintf (stderr, "%slocal/%s\n", color (C_LOCAL), cstr);
+		return;
+	}
 	pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), info, color (C_SPACE));
 	if (lver && strcmp (f(p, 'r'), "local")!=0)
 	{
+		/* show install information */
 		pcstr += sprintf (pcstr, " %s[", color(C_INSTALLED));
 		if (strcmp (info, lver)!=0)
 		{
@@ -438,7 +463,8 @@ void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_VOTES), info, color(C_SPACE));
 	}
 	fprintf (stderr, "%s\n", cstr);
-	if ((config.db_local && !config.search && !config.list_repo) || config.list_group) return;
+	/* if -Q or -Sl or -Sg <target>, don't display description */
+	if ((config.db_local && !config.search) || config.list_repo==1 || config.list_group) return;
 	fprintf (stderr, "%s", color(C_DSC));
 	indent (f(p, 'd'));
 }

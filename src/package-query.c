@@ -311,7 +311,7 @@ int main (int argc, char **argv)
 	if (targets == NULL && config.search)
 	{
 		config.search = 0;
-		config.list_repo = 1;
+		config.list_repo = 2;
 	}
 	if (targets == NULL && config.list_group)
 	{
