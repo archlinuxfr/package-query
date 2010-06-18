@@ -469,6 +469,13 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 	}
 	switch (c)
 	{
+		case '2':
+			{
+				off_t isize = alpm_pkg_get_isize(pkg);
+				info = ltostr (isize);
+				free_info=1;
+			}
+			break;
 		case 'a': info = (char *) alpm_pkg_get_arch (pkg); break;
 		case 'b': 
 			info = concat_str_list (alpm_pkg_get_backup (pkg)); 
@@ -544,13 +551,6 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 				if (!idate) break;
 				info = (char *) malloc (sizeof (char) * 50);
 				strftime(info, 50, "%s", localtime(&idate));
-				free_info=1;
-			}
-			break;
-		case '2':
-			{
-				off_t isize = alpm_pkg_get_isize(pkg);
-				info = ltostr (isize);
 				free_info=1;
 			}
 			break;

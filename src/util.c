@@ -334,7 +334,7 @@ void print_package (const char * target,
 		else
 		{
 			info = NULL;
-			if (strchr ("l1234", c[1]))
+			if (strchr ("l134", c[1]))
 				info = alpm_local_pkg_get_str (f(pkg, 'n'), c[1]);
 			else if (c[1]=='t')
 				info = target; 
