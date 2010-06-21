@@ -26,6 +26,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 
 #include "util.h"
 #include "alpm-query.h"
@@ -84,6 +85,18 @@ int init_db_local ()
 		return 0;
 	}
 	return 1;
+}
+
+/* From pacman 3.4.0, set arch */
+static void setarch(const char *arch)
+{
+	if (strcmp(arch, "auto") == 0) {
+		struct utsname un;
+		uname(&un);
+		alpm_option_set_arch(un.machine);
+	} else {
+		alpm_option_set_arch(arch);
+	}
 }
 
 int parse_config_file (alpm_list_t **dbs, const char *config_file, int reg)
@@ -155,23 +168,38 @@ int parse_config_file (alpm_list_t **dbs, const char *config_file, int reg)
 				else if (reg && strcmp (line, "Server") == 0 && db != NULL)
 				{
 					strtrim (ptr);
+					const char *arch = alpm_option_get_arch();
 					char *server = strreplace (ptr, "$repo", alpm_db_get_name (db));
+					if (arch)
+					{
+						char *temp=server;
+						server = strreplace(temp, "$arch", arch);
+						free(temp);
+					}
 					alpm_db_setserver(db, server);
 					free (server);
 				}
-				else if (reg && in_option && !config.custom_dbpath && 
-					strcmp (line, "DBPath") == 0)
+				else if (reg && in_option)
 				{
-					strtrim (ptr);
-					strcpy (config.dbpath, ptr);
-					if (alpm_option_set_dbpath (config.dbpath)!=0)
+					if (strcmp (line, "Architecture") == 0)
 					{
-						fprintf (stderr, "problem setting dbpath '%s' (%s)\n", 
-							config.dbpath, alpm_strerrorlast());
-						file_closed=1;
-						fclose (conf);
-						return 0;
-					}					
+						strtrim (ptr);
+						setarch (ptr);
+					}
+					else if (!config.custom_dbpath && 
+						strcmp (line, "DBPath") == 0)
+					{
+						strtrim (ptr);
+						strcpy (config.dbpath, ptr);
+						if (alpm_option_set_dbpath (config.dbpath)!=0)
+						{
+							fprintf (stderr, "problem setting dbpath '%s' (%s)\n", 
+								config.dbpath, alpm_strerrorlast());
+							file_closed=1;
+							fclose (conf);
+							return 0;
+						}					
+					}
 				}
 			}
 		}
