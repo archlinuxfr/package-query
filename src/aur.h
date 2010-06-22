@@ -21,7 +21,6 @@
 #include <alpm_list.h>
 
 #define AUR_BASE_URL "http://aur.archlinux.org"
-#define AUR_SORT 'n'
 
 /*
  * AUR package
@@ -88,3 +87,5 @@ const char *aur_get_str (void *p, unsigned char c);
 
 void aur_cleanup ();
 #endif
+
+/* vim: set ts=4 sw=4 noet: */

@@ -31,7 +31,7 @@
 #include "util.h"
 #include "alpm-query.h"
 
-	
+
 char *ret_char (void *data)
 {
 	return strdup ((char *) data);
@@ -417,11 +417,8 @@ int search_pkg (pmdb_t *db, alpm_list_t *targets)
 	{
 		pmpkg_t *info = alpm_list_getdata(t);
 		if (!filter (info, config.filter)) continue;
-		char *ts;
 		ret++;
-		ts = concat_str_list (targets);
-		print_package (ts, info, alpm_pkg_get_str);
-		free(ts);
+		print_or_add_result ((void *) info, R_ALPM_PKG);
 	}
 	alpm_list_free (res);
 	return ret;
@@ -439,7 +436,7 @@ int alpm_search_local (alpm_list_t **res)
 			if (res)
 				*res = alpm_list_add (*res, strdup (alpm_pkg_get_name (alpm_list_getdata (i))));
 			else
-				print_package ("-", alpm_list_getdata (i), alpm_pkg_get_str);
+				print_or_add_result ((void *) alpm_list_getdata (i), R_ALPM_PKG);
 			ret++;
 		}
 	}
@@ -497,6 +494,13 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 	}
 	switch (c)
 	{
+		case '2':
+			{
+				off_t isize = alpm_pkg_get_isize(pkg);
+				info = ltostr (isize);
+				free_info=1;
+			}
+			break;
 		case 'a': info = (char *) alpm_pkg_get_arch (pkg); break;
 		case 'b': 
 			info = concat_str_list (alpm_pkg_get_backup (pkg)); 
@@ -573,13 +577,6 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 				free_info=1;
 			}
 			break;
-		case '2':
-			{
-				off_t isize = alpm_pkg_get_isize(pkg);
-				info = ltostr (isize);
-				free_info=1;
-			}
-			break;
 		case '3':
 			{
 				alpm_list_t *f, *files;
@@ -650,3 +647,5 @@ void alpm_cleanup ()
 	alpm_grp_get_str (NULL, 0);
 	alpm_local_pkg_get_str (NULL, 0);
 }
+
+/* vim: set ts=4 sw=4 noet: */

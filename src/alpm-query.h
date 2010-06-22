@@ -86,3 +86,5 @@ const char *alpm_grp_get_str (void *p, unsigned char c);
 void alpm_cleanup ();
 
 #endif
+
+/* vim: set ts=4 sw=4 noet: */

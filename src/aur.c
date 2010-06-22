@@ -421,18 +421,10 @@ int aur_request (alpm_list_t *targets, int type)
 					alpm_list_t *l,*p;
 					char *ts = concat_str_list (list_t);
 					int found;
-					/* Sort results */
-					switch (config.sort)
-					{
-						case 'n': pkgs = alpm_list_msort (pkgs, 
-									alpm_list_count (pkgs), 
+					/* Aur default sort by names */
+					if (config.sort == 0)
+						pkgs = alpm_list_msort (pkgs, alpm_list_count (pkgs), 
 									(alpm_list_fn_cmp) aur_pkg_cmp);
-						     break;
-						case 'v': pkgs = alpm_list_msort (pkgs, 
-									alpm_list_count (pkgs), 
-									(alpm_list_fn_cmp) aur_pkg_votes_cmp);
-						     break;
-					}
 					/* Filter results with others targets without making more queries */
 					for (p = pkgs; p; p = alpm_list_next(p))
 					{
@@ -444,7 +436,8 @@ int aur_request (alpm_list_t *targets, int type)
 								found=0;
 						}
 						if (found)
-							print_package (ts, alpm_list_getdata (p), aur_get_str);
+							print_or_add_result (alpm_list_getdata (p), R_AUR_PKG);
+							//print_package (ts, alpm_list_getdata (p), aur_get_str);
 					}
 					free (ts);
 					alpm_list_free_inner (pkgs, (alpm_list_fn_free) aur_pkg_free);
@@ -546,3 +539,5 @@ void aur_cleanup ()
 {
 	aur_get_str (NULL, 0);
 }
+
+/* vim: set ts=4 sw=4 noet: */
