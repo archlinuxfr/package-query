@@ -24,6 +24,8 @@
 #include <limits.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <locale.h>
+#include <libintl.h>
 
 #include "util.h"
 #include "alpm-query.h"
@@ -34,6 +36,9 @@
 #define FORMAT_OUT "%r/%n %v [%l] (%g)\n\t%d"
 #define FORMAT_OUT_USAGE "%r/%n %v [%l] (%g)\\n\\t%d"
 
+#define N_DB     1
+#define N_TARGET 2
+
 extern char *optarg;
 extern int optind;
 
@@ -42,21 +47,23 @@ void init_config (const char *myname)
 	char *_myname=strdup (myname);
 	config.myname = strdup(basename(_myname));
 	free (_myname);
+	config.op = 0;
 	config.quiet = 0;
 	config.db_local = 0;
 	config.db_sync = 0;
 	config.aur = 0;
 	config.query=ALL;
-	config.information = 0;
 	config.is_file = 0;
-	config.search = 0;
 	config.list = 0;
-	config.list_repo = 0;
 	config.list_group = 0;
 	config.escape = 0;
 	config.just_one = 0;
 	config.filter = 0;
-	config.sort = AUR_SORT;
+	config.sort = 0;
+	config.yaourt = 0;
+	config.yaourt_n = 0;
+	config.y_aur_foreign = 0;
+	config.colors = 0; 
 	strcpy (config.csep, " ");
 	strcpy (config.root_dir, "");
 	strcpy (config.dbpath, "");
@@ -134,6 +141,7 @@ void usage (unsigned short _error)
 int main (int argc, char **argv)
 {
 	int ret=0;
+	int need=0, given=0, cycle_db=0;
 	pmdb_t *db;
 	alpm_list_t *targets=NULL;
 	alpm_list_t *dbs=NULL;
@@ -162,21 +170,22 @@ int main (int argc, char **argv)
 		{"unrequired", no_argument,       0, 't'},
 		{"upgrades",   no_argument,       0, 'u'},
 		{"config",     required_argument, 0, 'c'},
-		{"just-one",     no_argument, 0, '1'},
-		{"aur",     no_argument, 0, 'A'},
-		{"escape",     no_argument, 0, 'x'},
+		{"just-one",   no_argument,       0, '1'},
+		{"aur",        no_argument,       0, 'A'},
+		{"escape",     no_argument,       0, 'x'},
 		{"format",     required_argument, 0, 'f'},
-		{"list-repo",     required_argument, 0, 'L'},
-		{"query-type",     required_argument, 0, 1000},
-		{"csep",     required_argument, 0, 1001},
-		{"sort",     required_argument, 0, 1002},
-		{"version",     no_argument, 0, 'v'},
+		{"list-repo",  required_argument, 0, 'L'},
+		{"query-type", required_argument, 0, 1000},
+		{"csep",       required_argument, 0, 1001},
+		{"sort",       required_argument, 0, 1002},
+		{"yaourt",     no_argument,       0, 1003},
+		{"yaourt-n",   no_argument,       0, 1004},
+		{"version",    no_argument,       0, 'v'},
 
 		{0, 0, 0, 0}
 	};
 
 	
-//	while ((opt = getopt (argc, argv, "1Ac:b:ef:ghiLlmpQqr:Sst:uv")) != -1) 
 	while ((opt = getopt_long (argc, argv, "1Ac:b:def:ghiLlmpQqr:Sstuvx", opts, &opt_index)) != -1) 
 	{
 		switch (opt) 
@@ -186,6 +195,7 @@ int main (int argc, char **argv)
 				break;
 			case 'A':
 				config.aur = 1;
+				given |= N_DB;
 				break;
 			case 'c':
 				strcpy (config.config_file, optarg);
@@ -207,26 +217,35 @@ int main (int argc, char **argv)
 				strcpy (config.format_out, optarg);
 				break;
 			case 'g':
-				config.list_group = 1;
+				if (config.op) break;
+				config.op = OP_LIST_GROUP;
 				config.filter |= F_GROUP;
+				cycle_db = 1;
 				break;
 			case 'i':
-				config.information = 1;
+				if (config.op) break;
+				config.op = OP_INFO;
+				need |= N_TARGET | N_DB;
 				break;
 			case 'L':
 				config.list = 1;
 				break;
 			case 'l':
-				config.list_repo = 1;
+				if (config.op) break;
+				config.op = OP_LIST_REPO;
+				need |= N_DB;
+				cycle_db = 1;
 				break;
 			case 'm':
 				config.filter |= F_FOREIGN;
 				break;
 			case 'p':
 				config.is_file = 1;
+				need |= N_TARGET;
 				break;
 			case 'Q':
 				config.db_local = 1;
+				given |= N_DB;
 				break;
 			case 'q':
 				config.quiet = 1;
@@ -237,29 +256,56 @@ int main (int argc, char **argv)
 					strcat (config.root_dir, "/");
 				break;
 			case 's':
-				config.search = 1;
+				if (config.op) break;
+				config.op = OP_SEARCH;
+				need |= N_DB;
+				cycle_db = 1;
 				break;
 			case 'S':
 				config.db_sync = 1;
+				given |= N_DB;
 				break;
 			case 't':
 				config.filter |= F_UNREQUIRED;
 				break;
-			case 1000:
+			case 1000: /* --query-type */
+				if (config.op) break;
+				config.op = OP_QUERY;
 				if (strcmp (optarg, "depends")==0)
-					config.query = DEPENDS;
+					config.query = OP_Q_DEPENDS;
 				else if (strcmp (optarg, "conflicts")==0)
-					config.query = CONFLICTS;
+					config.query = OP_Q_CONFLICTS;
 				else if (strcmp (optarg, "provides")==0)
-					config.query = PROVIDES;
+					config.query = OP_Q_PROVIDES;
 				else if (strcmp (optarg, "replaces")==0)
-					config.query = REPLACES;
+					config.query = OP_Q_REPLACES;
+				need |= N_TARGET | N_DB;
 				break;
-			case 1001:
+			case 1001: /* --csep */
 				strncpy (config.csep, optarg, SEP_LEN);
 				break;
-			case 1002:
+			case 1002: /* --sort */
 				config.sort = optarg[0];
+				break;
+			case 1003: /* --yaourt */
+				config.yaourt=1;
+				if (isatty (fileno (stderr)))
+				{
+					const char *colormode = getenv ("COLORMODE");
+					if (colormode)
+					{
+						if (!strcmp (colormode, "normal") || !strcmp (colormode, ""))
+							config.colors = 1;
+						else if (!strcmp (colormode, "lightbg"))
+							config.colors = 2;
+					}
+				}
+				setlocale (LC_ALL, "");
+				bindtextdomain ("yaourt", "/usr/share/locale");
+				textdomain ("yaourt");
+				break;
+			case 1004: /* --yaourt-n */
+				config.yaourt_n = 1;
 				break;
 			case 'u':
 				config.filter |= F_UPGRADES;
@@ -271,7 +317,20 @@ int main (int argc, char **argv)
 				usage (1);
 		}
 	}
-	if ((config.search || config.information) && !config.aur && !config.db_local && !config.db_sync)
+	if (config.list)
+	{
+		/* -L displays respository list and exits. */
+		dbs = get_db_sync ();
+		if (dbs)
+		{
+			for(t = dbs; t; t = alpm_list_next(t))
+				printf ("%s\n", (char *)alpm_list_getdata(t));
+			FREELIST (dbs);
+		}
+		free (config.myname);
+		exit (0);
+	}
+	if ((need & N_DB) && !(given & N_DB))
 	{
 		fprintf(stderr, "search or information must have database target (-{Q,S,A}).\n");
 		exit(1);
@@ -281,37 +340,25 @@ int main (int argc, char **argv)
 	{
 		targets = alpm_list_add(targets, strdup(argv[i]));
 	}
-	if (targets == NULL && config.search)
+	if (i!=optind) 
 	{
-		config.search = 0;
-		config.list_repo = 1;
+		given |= N_TARGET;
 	}
-	if (targets == NULL && !config.list && !config.list_repo &&
-		!config.db_local && !config.list_group)
+	if ((need & N_TARGET) && !(given & N_TARGET))
 	{
 		fprintf(stderr, "no targets specified.\n");
 		usage(1);
 	}
-	if (config.list)
+	if (targets == NULL)
 	{
-		dbs = get_db_sync ();
-		if (dbs)
-		{
-			for(t = dbs; t; t = alpm_list_next(t))
-				printf ("%s\n", (char *)alpm_list_getdata(t));
-			FREELIST (dbs);
-		}
-		/* TODO: some cleanup function ! */
-		free (config.myname);
-		exit (0);
+		if (config.op == OP_SEARCH)	config.op = OP_LIST_REPO_S;
+		/* print groups instead of packages */
+		if (config.op == OP_LIST_GROUP) config.list_group = 1;
 	}
 	/* TODO: release alpm before exit on failure */
 	if (!init_alpm()) exit(1);
-	if (!init_db_sync ()) exit(1);
-	/* we can add local to dbs, so copy the list instead of just get alpm's one */
-	if (config.db_sync) 
-		dbs = alpm_list_copy (alpm_option_get_syncdbs());
-	if (!init_db_local()) exit(1);
+	if (!init_db_sync ()) goto cleanup;
+	if (!init_db_local()) goto cleanup;
 	if (config.is_file)
 	{
 		for(t = targets; t; t = alpm_list_next(t))
@@ -324,66 +371,73 @@ int main (int argc, char **argv)
 				continue;
 			}
 			print_package (filename, pkg, alpm_pkg_get_str);
+			ret++;
 		}
+		goto cleanup;
 	}
-	else if (config.db_local)
-		dbs = alpm_list_add(dbs, alpm_option_get_localdb());
-	if  (targets || config.list_repo || config.list_group)
+	/* we can add local to dbs, so copy the list instead of just get alpm's one */
+	if (config.db_sync) dbs = alpm_list_copy (alpm_option_get_syncdbs());
+	if (config.db_local) dbs = alpm_list_add(dbs, alpm_option_get_localdb());
+
+	if  (cycle_db || targets)
 	{
-		for(t = dbs; t && (targets || config.list_repo || config.list_group); t = alpm_list_next(t))
+		for(t = dbs; t && (cycle_db || targets); t = alpm_list_next(t))
 		{
 			db = alpm_list_getdata(t);
-			if (config.list_repo)
+			switch (config.op)
 			{
-				ret += list_db (db, targets);
-			}
-			else if (config.information)
-			{
-				ret += search_pkg_by_name (db, &targets, config.just_one);
-			}
-			else if (config.search)
-			{
-				ret += search_pkg (db, targets);
-			}
-			else if (config.list_group)
-			{
-				ret += list_grp (db, targets,  (targets!=NULL));
-			}
-			else if (config.query)
-			{
-				switch (config.query)
-				{
-					case DEPENDS: 
-						ret += search_pkg_by_depends (db, targets); break;
-					case CONFLICTS: 
-						ret += search_pkg_by_conflicts (db, targets); break;
-					case PROVIDES: 
-						ret += search_pkg_by_provides (db, targets); break;
-					case REPLACES: 
-						ret += search_pkg_by_replaces (db, targets); break;
-				}
+				case OP_LIST_REPO:
+				case OP_LIST_REPO_S:
+					ret += list_db (db, targets); break;
+				case OP_INFO: 
+					ret += search_pkg_by_name (db, &targets, config.just_one);
+					break;
+				case OP_SEARCH: ret += search_pkg (db, targets); break;
+				case OP_LIST_GROUP: 
+					ret += list_grp (db, targets, !config.list_group);
+					break;
+				case OP_QUERY: 
+					switch (config.query)
+					{
+						case OP_Q_DEPENDS: 
+							ret += search_pkg_by_depends (db, targets); break;
+						case OP_Q_CONFLICTS: 
+							ret += search_pkg_by_conflicts (db, targets); break;
+						case OP_Q_PROVIDES: 
+							ret += search_pkg_by_provides (db, targets); break;
+						case OP_Q_REPLACES: 
+							ret += search_pkg_by_replaces (db, targets); break;
+					}
+					break;
 			}
 		}
 	}
-	if (config.aur && (targets || (config.filter & F_FOREIGN)) && !config.is_file)
-	{
-		if (config.filter & F_FOREIGN)
-		{
-			FREELIST (targets);
-			targets=NULL;
-			alpm_search_local (&targets);
-			ret += aur_info_none (targets);
-		}
-		else if (config.information)
-			ret += aur_info (targets);
-		else if (config.search)
-			ret += aur_search (targets);
-	}
-	else if (config.db_local && !targets && !config.just_one && !config.list_repo && !config.list_group)
+	else if (!config.aur && config.db_local)
 	{
 		ret += alpm_search_local (NULL);
 	}
+	if (config.aur)
+	{
+		switch (config.op)
+		{
+			case OP_INFO: ret += aur_info (targets); break;
+			case OP_SEARCH: ret += aur_search (targets); break;
+			default:
+				if (config.db_local && config.filter == F_FOREIGN 
+					&& !(given & N_TARGET))
+				{
+					/* -AQma */
+					config.y_aur_foreign = 1;
+					alpm_search_local (&targets);
+					ret += aur_info_none (targets);
+				}
+				break;
+		}
+	}
 
+	show_results();
+
+cleanup:
 	/* Some cleanups */
 	alpm_list_free (dbs);
 	if (alpm_release()==-1)
@@ -399,3 +453,4 @@ int main (int argc, char **argv)
 		return 1;
 }
 
+/* vim: set ts=4 sw=4 noet: */

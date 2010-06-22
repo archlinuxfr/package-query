@@ -22,10 +22,160 @@
 #include <limits.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <libintl.h>
+
 
 #include "util.h"
 #include "alpm-query.h"
+#include "aur.h"
+#include "color.h"
 
+alpm_list_t *results=NULL;
+
+
+
+results_t *results_new (void *ele, unsigned short type)
+{
+	results_t *r = NULL;
+	if ((r = malloc (sizeof (results_t))) == NULL)
+	{
+		perror ("malloc");
+		exit (1);
+	}
+	if (type == R_AUR_PKG)
+		r->ele = (void *) aur_pkg_dup ((aurpkg_t *) ele);
+	else
+		r->ele = ele;
+	r->type = type;
+	return r;
+}
+	
+results_t *results_free (results_t *r)
+{
+	if (r->type == R_AUR_PKG) aur_pkg_free (r->ele);
+	free (r);
+	return NULL;
+}
+	
+const char *results_name (const results_t *r)
+{
+	switch (r->type)
+	{
+		case R_ALPM_PKG:
+			return alpm_pkg_get_name ((pmpkg_t *) r->ele);
+		case R_AUR_PKG:
+			return aur_pkg_get_name ((aurpkg_t *) r->ele);
+		default:
+			return NULL;
+	}
+}
+
+time_t results_installdate (const results_t *r)
+{
+	const char *r_name;
+	pmpkg_t *pkg = NULL;
+	time_t idate=0;
+	if (r->type==R_AUR_PKG) return 0;
+	r_name = results_name (r);
+	pkg = alpm_db_get_pkg(alpm_option_get_localdb(), r_name);
+	if (pkg) idate = alpm_pkg_get_installdate(pkg);
+	return idate;
+}
+			
+
+off_t results_isize (const results_t *r)
+{
+	if (r->type==R_AUR_PKG) return 0;
+	return alpm_pkg_get_isize(r->ele);
+}
+		
+int results_votes (const results_t *r)
+{
+	switch (r->type)
+	{
+		case R_AUR_PKG:
+			return aur_pkg_get_votes ((aurpkg_t *) r->ele);
+		default:
+			return 0;
+	}
+}
+			
+			
+int results_cmp (const results_t *r1, const results_t *r2)
+{
+	return strcmp (results_name (r1), results_name (r2));
+}
+
+int results_installdate_cmp (const results_t *r1, const results_t *r2)
+{
+	if (results_installdate (r1)>results_installdate (r2))
+		return 1;
+	else if (results_installdate (r1)>results_installdate (r2))
+		return -1;
+	else
+		return 0;
+}
+
+
+int results_isize_cmp (const results_t *r1, const results_t *r2)
+{
+	if (results_isize (r1)>results_isize (r2))
+		return 1;
+	else if (results_isize (r1)>results_isize (r2))
+		return -1;
+	else
+		return 0;
+}
+
+
+int results_votes_cmp (const results_t *r1, const results_t *r2)
+{
+	return (results_votes (r1) - results_votes (r2));
+}
+
+void print_or_add_result (void *pkg, unsigned short type)
+{
+	if (config.sort==0)
+	{
+		print_package ("", pkg, (type == R_ALPM_PKG) ? alpm_pkg_get_str : aur_get_str);
+		return;
+	}
+	else
+	{
+		results = alpm_list_add (results, results_new (pkg, type));
+	}
+}
+		
+void show_results ()
+{
+	alpm_list_t *i;
+	alpm_list_fn_cmp fn_cmp=NULL;
+	if (results!=NULL)
+	{
+		switch (config.sort)
+		{
+			case 'n': fn_cmp = (alpm_list_fn_cmp) results_cmp; break;
+			case 'w': fn_cmp = (alpm_list_fn_cmp) results_votes_cmp; break;
+			case '1': fn_cmp = (alpm_list_fn_cmp) results_installdate_cmp; break;
+			case '2': fn_cmp = (alpm_list_fn_cmp) results_isize_cmp; break;
+		}
+		if (fn_cmp)
+			results = alpm_list_msort (results, alpm_list_count (results), fn_cmp);
+		for(i = results; i; i = alpm_list_next(i))
+		{
+			results_t *r = alpm_list_getdata(i);
+			if (r->type == R_ALPM_PKG)
+				print_package ("", r->ele, alpm_pkg_get_str);
+			else if (r->type == R_AUR_PKG)
+				print_package ("", r->ele, aur_get_str);
+		}
+		alpm_list_free_inner (results, (alpm_list_fn_free) results_free);
+		alpm_list_free (results);
+		results = NULL;
+	}
+}
 
 target_t *target_parse (const char *str)
 {
@@ -208,8 +358,7 @@ char *concat_str_list (alpm_list_t *l)
 	alpm_list_t *i;
 	if (!l)
 	{
-		ret = (char *) malloc (sizeof (char) * 2);
-		strcpy (ret, "-");
+		return NULL;
 	}
 	else
 	{
@@ -231,8 +380,7 @@ char *concat_str_list (alpm_list_t *l)
 		}
 		else
 		{
-			ret = (char *) malloc (sizeof (char) * 2);
-			strcpy (ret, "-");
+			return NULL;
 		}
 	}
 	return ret;
@@ -309,10 +457,167 @@ char *strreplace(const char *str, const char *needle, const char *replace)
 	return newstr;
 }
 
+int getcols(void)
+{
+	if (!isatty (2)) {
+		/* We will default to 80 columns if we're not a tty
+		 * this seems a fairly standard file width.
+		 */
+		return 80;
+	} else {
+#ifdef TIOCGSIZE
+		struct ttysize win;
+		if(ioctl(2, TIOCGSIZE, &win) == 0) {
+			return win.ts_cols;
+		}
+#elif defined(TIOCGWINSZ)
+		struct winsize win;
+		if(ioctl(2, TIOCGWINSZ, &win) == 0) {
+			return win.ws_col;
+		}
+#endif
+		/* If we can't figure anything out, we'll just assume 80 columns */
+		/* TODO any problems caused by this assumption? */
+		return 80;
+	}
+	/* Original envvar way - prone to display issues
+	const char *cenv = getenv("COLUMNS");
+	if(cenv != NULL) {
+		return atoi(cenv);
+	}
+	return -1;
+	*/
+}
+
+void indent (const char *str)
+{
+	char *s=NULL;
+	char *c=NULL, *c1=NULL;
+	int cur_col=4, cols;
+	if (!str)
+		return;
+	s=strdup (str);
+	c=s;
+	cols=getcols();
+	fprintf (stderr, "%-*s", 4, "");
+	while ((c1=strchr (c, ' ')) != NULL)
+	{
+		c1[0]='\0';
+		cur_col+=strlen (c)+1;
+		if (cur_col >= cols)
+		{
+			fprintf (stderr, "\n%-*s%s ", 4, "", c);
+			cur_col=4+strlen(c)+1;
+		}
+		else
+			fprintf (stderr, "%s ", c);
+		c=&c1[1];
+	}
+	cur_col+=strlen (c);
+	if (cur_col >= cols && c!=s)
+		fprintf (stderr, "\n%-*s%s\n", 4, "", c);
+	else
+		fprintf (stderr, "%s\n", c);
+	free (s);
+}
+
+void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
+{
+	static char cstr[PATH_MAX];
+	static int number=0;
+	const char *info, *lver;
+	char *pcstr;
+	cstr[0]='\0';
+	pcstr = cstr;
+	if (config.yaourt_n)
+	{
+		/* yaourt interactive list */
+		pcstr += sprintf (pcstr, "%s%d%s ", color (C_NB), ++number, color (C_SPACE));
+	}
+	if (config.y_aur_foreign)
+	{
+		fprintf (stdout, "local/");
+	}
+	else
+	{
+		info = f(p, 's');
+		if (info)
+		{
+			fprintf (stdout, "%s/", info);
+			if (strcmp (info, "testing")==0 || strcmp (info, "core")==0)
+				pcstr += sprintf (pcstr, "%s%s/", color (C_TESTING), info);
+			else if (strcmp (info, "local")==0)
+				pcstr += sprintf (pcstr, "%s%s/", color (C_LOCAL), info);
+			else if (strcmp (info, "extra")==0)
+				pcstr += sprintf (pcstr, "%s%s/", color (C_EXTRA), info);
+			else
+				pcstr += sprintf (pcstr, "%s%s/", color (C_OTHER), info);
+		}
+	}
+	info=f(p, 'n');
+	fprintf (stdout, "%s\n", info);
+	pcstr += sprintf (pcstr, "%s%s ", color(C_PKG), info);
+	if (config.list_group)
+	{
+		/* no more output for -[S,Q]g and no targets */
+		fprintf (stderr, "%s\n", cstr);
+		return;
+	}
+	lver = alpm_local_pkg_get_str (info, 'l');
+	info = f(p, 'v');
+	if (config.y_aur_foreign)
+	{
+		/* show foreign package */
+		pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), lver, color (C_SPACE));
+		if (info)
+		{
+			/* package found in AUR */
+			if (alpm_pkg_vercmp (info, lver)>0)
+				pcstr += sprintf (pcstr, " ( aur: %s )", info);
+			fprintf (stderr, "%saur/%s\n", color (C_OTHER), cstr);
+		}
+		else
+			fprintf (stderr, "%slocal/%s\n", color (C_LOCAL), cstr);
+		return;
+	}
+	pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), info, color (C_SPACE));
+	if (lver && strcmp (f(p, 'r'), "local")!=0)
+	{
+		/* show install information */
+		pcstr += sprintf (pcstr, " %s[", color(C_INSTALLED));
+		if (strcmp (info, lver)!=0)
+		{
+			pcstr += sprintf (pcstr, "%s%s%s ", color(C_LVER), lver, color(C_INSTALLED));
+		}
+		pcstr += sprintf (pcstr, "%s]%s", dgettext ("yaourt", "installed"), color(C_SPACE));
+	}
+	
+	info = f(p, 'g');
+	if (info)
+	{
+		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_GRP), info, color(C_SPACE));
+	}
+	info = f(p, 'o');
+	if (info && info[0]=='1')
+	{
+		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_OD), dgettext ("yaourt", "Out of Date"), color(C_SPACE));
+	}
+	info = f(p, 'w');
+	if (info)
+	{
+		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_VOTES), info, color(C_SPACE));
+	}
+	fprintf (stderr, "%s\n", cstr);
+	/* if -Q or -Sl or -Sg <target>, don't display description */
+	if (config.op != OP_SEARCH && config.op != OP_LIST_REPO_S) return;
+	fprintf (stderr, "%s", color(C_DSC));
+	indent (f(p, 'd'));
+}
 
 void print_package (const char * target, 
 	void * pkg, const char *(*f)(void *p, unsigned char c))
 {
+	if (config.yaourt) {yaourt_print_package (pkg, f); return; }
 	if (config.quiet) return;
 	char *format_cpy;
 	char *ptr;
@@ -360,3 +665,5 @@ void print_package (const char * target,
 	fflush (NULL);
 		
 }
+
+/* vim: set ts=4 sw=4 noet: */

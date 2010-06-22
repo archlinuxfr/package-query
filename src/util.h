@@ -18,31 +18,39 @@
  */
 #ifndef _UTIL_H
 #define _UTIL_H
+#include <limits.h>
 #include <alpm.h>
 #include <alpm_list.h>
 #include "aur.h"
 
+/*
+ * Operations
+ */
+#define OP_LIST_GROUP  1
+#define OP_INFO        2
+#define OP_LIST_REPO   3
+#define OP_LIST_REPO_S 4
+#define OP_SEARCH      5
+#define OP_QUERY       6
 
 /*
  * Query type
  */
 #define ALL	0
 
-#define DEPENDS 1
-#define CONFLICTS 2
-#define PROVIDES 3
-#define REPLACES 4
-
-/*
- * Search Database
- */
-#define NONE 0
-#define LOCAL 1
-#define SYNC 2
-#define AUR	3
-
+#define OP_Q_DEPENDS   1
+#define OP_Q_CONFLICTS 2
+#define OP_Q_PROVIDES  3
+#define OP_Q_REPLACES  4
 
 #define SEP_LEN 10
+
+/*
+ * Results type
+ */
+#define R_ALPM_PKG 1
+#define R_AUR_PKG 2
+ 
 
 /*
  * General config
@@ -50,21 +58,22 @@
 typedef struct _aq_config 
 {
 	char *myname;
+	unsigned short op;
 	unsigned short quiet;
 	unsigned short db_local;
 	unsigned short db_sync;
 	unsigned short aur;
 	unsigned short query;
-	unsigned short information;
 	unsigned short is_file;
-	unsigned short search;
 	unsigned short list;
-	unsigned short list_repo;
 	unsigned short list_group;
 	unsigned short escape;
 	unsigned short just_one;
 	unsigned short updates;
 	unsigned short filter;
+	unsigned short yaourt;
+	unsigned short yaourt_n;
+	unsigned short y_aur_foreign;
 	char sort;
 	char csep[SEP_LEN];
 	char format_out[PATH_MAX];
@@ -72,11 +81,23 @@ typedef struct _aq_config
 	char dbpath[PATH_MAX];
 	unsigned short custom_dbpath;
 	char config_file[PATH_MAX];
+	unsigned short colors;
 } aq_config;
 
 aq_config config;
 
 void init_config (const char *myname);
+
+
+/* Results */
+typedef struct _results_t
+{
+	void *ele;
+	unsigned short type;
+} results_t;
+
+void print_or_add_result (void *pkg, unsigned short type);
+void show_results ();
 
 /*
  * Target type
@@ -134,3 +155,5 @@ void print_package (const char * target,
 	void * pkg, const char *(*f)(void *p, unsigned char c));
 
 #endif
+
+/* vim: set ts=4 sw=4 noet: */

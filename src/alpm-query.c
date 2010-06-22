@@ -26,11 +26,12 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 
 #include "util.h"
 #include "alpm-query.h"
 
-	
+
 char *ret_char (void *data)
 {
 	return strdup ((char *) data);
@@ -84,6 +85,18 @@ int init_db_local ()
 		return 0;
 	}
 	return 1;
+}
+
+/* From pacman 3.4.0, set arch */
+static void setarch(const char *arch)
+{
+	if (strcmp(arch, "auto") == 0) {
+		struct utsname un;
+		uname(&un);
+		alpm_option_set_arch(un.machine);
+	} else {
+		alpm_option_set_arch(arch);
+	}
 }
 
 int parse_config_file (alpm_list_t **dbs, const char *config_file, int reg)
@@ -155,23 +168,38 @@ int parse_config_file (alpm_list_t **dbs, const char *config_file, int reg)
 				else if (reg && strcmp (line, "Server") == 0 && db != NULL)
 				{
 					strtrim (ptr);
+					const char *arch = alpm_option_get_arch();
 					char *server = strreplace (ptr, "$repo", alpm_db_get_name (db));
+					if (arch)
+					{
+						char *temp=server;
+						server = strreplace(temp, "$arch", arch);
+						free(temp);
+					}
 					alpm_db_setserver(db, server);
 					free (server);
 				}
-				else if (reg && in_option && !config.custom_dbpath && 
-					strcmp (line, "DBPath") == 0)
+				else if (reg && in_option)
 				{
-					strtrim (ptr);
-					strcpy (config.dbpath, ptr);
-					if (alpm_option_set_dbpath (config.dbpath)!=0)
+					if (strcmp (line, "Architecture") == 0)
 					{
-						fprintf (stderr, "problem setting dbpath '%s' (%s)\n", 
-							config.dbpath, alpm_strerrorlast());
-						file_closed=1;
-						fclose (conf);
-						return 0;
-					}					
+						strtrim (ptr);
+						setarch (ptr);
+					}
+					else if (!config.custom_dbpath && 
+						strcmp (line, "DBPath") == 0)
+					{
+						strtrim (ptr);
+						strcpy (config.dbpath, ptr);
+						if (alpm_option_set_dbpath (config.dbpath)!=0)
+						{
+							fprintf (stderr, "problem setting dbpath '%s' (%s)\n", 
+								config.dbpath, alpm_strerrorlast());
+							file_closed=1;
+							fclose (conf);
+							return 0;
+						}					
+					}
 				}
 			}
 		}
@@ -389,11 +417,8 @@ int search_pkg (pmdb_t *db, alpm_list_t *targets)
 	{
 		pmpkg_t *info = alpm_list_getdata(t);
 		if (!filter (info, config.filter)) continue;
-		char *ts;
 		ret++;
-		ts = concat_str_list (targets);
-		print_package (ts, info, alpm_pkg_get_str);
-		free(ts);
+		print_or_add_result ((void *) info, R_ALPM_PKG);
 	}
 	alpm_list_free (res);
 	return ret;
@@ -411,7 +436,7 @@ int alpm_search_local (alpm_list_t **res)
 			if (res)
 				*res = alpm_list_add (*res, strdup (alpm_pkg_get_name (alpm_list_getdata (i))));
 			else
-				print_package ("-", alpm_list_getdata (i), alpm_pkg_get_str);
+				print_or_add_result ((void *) alpm_list_getdata (i), R_ALPM_PKG);
 			ret++;
 		}
 	}
@@ -514,9 +539,7 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			if (!dburl) return NULL;
 			const char *pkgfilename = alpm_pkg_get_filename (pkg);
 			info = (char *) malloc (sizeof (char) * (strlen (dburl) + strlen(pkgfilename) + 2));
-			strcpy (info, dburl);
-			strcat (info, "/");
-			strcat (info, pkgfilename);
+			sprintf (info, "%s/%s", dburl, pkgfilename);
 			free_info = 1;
 			}
 			break;
@@ -624,3 +647,5 @@ void alpm_cleanup ()
 	alpm_grp_get_str (NULL, 0);
 	alpm_local_pkg_get_str (NULL, 0);
 }
+
+/* vim: set ts=4 sw=4 noet: */
