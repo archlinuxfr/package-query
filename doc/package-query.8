@@ -2,12 +2,12 @@
 .\"     Title: package-query
 .\"    Author: [see the "Authors" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 2010-04-25
+.\"      Date: 2010-06-24
 .\"    Manual: Package-query Manual
-.\"    Source: Package-query 0.2
+.\"    Source: Package-query 0.4
 .\"  Language: English
 .\"
-.TH "PACKAGE\-QUERY" "8" "2010\-04\-25" "Package\-query 0\&.2" "Package\-query Manual"
+.TH "PACKAGE\-QUERY" "8" "2010\-06\-24" "Package\-query 0\&.4" "Package\-query Manual"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -101,7 +101,12 @@ Escape \e" in output\&.
 .PP
 \fB\-1, \-\-just\-one\fR
 .RS 4
-Show first answer for each target\&.
+Show first answer for each target (\fI\-i\fR)\&.
+.RE
+.PP
+\fB\-\-nocolor\fR
+.RS 4
+Output without colors\&.
 .RE
 .SH "COMMON SEARCH OPTIONS"
 .PP
@@ -119,18 +124,17 @@ Filter to packages that are part of group\&.
 .RS 4
 Regex search for ALPM and SQL search for AUR\&.
 .RE
-.SH "AUR DB SEARCH"
 .PP
-\fB\-\-sort [n,v]\fR
+\fB\-\-sort [n,w,1,2]\fR
 .RS 4
-Return aur search sorted by names (\fIn\fR) or by votes (\fIv\fR)\&.
+Return search results sorted by names (\fIn\fR), by votes (\fIw\fR), by installed date (\fI1\fR) or by theorical size (\fI2\fR)\&.
 .RE
 .SH "LOCAL DB SEARCH"
 .PP
 \fB\-m, \-\-foreign\fR
 .RS 4
 Filter result to packages that were not found in the sync database(s)\&. With
-\fI\-A\fR
+\fI\-QA\fR
 search if foreign packages exist in AUR\&.
 .RE
 .PP
@@ -208,8 +212,6 @@ Format can contain:
 .if n \{\
 .RE
 .\}
-.sp
-Default format: \fI%r/%n %v [%l] (%g)\en\et%d\fR
 .PP
 \fB\-\-csep <sep>\fR
 .RS 4
