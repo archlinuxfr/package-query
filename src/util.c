@@ -16,6 +16,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <alpm.h>
 #include <alpm_list.h>
@@ -31,6 +32,8 @@
 #include "alpm-query.h"
 #include "aur.h"
 #include "color.h"
+
+#define _(x) gettext(x)
 
 alpm_list_t *results=NULL;
 
@@ -459,7 +462,7 @@ char *strreplace(const char *str, const char *needle, const char *replace)
 
 int getcols(void)
 {
-	if (!isatty (2)) {
+	if (!isatty (1)) {
 		/* We will default to 80 columns if we're not a tty
 		 * this seems a fairly standard file width.
 		 */
@@ -467,12 +470,12 @@ int getcols(void)
 	} else {
 #ifdef TIOCGSIZE
 		struct ttysize win;
-		if(ioctl(2, TIOCGSIZE, &win) == 0) {
+		if(ioctl(1, TIOCGSIZE, &win) == 0) {
 			return win.ts_cols;
 		}
 #elif defined(TIOCGWINSZ)
 		struct winsize win;
-		if(ioctl(2, TIOCGWINSZ, &win) == 0) {
+		if(ioctl(1, TIOCGWINSZ, &win) == 0) {
 			return win.ws_col;
 		}
 #endif
@@ -499,29 +502,29 @@ void indent (const char *str)
 	s=strdup (str);
 	c=s;
 	cols=getcols();
-	fprintf (stderr, "%-*s", 4, "");
+	fprintf (stdout, "%-*s", 4, "");
 	while ((c1=strchr (c, ' ')) != NULL)
 	{
 		c1[0]='\0';
 		cur_col+=strlen (c)+1;
 		if (cur_col >= cols)
 		{
-			fprintf (stderr, "\n%-*s%s ", 4, "", c);
+			fprintf (stdout, "\n%-*s%s ", 4, "", c);
 			cur_col=4+strlen(c)+1;
 		}
 		else
-			fprintf (stderr, "%s ", c);
+			fprintf (stdout, "%s ", c);
 		c=&c1[1];
 	}
 	cur_col+=strlen (c);
 	if (cur_col >= cols && c!=s)
-		fprintf (stderr, "\n%-*s%s\n", 4, "", c);
+		fprintf (stdout, "\n%-*s%s\n", 4, "", c);
 	else
-		fprintf (stderr, "%s\n", c);
+		fprintf (stdout, "%s\n", c);
 	free (s);
 }
 
-void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
+void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 {
 	static char cstr[PATH_MAX];
 	static int number=0;
@@ -529,21 +532,21 @@ void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 	char *pcstr;
 	cstr[0]='\0';
 	pcstr = cstr;
-	if (config.yaourt_n)
+	if (config.numbering)
 	{
-		/* yaourt interactive list */
+		/* Numbering list */
 		pcstr += sprintf (pcstr, "%s%d%s ", color (C_NB), ++number, color (C_SPACE));
 	}
-	if (config.y_aur_foreign)
+	if (config.get_res && config.aur_foreign)
 	{
-		fprintf (stdout, "local/");
+		dprintf (3, "local/");
 	}
-	else
+	else if (!config.aur_foreign)
 	{
 		info = f(p, 's');
 		if (info)
 		{
-			fprintf (stdout, "%s/", info);
+			if (config.get_res) dprintf (3, "%s/", info);
 			if (strcmp (info, "testing")==0 || strcmp (info, "core")==0)
 				pcstr += sprintf (pcstr, "%s%s/", color (C_TESTING), info);
 			else if (strcmp (info, "local")==0)
@@ -555,17 +558,17 @@ void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 		}
 	}
 	info=f(p, 'n');
-	fprintf (stdout, "%s\n", info);
+	if (config.get_res) dprintf (3, "%s\n", info);
 	pcstr += sprintf (pcstr, "%s%s ", color(C_PKG), info);
 	if (config.list_group)
 	{
 		/* no more output for -[S,Q]g and no targets */
-		fprintf (stderr, "%s\n", cstr);
+		fprintf (stdout, "%s\n", cstr);
 		return;
 	}
 	lver = alpm_local_pkg_get_str (info, 'l');
 	info = f(p, 'v');
-	if (config.y_aur_foreign)
+	if (config.aur_foreign)
 	{
 		/* show foreign package */
 		pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), lver, color (C_SPACE));
@@ -574,22 +577,26 @@ void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 			/* package found in AUR */
 			if (alpm_pkg_vercmp (info, lver)>0)
 				pcstr += sprintf (pcstr, " ( aur: %s )", info);
-			fprintf (stderr, "%saur/%s\n", color (C_OTHER), cstr);
+			fprintf (stdout, "%saur/%s\n", color (C_OTHER), cstr);
 		}
 		else
-			fprintf (stderr, "%slocal/%s\n", color (C_LOCAL), cstr);
+			fprintf (stdout, "%slocal/%s\n", color (C_LOCAL), cstr);
 		return;
 	}
 	pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), info, color (C_SPACE));
-	if (lver && strcmp (f(p, 'r'), "local")!=0)
+	if (lver)
 	{
-		/* show install information */
-		pcstr += sprintf (pcstr, " %s[", color(C_INSTALLED));
-		if (strcmp (info, lver)!=0)
+		const char *repo = f(p, 'r');
+		if (repo && strcmp (repo, "local")!=0)
 		{
-			pcstr += sprintf (pcstr, "%s%s%s ", color(C_LVER), lver, color(C_INSTALLED));
+			/* show install information */
+			pcstr += sprintf (pcstr, " %s[", color(C_INSTALLED));
+			if (strcmp (info, lver)!=0)
+			{
+				pcstr += sprintf (pcstr, "%s%s%s ", color(C_LVER), lver, color(C_INSTALLED));
+			}
+			pcstr += sprintf (pcstr, "%s]%s", _("installed"), color(C_SPACE));
 		}
-		pcstr += sprintf (pcstr, "%s]%s", dgettext ("yaourt", "installed"), color(C_SPACE));
 	}
 	
 	info = f(p, 'g');
@@ -600,25 +607,26 @@ void yaourt_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 	info = f(p, 'o');
 	if (info && info[0]=='1')
 	{
-		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_OD), dgettext ("yaourt", "Out of Date"), color(C_SPACE));
+		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_OD), _("Out of Date"), color(C_SPACE));
 	}
 	info = f(p, 'w');
 	if (info)
 	{
 		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_VOTES), info, color(C_SPACE));
 	}
-	fprintf (stderr, "%s\n", cstr);
+	fprintf (stdout, "%s\n", cstr);
 	/* if -Q or -Sl or -Sg <target>, don't display description */
 	if (config.op != OP_SEARCH && config.op != OP_LIST_REPO_S) return;
-	fprintf (stderr, "%s", color(C_DSC));
+	fprintf (stdout, "%s", color(C_DSC));
 	indent (f(p, 'd'));
+	fprintf (stdout, "%s", color(C_NO));
 }
 
 void print_package (const char * target, 
 	void * pkg, const char *(*f)(void *p, unsigned char c))
 {
-	if (config.yaourt) {yaourt_print_package (pkg, f); return; }
 	if (config.quiet) return;
+	if (!config.custom_out) { color_print_package (pkg, f); return; }
 	char *format_cpy;
 	char *ptr;
 	char *end;

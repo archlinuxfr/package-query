@@ -71,9 +71,11 @@ typedef struct _aq_config
 	unsigned short just_one;
 	unsigned short updates;
 	unsigned short filter;
-	unsigned short yaourt;
-	unsigned short yaourt_n;
-	unsigned short y_aur_foreign;
+	unsigned short numbering;
+	unsigned short aur_foreign;
+	unsigned short colors;
+	unsigned short custom_out;
+	unsigned short get_res;
 	char sort;
 	char csep[SEP_LEN];
 	char format_out[PATH_MAX];
@@ -81,7 +83,6 @@ typedef struct _aq_config
 	char dbpath[PATH_MAX];
 	unsigned short custom_dbpath;
 	char config_file[PATH_MAX];
-	unsigned short colors;
 } aq_config;
 
 aq_config config;

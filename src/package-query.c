@@ -33,9 +33,6 @@
 
 #define _VERSION "0.3"
 
-#define FORMAT_OUT "%r/%n %v [%l] (%g)\n\t%d"
-#define FORMAT_OUT_USAGE "%r/%n %v [%l] (%g)\\n\\t%d"
-
 #define N_DB     1
 #define N_TARGET 2
 
@@ -60,16 +57,17 @@ void init_config (const char *myname)
 	config.just_one = 0;
 	config.filter = 0;
 	config.sort = 0;
-	config.yaourt = 0;
-	config.yaourt_n = 0;
-	config.y_aur_foreign = 0;
-	config.colors = 0; 
+	config.numbering = 0;
+	config.aur_foreign = 0;
+	config.colors = 1; 
+	config.custom_out = 0; 
+	config.get_res = 0;
 	strcpy (config.csep, " ");
 	strcpy (config.root_dir, "");
 	strcpy (config.dbpath, "");
 	config.custom_dbpath = 0;
 	strcpy (config.config_file, "");
-	strcpy (config.format_out, FORMAT_OUT);
+	strcpy (config.format_out, "");
 }
 
 
@@ -96,7 +94,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-b --dbpath <database path> : default %s", DBPATH);
 	fprintf(stderr, "\n\t-c --config <configuration file> : default %s", CONFFILE);
 	fprintf(stderr, "\n\t-x --escape escape \" on output");
-	fprintf(stderr, "\n\t-f --format <format> : default %s", FORMAT_OUT_USAGE);
+	fprintf(stderr, "\n\t-f --format <format>");
 	fprintf(stderr, "\n\t-i --info search by name");
 	fprintf(stderr, "\n\t-L --list-repo list configured repository");
 	fprintf(stderr, "\n\t-l --list list repository content");
@@ -107,7 +105,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-r --root <root path> : default %s", ROOTDIR);
 	fprintf(stderr, "\n\t-s --search search");
 	fprintf(stderr, "\n\t-S --sync search in sync database");
-	fprintf(stderr, "\n\t--sort [n,v] sort aur search by name or votes");
+	fprintf(stderr, "\n\t--sort [n,w,1,2] sort search by name, votes, install date, size");
 	fprintf(stderr, "\n\t--query-type query type");
 	fprintf(stderr, "\n\t-u --upgrades list updates available");
 	fprintf(stderr, "\n\t-h --help show help");
@@ -178,8 +176,9 @@ int main (int argc, char **argv)
 		{"query-type", required_argument, 0, 1000},
 		{"csep",       required_argument, 0, 1001},
 		{"sort",       required_argument, 0, 1002},
-		{"yaourt",     no_argument,       0, 1003},
-		{"yaourt-n",   no_argument,       0, 1004},
+		{"nocolor",    no_argument,       0, 1003},
+		{"number",     no_argument,       0, 1004},
+		{"get-res",    no_argument,       0, 1005},
 		{"version",    no_argument,       0, 'v'},
 
 		{0, 0, 0, 0}
@@ -214,6 +213,7 @@ int main (int argc, char **argv)
 				config.escape = 1;
 				break;
 			case 'f':
+				config.custom_out = 1;
 				strcpy (config.format_out, optarg);
 				break;
 			case 'g':
@@ -287,25 +287,20 @@ int main (int argc, char **argv)
 			case 1002: /* --sort */
 				config.sort = optarg[0];
 				break;
-			case 1003: /* --yaourt */
-				config.yaourt=1;
-				if (isatty (fileno (stderr)))
-				{
-					const char *colormode = getenv ("COLORMODE");
-					if (colormode)
-					{
-						if (!strcmp (colormode, "normal") || !strcmp (colormode, ""))
-							config.colors = 1;
-						else if (!strcmp (colormode, "lightbg"))
-							config.colors = 2;
-					}
-				}
-				setlocale (LC_ALL, "");
-				bindtextdomain ("yaourt", "/usr/share/locale");
-				textdomain ("yaourt");
+			case 1003: /* --nocolor */
+				config.colors=0;
 				break;
-			case 1004: /* --yaourt-n */
-				config.yaourt_n = 1;
+			case 1004: /* --number */
+				config.numbering = 1;
+				break;
+			case 1005: /* --get-res */
+				{
+					int d = dup(1);
+					if (d==4) 
+						config.get_res = 1;
+					if (d!=3 && d!=-1)
+						close (d);
+				}
 				break;
 			case 'u':
 				config.filter |= F_UPGRADES;
@@ -316,6 +311,23 @@ int main (int argc, char **argv)
 			default: /* '?' */
 				usage (1);
 		}
+	}
+	if (config.colors && !config.custom_out)
+	{
+		if (isatty (1))
+		{
+			const char *colormode = getenv ("COLORMODE");
+			if (colormode)
+			{
+				if (!strcmp (colormode, "lightbg"))
+					config.colors = 2;
+			}
+		}
+		else config.colors = 0;
+		/* TODO: specific package-query locale ? */
+		setlocale (LC_ALL, "");
+		bindtextdomain ("yaourt", "/usr/share/locale");
+		textdomain ("yaourt");
 	}
 	if (config.list)
 	{
@@ -427,7 +439,7 @@ int main (int argc, char **argv)
 					&& !(given & N_TARGET))
 				{
 					/* -AQma */
-					config.y_aur_foreign = 1;
+					config.aur_foreign = 1;
 					alpm_search_local (&targets);
 					ret += aur_info_none (targets);
 				}

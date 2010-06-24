@@ -34,7 +34,7 @@
 #define C_VOTES     12
 #define C_DSC       13
 #define C_SPACE     14
-
+#define C_NO        15
 
 const char * color (unsigned int col);
 #endif
