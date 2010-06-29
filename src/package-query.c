@@ -16,7 +16,13 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#define _GNU_SOURCE
+
+#include <config.h>
+#if defined(GIT_VERSION)
+#undef PACKAGE_VERSION
+#define PACKAGE_VERSION GIT_VERSION
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <alpm.h>
@@ -30,8 +36,6 @@
 #include "util.h"
 #include "alpm-query.h"
 #include "aur.h"
-
-#define _VERSION "0.3"
 
 #define N_DB     1
 #define N_TARGET 2
@@ -75,7 +79,7 @@ void init_config (const char *myname)
 
 void version ()
 {
-	printf ("%s %s\n", config.myname, _VERSION);
+	printf ("%s %s\n", config.myname, PACKAGE_VERSION);
 	exit (0);
 }
 
@@ -326,7 +330,7 @@ int main (int argc, char **argv)
 		else config.colors = 0;
 		/* TODO: specific package-query locale ? */
 		setlocale (LC_ALL, "");
-		bindtextdomain ("yaourt", "/usr/share/locale");
+		bindtextdomain ("yaourt", LOCALEDIR);
 		textdomain ("yaourt");
 	}
 	if (config.list)

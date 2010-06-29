@@ -21,9 +21,6 @@
 #include <alpm.h>
 #include <alpm_list.h>
 
-#define ROOTDIR "/"
-#define DBPATH "var/lib/pacman"
-#define CONFFILE "etc/pacman.conf"
 
 /*
  * Filter

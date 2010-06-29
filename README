@@ -1,0 +1,5 @@
+Dependencies:
+	- libalpm: http://www.archlinux.org/pacman/
+	- yajl: http://lloyd.github.com/yajl/
+	- curl: http://curl.haxx.se
+
