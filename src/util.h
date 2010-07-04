@@ -51,6 +51,8 @@
 #define R_ALPM_PKG 1
 #define R_AUR_PKG 2
  
+/* Results FD */
+#define FD_RES 3
 
 /*
  * General config

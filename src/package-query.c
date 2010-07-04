@@ -298,13 +298,8 @@ int main (int argc, char **argv)
 				config.numbering = 1;
 				break;
 			case 1005: /* --get-res */
-				{
-					int d = dup(1);
-					if (d==4) 
-						config.get_res = 1;
-					if (d!=3 && d!=-1)
-						close (d);
-				}
+				if (dup2(FD_RES, FD_RES) == FD_RES)
+					config.get_res = 1;
 				break;
 			case 'u':
 				config.filter |= F_UPGRADES;

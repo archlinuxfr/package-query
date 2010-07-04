@@ -538,14 +538,14 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 	}
 	if (config.get_res && config.aur_foreign)
 	{
-		dprintf (3, "local/");
+		dprintf (FD_RES, "local/");
 	}
 	else if (!config.aur_foreign)
 	{
 		info = f(p, 's');
 		if (info)
 		{
-			if (config.get_res) dprintf (3, "%s/", info);
+			if (config.get_res) dprintf (FD_RES, "%s/", info);
 			if (strcmp (info, "testing")==0 || strcmp (info, "core")==0)
 				pcstr += sprintf (pcstr, "%s%s/", color (C_TESTING), info);
 			else if (strcmp (info, "local")==0)
@@ -557,7 +557,7 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 		}
 	}
 	info=f(p, 'n');
-	if (config.get_res) dprintf (3, "%s\n", info);
+	if (config.get_res) dprintf (FD_RES, "%s\n", info);
 	pcstr += sprintf (pcstr, "%s%s ", color(C_PKG), info);
 	if (config.list_group)
 	{
