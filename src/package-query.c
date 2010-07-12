@@ -218,6 +218,7 @@ int main (int argc, char **argv)
 				break;
 			case 'f':
 				config.custom_out = 1;
+				config.colors=0;
 				strcpy (config.format_out, optarg);
 				break;
 			case 'g':
@@ -311,23 +312,6 @@ int main (int argc, char **argv)
 				usage (1);
 		}
 	}
-	if (config.colors && !config.custom_out)
-	{
-		if (isatty (1))
-		{
-			const char *colormode = getenv ("COLORMODE");
-			if (colormode)
-			{
-				if (!strcmp (colormode, "lightbg"))
-					config.colors = 2;
-			}
-		}
-		else config.colors = 0;
-		/* TODO: specific package-query locale ? */
-		setlocale (LC_ALL, "");
-		bindtextdomain ("yaourt", LOCALEDIR);
-		textdomain ("yaourt");
-	}
 	if (config.list)
 	{
 		/* -L displays respository list and exits. */
@@ -340,6 +324,20 @@ int main (int argc, char **argv)
 		}
 		free (config.myname);
 		exit (0);
+	}
+	if (config.colors)
+	{
+		if (isatty (1))
+			color_init();
+		else 
+			config.colors = 0;
+	}
+	if (!config.custom_out)
+	{
+		/* TODO: specific package-query locale ? */
+		setlocale (LC_ALL, "");
+		bindtextdomain ("yaourt", LOCALEDIR);
+		textdomain ("yaourt");
 	}
 	if ((need & N_DB) && !(given & N_DB))
 	{
@@ -457,6 +455,7 @@ cleanup:
 	free (config.myname);
 	alpm_cleanup ();
 	aur_cleanup ();
+	color_cleanup ();
 	/* Anything left ? */
 	if (ret != 0)
 		return 0;

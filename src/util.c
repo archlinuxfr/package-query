@@ -534,7 +534,7 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 	if (config.numbering)
 	{
 		/* Numbering list */
-		pcstr += sprintf (pcstr, "%s%d%s ", color (C_NB), ++number, color (C_SPACE));
+		pcstr += sprintf (pcstr, "%s%d%s ", color (C_NB), ++number, color (C_NO));
 	}
 	if (config.get_res && config.aur_foreign)
 	{
@@ -546,19 +546,12 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 		if (info)
 		{
 			if (config.get_res) dprintf (FD_RES, "%s/", info);
-			if (strcmp (info, "testing")==0 || strcmp (info, "core")==0)
-				pcstr += sprintf (pcstr, "%s%s/", color (C_TESTING), info);
-			else if (strcmp (info, "local")==0)
-				pcstr += sprintf (pcstr, "%s%s/", color (C_LOCAL), info);
-			else if (strcmp (info, "extra")==0)
-				pcstr += sprintf (pcstr, "%s%s/", color (C_EXTRA), info);
-			else
-				pcstr += sprintf (pcstr, "%s%s/", color (C_OTHER), info);
+			pcstr += sprintf (pcstr, "%s%s/%s", color_repo (info), info, color(C_NO));
 		}
 	}
 	info=f(p, 'n');
 	if (config.get_res) dprintf (FD_RES, "%s\n", info);
-	pcstr += sprintf (pcstr, "%s%s ", color(C_PKG), info);
+	pcstr += sprintf (pcstr, "%s%s%s ", color(C_PKG), info, color(C_NO));
 	if (config.list_group)
 	{
 		/* no more output for -[S,Q]g and no targets */
@@ -570,19 +563,19 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 	if (config.aur_foreign)
 	{
 		/* show foreign package */
-		pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), lver, color (C_SPACE));
+		pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), lver, color (C_NO));
 		if (info)
 		{
 			/* package found in AUR */
 			if (alpm_pkg_vercmp (info, lver)>0)
 				pcstr += sprintf (pcstr, " ( aur: %s )", info);
-			fprintf (stdout, "%saur/%s\n", color (C_OTHER), cstr);
+			fprintf (stdout, "%saur/%s%s\n", color_repo ("aur"), color (C_NO), cstr);
 		}
 		else
-			fprintf (stdout, "%slocal/%s\n", color (C_LOCAL), cstr);
+			fprintf (stdout, "%slocal/%s%s\n", color_repo ("local"), color (C_NO), cstr);
 		return;
 	}
-	pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), info, color (C_SPACE));
+	pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), info, color (C_NO));
 	if (lver)
 	{
 		const char *repo = f(p, 'r');
@@ -592,26 +585,26 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 			pcstr += sprintf (pcstr, " %s[", color(C_INSTALLED));
 			if (strcmp (info, lver)!=0)
 			{
-				pcstr += sprintf (pcstr, "%s%s%s ", color(C_LVER), lver, color(C_INSTALLED));
+				pcstr += sprintf (pcstr, "%s%s%s%s ", color(C_LVER), lver, color (C_NO), color(C_INSTALLED));
 			}
-			pcstr += sprintf (pcstr, "%s]%s", _("installed"), color(C_SPACE));
+			pcstr += sprintf (pcstr, "%s]%s", _("installed"), color(C_NO));
 		}
 	}
 	
 	info = f(p, 'g');
 	if (info)
 	{
-		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_GRP), info, color(C_SPACE));
+		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_GRP), info, color(C_NO));
 	}
 	info = f(p, 'o');
 	if (info && info[0]=='1')
 	{
-		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_OD), _("Out of Date"), color(C_SPACE));
+		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_OD), _("Out of Date"), color(C_NO));
 	}
 	info = f(p, 'w');
 	if (info)
 	{
-		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_VOTES), info, color(C_SPACE));
+		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_VOTES), info, color(C_NO));
 	}
 	fprintf (stdout, "%s\n", cstr);
 	/* if -Q or -Sl or -Sg <target>, don't display description */

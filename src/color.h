@@ -19,24 +19,23 @@
 #ifndef _COLOR_H
 #define _COLOR_H
 
-#define C_NB        0
-#define C_TESTING   1
-#define C_CORE      2
-#define C_EXTRA     3
-#define C_LOCAL     4
-#define C_OTHER     5
-#define C_PKG       6
-#define C_VER       7
-#define C_INSTALLED 8
-#define C_LVER      9
-#define C_GRP       10
-#define C_OD        11
-#define C_VOTES     12
-#define C_DSC       13
-#define C_SPACE     14
-#define C_NO        15
+#define C_NB        "nb"
+#define C_OTHER     "other"
+#define C_PKG       "pkg"
+#define C_VER       "ver"
+#define C_INSTALLED "installed"
+#define C_LVER      "lver"
+#define C_GRP       "grp"
+#define C_OD        "od"
+#define C_VOTES     "votes"
+#define C_DSC       "dsc"
+#define C_NO        "no"
 
-const char * color (unsigned int col);
+void color_init (void);
+void color_cleanup (void);
+const char * color (const char* col);
+const char * color_repo (const char *repo);
+
 #endif
 
 /* vim: set ts=4 sw=4 noet: */
