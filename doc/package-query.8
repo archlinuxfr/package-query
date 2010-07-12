@@ -2,12 +2,12 @@
 .\"     Title: package-query
 .\"    Author: [see the "Authors" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 2010-06-24
+.\"      Date: 2010-07-12
 .\"    Manual: Package-query Manual
 .\"    Source: Package-query 0.4
 .\"  Language: English
 .\"
-.TH "PACKAGE\-QUERY" "8" "2010\-06\-24" "Package\-query 0\&.4" "Package\-query Manual"
+.TH "PACKAGE\-QUERY" "8" "2010\-07\-12" "Package\-query 0\&.4" "Package\-query Manual"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -188,6 +188,7 @@ Format can contain:
 %s: sync repository, respect linkman:pacman\&.conf[5] order\&.
 %t: target submitted with command
 %v: version, depends on DB
+%V: package version in sync db
 %w: AUR votes
 .fi
 .if n \{\
@@ -219,6 +220,50 @@ For format like
 \fI%g\fR,
 \fI%c\fR
 \&..., define separator\&. Default to space\&.
+.RE
+.SH "ENVIRONMENT VARIABLES"
+.PP
+\fBPQ_COLORS\fR
+.RS 4
+Specifies the colors used in default output\&. Its value is a colon\-separated list of keys\&. Supported keys are:
+
+\fBno=\fR
+No color\&. (default: 0)
+
+\fBnb=\fR
+Numbers (when numbering lines) color\&. (default: 1;33;7)
+
+\fBpkg=\fR
+Package name\&. (default: 1)
+
+\fBver=\fR
+Package version\&. (default: 1;32)
+
+\fBlver=\fR
+Installed version\&. (default: 1;31;7)
+
+\fBinstalled=\fR
+\fI[installed]\fR
+color\&. (default: 1;33;7)
+
+\fBgrp=\fR
+Groups\&. (default: 1;34)
+
+\fBod=\fR
+Out of date status\&. (default: 1;33;7)
+
+\fBvotes=\fR
+Number of votes\&. (default: 1;33;7)
+
+\fBdsc=\fR
+Description\&. (default: 0)
+
+\fBother=\fR
+Respository not explicitly defined\&. (default: 1;35)
+
+\fB[repo name]=\fR
+Repository specific color\&. (default:
+\fItesting=1;31:core=1;31:extra=1;32:local=1;33\fR)
 .RE
 .SH "SEE ALSO"
 .sp
