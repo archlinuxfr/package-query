@@ -479,6 +479,61 @@ int list_db (pmdb_t *db, alpm_list_t *targets)
 	return ret;
 }
 
+/* get_sync_pkg() returns the first pkg with same name in sync dbs */
+pmpkg_t *get_sync_pkg (pmpkg_t *pkg)
+{
+	pmpkg_t *sync_pkg;
+	const char *dbname;
+	dbname = alpm_db_get_name (alpm_pkg_get_db (pkg));
+	if (dbname==NULL || strcmp ("local", dbname)==0)
+	{
+		alpm_list_t *i;
+		const char *pkgname;
+		pkgname = alpm_pkg_get_name (pkg);
+		for (i=alpm_option_get_syncdbs(); i; i = alpm_list_next (i))
+		{
+			sync_pkg = alpm_db_get_pkg (alpm_list_getdata(i), pkgname);
+			if (sync_pkg) return sync_pkg;
+		}
+	}
+	return NULL;
+}
+
+off_t alpm_pkg_get_realsize (pmpkg_t *pkg)
+{
+	alpm_list_t *f, *files;
+	int len, i, j;
+	ino_t *inodes=NULL;
+	struct stat buf;
+	off_t size=0;
+	files = alpm_pkg_get_files (pkg);
+	if (files)
+	{
+		chdir (config.root_dir);
+		len = alpm_list_count (files);
+		inodes=calloc (len, sizeof (ino_t));
+		j=0;
+		for (f = files; f; f = alpm_list_next (f))
+		{
+			int found=0;
+			const char *filename=alpm_list_getdata (f);
+			if (lstat (filename, &buf) == -1 ||
+				!(S_ISREG (buf.st_mode) || S_ISLNK(buf.st_mode)))
+				continue;
+			for (i=0; i<len && i<j && !found; i++)
+				if (inodes[i] == buf.st_ino)
+				{
+					found=1;
+					break;
+				}
+			if (found) continue;
+			inodes[j++]=buf.st_ino;
+			size+=buf.st_size;
+		}
+		free (inodes);
+	}
+	return size;
+}
 
 const char *alpm_pkg_get_str (void *p, unsigned char c)
 {
@@ -488,17 +543,14 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 	if (free_info)
 	{
 		free (info);
-		info = NULL;
 		free_info = 0;
 	}
+	info = NULL;
 	switch (c)
 	{
 		case '2':
-			{
-				off_t isize = alpm_pkg_get_isize(pkg);
-				info = ltostr (isize);
-				free_info=1;
-			}
+			info = ltostr (alpm_pkg_get_isize(pkg));
+			free_info=1;
 			break;
 		case 'a': info = (char *) alpm_pkg_get_arch (pkg); break;
 		case 'b': 
@@ -515,23 +567,10 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			free_info = 1;
 			break;
 		case 'n': info = (char *) alpm_pkg_get_name (pkg); break;
-		case 'r': info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg)); break;
 		case 's': 
-			info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg));
-			if (info!=NULL && strcmp ("local", info)==0)
-			{
-				alpm_list_t *i;
-				int found=0;
-				for (i=alpm_option_get_syncdbs(); i && !found; i = alpm_list_next (i))
-				{
-					if (alpm_db_get_pkg (alpm_list_getdata(i), alpm_pkg_get_name (pkg)))
-					{
-						info = (char *) alpm_db_get_name (alpm_list_getdata(i));
-						found = 1;
-					}
-				}
-			}
-			break;
+			pkg = get_sync_pkg (pkg);
+			if (!pkg) pkg = (pmpkg_t *) p;
+		case 'r': info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg)); break;
 		case 'u': 
 			{
 			const char *dburl= alpm_db_get_url((alpm_pkg_get_db (pkg)));
@@ -542,6 +581,9 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			free_info = 1;
 			}
 			break;
+		case 'V': 
+			pkg = get_sync_pkg (pkg);
+			if (!pkg) break;
 		case 'v': info = (char *) alpm_pkg_get_version (pkg); break;
 		default: return NULL; break;
 	}
@@ -557,9 +599,9 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 	if (free_info)
 	{
 		free (info);
-		info = NULL;
 		free_info = 0;
 	}
+	info = NULL;
 	if (!pkg_name) return NULL;
 	pkg = alpm_db_get_pkg(alpm_option_get_localdb(), pkg_name);
 	if (!pkg) return NULL;
@@ -577,41 +619,8 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 			}
 			break;
 		case '3':
-			{
-				alpm_list_t *f, *files;
-				int len, i, j;
-				ino_t *inodes=NULL;
-				struct stat buf;
-				off_t size=0;
-				files = alpm_pkg_get_files (pkg);
-				chdir (config.root_dir);
-				if (files)
-				{
-					len = alpm_list_count (files);
-					inodes=calloc (len, sizeof (ino_t));
-					j=0;
-					for (f = files; f; f = alpm_list_next (f))
-					{
-						int found=0;
-						const char *filename=alpm_list_getdata (f);
-						if (lstat (filename, &buf) == -1 ||
-							!(S_ISREG (buf.st_mode) || S_ISLNK(buf.st_mode)))
-							continue;
-						for (i=0; i<len && i<j && !found; i++)
-							if (inodes[i] == buf.st_ino)
-							{
-								found=1;
-								break;
-							}
-						if (found) continue;
-						inodes[j++]=buf.st_ino;
-						size+=buf.st_size;
-					}
-					free (inodes);
-					info = ltostr (size);
-					free_info=1;
-				}
-			}
+			info = ltostr (alpm_pkg_get_realsize (pkg));
+			free_info=1;
 			break;
 		case '4': info = itostr (filter_state (pkg)); free_info=1; break;
 		default: return NULL; break;
@@ -629,9 +638,9 @@ const char *alpm_grp_get_str (void *p, unsigned char c)
 	if (free_info)
 	{
 		free (info);
-		info = NULL;
 		free_info = 0;
 	}
+	info = NULL;
 	switch (c)
 	{
 		case 'n': info = (char *) alpm_grp_get_name (grp); break;

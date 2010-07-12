@@ -497,9 +497,9 @@ const char *aur_get_str (void *p, unsigned char c)
 	if (free_info)
 	{
 		free (info);
-		info = NULL;
 		free_info = 0;
 	}
+	info = NULL;
 	switch (c)
 	{
 		case 'd': info = (char *) aur_pkg_get_desc (pkg); break;
