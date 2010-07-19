@@ -12,6 +12,11 @@ AC_CONFIG_HEADER([config.h])
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
+# Help line for libfetch
+AC_ARG_ENABLE(fetch,
+	AS_HELP_STRING([--enable-fetch], [build with libfetch instead of curl support]),
+	[usefetch=$enableval], [usefetch=no])
+
 
 # Checks for header files.
 AC_CHECK_HEADERS([ctype.h getopt.h libintl.h limits.h locale.h sys/ioctl.h sys/utsname.h])
@@ -21,10 +26,18 @@ AC_CHECK_LIB([alpm], [alpm_version], ,
 AC_CHECK_LIB([yajl], [yajl_free], ,
 	AC_MSG_ERROR([yajl is needed to compile package-query]))
 
-PKG_CHECK_MODULES(LIBCURL, libcurl)
 
+AC_MSG_CHECKING(whether to link with libfetch)
+if test "x$usefetch" = "xyes" ; then
+	AC_MSG_RESULT(yes)
+	AC_DEFINE([USE_FETCH], , [Use libfetch])
+	AC_CHECK_LIB([fetch], [fetchParseURL], ,
+		AC_MSG_ERROR([libfetch is needed to compile package-query]), [-lcrypto -ldl] )
+else
+	AC_MSG_RESULT(no)
+	PKG_CHECK_MODULES(LIBCURL, libcurl)
+fi
 
-# Enable or disable use of git version in pacman version string
 usegitver=no
 gitver=""
 AC_CHECK_PROGS([GIT], [git])
@@ -71,6 +84,8 @@ ${PACKAGE_NAME}:
   Directory and file information:
     root working directory : ${ROOTDIR}
 
+  Compilation options:
+    Use libfetch           : ${usefetch}
 "
 
 

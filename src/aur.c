@@ -16,13 +16,18 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "config.h"
 #include <string.h>
 #include <alpm_list.h>
 
+#ifdef USE_FETCH
+#include <ctype.h>
+#include <fetch.h>
+#else
 #include <curl/curl.h>
 #include <curl/types.h>
 #include <curl/easy.h>
-
+#endif
 #include <yajl/yajl_parse.h>
 #include <yajl/yajl_gen.h>
 
@@ -66,6 +71,10 @@
 #define AUR_SEARCH	2
 #define AUR_INFO_P	3
 
+#ifdef USE_FETCH
+#define AUR_DL_LEN 1024 * 10
+#define AUR_DL_TM 10	/* Timeout */
+#endif
 
 alpm_list_t *pkgs=NULL;
 
@@ -206,13 +215,46 @@ unsigned short aur_pkg_get_outofdate (const aurpkg_t * pkg)
 }
 
 
+#ifdef USE_FETCH
+/* {{{ */
+/* http://www.geekhideout.com/urlcode.shtml */
+/* Converts an integer value to its hex character*/
+char to_hex (char code) 
+{
+	static char hex[] = "0123456789abcdef";
+	return hex[code & 15];
+}
+
+/* Returns a url-encoded version of str */
+char *url_encode (const char *str) 
+{
+	const char *pstr = str;
+	char *buf = malloc(strlen(str) * 3 + 1), *pbuf = buf;
+	while (*pstr) 
+	{
+		if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~')
+			*pbuf++ = *pstr;
+		else if (*pstr == ' ') 
+			*pbuf++ = '+';
+	 	else 
+			*pbuf++ = '%', *pbuf++ = to_hex(*pstr >> 4), *pbuf++ = to_hex(*pstr & 15);
+		pstr++;
+	}
+	*pbuf = '\0';
+	return buf;
+}
+
+/* }}} */
+#else
+/* {{{ */
 size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
 {
 	string_t *s = (string_t *) userdata;
 	string_ncat (s, data, nmemb);
 	return nmemb;
 }
-
+/* }}} */
+#endif
 
 static int json_key (void * ctx, const unsigned char * stringVal,
                             unsigned int stringLen)
@@ -314,8 +356,14 @@ int aur_request (alpm_list_t *targets, int type)
 {
 	int ret=0;
 	alpm_list_t *list_t=NULL;
+#ifdef USE_FETCH	
+	struct url *aur_url;
+	fetchIO *dlu = NULL;
+	char buf[AUR_DL_LEN];
+#else
 	CURL *curl;
 	CURLcode curl_code;
+#endif
 	yajl_handle hand;
 	yajl_status stat;
 	yajl_parser_config cfg = { 1, 1 };
@@ -330,12 +378,16 @@ int aur_request (alpm_list_t *targets, int type)
 	if (targets == NULL)
 		return 0;
 
+#ifdef USE_FETCH	
+	fetchTimeout = AUR_DL_TM;
+#else
 	curl = curl_easy_init ();
 	if (!curl)
 	{
 		perror ("curl");
 		return 0;
 	}
+#endif
 	sprintf (aur_rpc, "%s%s", AUR_BASE_URL, AUR_RPC);
 	if (type == AUR_SEARCH)
 	{
@@ -370,6 +422,26 @@ int aur_request (alpm_list_t *targets, int type)
 			pkg_name = t1->name;
 			aur_rpc[strlen(AUR_BASE_URL) + strlen(AUR_RPC) + strlen(AUR_RPC_INFO)] = '\0';
 		}
+#ifdef USE_FETCH	
+/* {{{ */
+		char *pkg_name_encode=url_encode (pkg_name);
+ 		strcat (aur_rpc, pkg_name_encode);
+		free (pkg_name_encode);
+ 		res = string_new();
+		hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) &pkg_json);
+		/* According to pacman code, libfetch doesn't reset error code */
+		fetchLastErrCode = 0;
+		aur_url = fetchParseURL (aur_rpc);
+		dlu = fetchGet (aur_url, "");
+		if (fetchLastErrCode == 0 && dlu)
+ 		{
+			ssize_t nread=0;
+			while ((nread = fetchIO_read (dlu, buf, AUR_DL_LEN)) > 0)
+				string_ncat (res, buf, nread);
+			fetchIO_close (dlu);
+/* }}} */
+#else
+/* {{{ */
 		char *pkg_name_encode=curl_easy_escape(curl, pkg_name, 0);
 		if (pkg_name_encode==NULL) 
 			continue;
@@ -383,6 +455,8 @@ int aur_request (alpm_list_t *targets, int type)
 		curl_easy_setopt (curl, CURLOPT_URL, aur_rpc);
 		if ((curl_code = curl_easy_perform (curl)) == CURLE_OK)
 		{
+/* }}} */
+#endif		
 			stat = yajl_parse(hand, (const unsigned char *) res->s, strlen (res->s));
 			if (stat != yajl_status_ok && stat != yajl_status_insufficient_data)
 			{
@@ -445,6 +519,9 @@ int aur_request (alpm_list_t *targets, int type)
 				pkgs = NULL;
 			}
 		}
+#ifdef USE_FETCH
+		fetchFreeURL (aur_url);
+#endif		
 		if (type != AUR_SEARCH)
 			target_free (t1);
 		string_free (res);
@@ -455,15 +532,28 @@ int aur_request (alpm_list_t *targets, int type)
 			aur_target = NULL;
 			target = NULL;
 		}
+#ifdef USE_FETCH
+/* {{{ */
+		if (fetchLastErrCode != 0)
+ 		{
+			fprintf(stderr, "AUR rpc error: %s\n", fetchLastErrString);
+ 			break;
+ 		}
+/* }}} */
+#else		
+/* {{{ */
 		if (curl_code != CURLE_OK)
 		{
 			fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
 			break;
 		}
+/* }}} */
+#endif
 	}
+#ifndef USE_FETCH
 	curl_easy_cleanup(curl);
 	curl_global_cleanup();
-
+#endif
 	if (list_t)
 	{
 		FREELIST(targets);
@@ -518,7 +608,7 @@ const char *aur_get_str (void *p, unsigned char c)
 			info = (char *) malloc (sizeof (char) * 
 				(strlen (AUR_BASE_URL) + 
 				strlen (aur_pkg_get_urlpath (pkg)) +
-				1 /* '/' separate url and filename */
+				2 /* '/' separate url and filename */
 				));
 			strcpy (info, AUR_BASE_URL);
 			strcat (info, aur_pkg_get_urlpath (pkg));
@@ -539,4 +629,4 @@ void aur_cleanup ()
 	aur_get_str (NULL, 0);
 }
 
-/* vim: set ts=4 sw=4 noet: */
+/* vim: set ts=4 sw=4 noet foldmarker={{{,}}} foldmethod=marker: */
