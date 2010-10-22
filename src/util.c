@@ -527,7 +527,7 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 {
 	static char cstr[PATH_MAX];
 	static int number=0;
-	const char *info, *lver;
+	const char *info, *ver=NULL, *lver;
 	char *pcstr;
 	cstr[0]='\0';
 	pcstr = cstr;
@@ -559,6 +559,8 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 		return;
 	}
 	lver = alpm_local_pkg_get_str (info, 'l');
+	info = f(p, 'v');
+	if (info) ver = strdup (info);
 	if (config.aur_foreign)
 	{
 		/* show foreign package */
@@ -569,40 +571,43 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 		}
 		else
 			pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), lver, color (C_NO));
-		info = f(p, 'v');
-		if (info)
+		if (ver)
 		{
 			/* package found in AUR */
-			if (alpm_pkg_vercmp (info, lver)>0)
-				pcstr += sprintf (pcstr, " ( aur: %s )", info);
+			if (alpm_pkg_vercmp (ver, lver)>0)
+				pcstr += sprintf (pcstr, " ( aur: %s )", ver);
 			fprintf (stdout, "%saur/%s%s\n", color_repo ("aur"), color (C_NO), cstr);
+			free (ver);
 		}
 		else
 			fprintf (stdout, "%slocal/%s%s\n", color_repo ("local"), color (C_NO), cstr);
 		return;
 	}
-	info = f(p, 'v');
-	pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), info, color (C_NO));
-	if (lver)
-	{
-		const char *repo = f(p, 'r');
-		if (repo && strcmp (repo, "local")!=0)
-		{
-			/* show install information */
-			pcstr += sprintf (pcstr, " %s[", color(C_INSTALLED));
-			if (strcmp (info, lver)!=0)
-			{
-				pcstr += sprintf (pcstr, "%s%s%s%s ", color(C_LVER), lver, color (C_NO), color(C_INSTALLED));
-			}
-			pcstr += sprintf (pcstr, "%s]%s", _("installed"), color(C_NO));
-		}
-	}
-	
+	/* show version */
+	pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), ver, color (C_NO));
+	/* show groups */
 	info = f(p, 'g');
 	if (info)
 	{
 		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_GRP), info, color(C_NO));
 	}
+	/* show install information */
+	if (lver)
+	{
+		const char *repo = f(p, 'r');
+		if (repo && strcmp (repo, "local")!=0)
+		{
+			pcstr += sprintf (pcstr, " %s[%s", color(C_INSTALLED), _("installed"));
+			if (strcmp (ver, lver)!=0)
+			{
+				pcstr += sprintf (pcstr, ": %s%s%s%s", color(C_LVER), lver, color (C_NO), color(C_INSTALLED));
+			}
+			pcstr += sprintf (pcstr, "]%s", color(C_NO));
+		}
+	}
+	/* ver no more needed */
+	free (ver);
+
 	info = f(p, 'o');
 	if (info && info[0]=='1')
 	{
