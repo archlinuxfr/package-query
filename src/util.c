@@ -559,11 +559,17 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 		return;
 	}
 	lver = alpm_local_pkg_get_str (info, 'l');
-	info = f(p, 'v');
 	if (config.aur_foreign)
 	{
 		/* show foreign package */
-		pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), lver, color (C_NO));
+		info = f(p, 'o');
+		if (info && info[0]=='1')
+		{
+			pcstr += sprintf (pcstr, "%s%s%s", color(C_OD), lver, color (C_NO));
+		}
+		else
+			pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), lver, color (C_NO));
+		info = f(p, 'v');
 		if (info)
 		{
 			/* package found in AUR */
@@ -575,6 +581,7 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 			fprintf (stdout, "%slocal/%s%s\n", color_repo ("local"), color (C_NO), cstr);
 		return;
 	}
+	info = f(p, 'v');
 	pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), info, color (C_NO));
 	if (lver)
 	{
