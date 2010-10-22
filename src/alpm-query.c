@@ -482,7 +482,7 @@ int list_db (pmdb_t *db, alpm_list_t *targets)
 /* get_sync_pkg() returns the first pkg with same name in sync dbs */
 pmpkg_t *get_sync_pkg (pmpkg_t *pkg)
 {
-	pmpkg_t *sync_pkg;
+	pmpkg_t *sync_pkg = NULL;
 	const char *dbname;
 	dbname = alpm_db_get_name (alpm_pkg_get_db (pkg));
 	if (dbname==NULL || strcmp ("local", dbname)==0)
@@ -493,10 +493,11 @@ pmpkg_t *get_sync_pkg (pmpkg_t *pkg)
 		for (i=alpm_option_get_syncdbs(); i; i = alpm_list_next (i))
 		{
 			sync_pkg = alpm_db_get_pkg (alpm_list_getdata(i), pkgname);
-			if (sync_pkg) return sync_pkg;
+			if (sync_pkg) break;
 		}
 	}
-	return NULL;
+	else sync_pkg = pkg;
+	return sync_pkg;
 }
 
 off_t alpm_pkg_get_realsize (pmpkg_t *pkg)
