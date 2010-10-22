@@ -78,6 +78,7 @@ typedef struct _aq_config
 	unsigned short colors;
 	unsigned short custom_out;
 	unsigned short get_res;
+	unsigned short show_size;
 	char sort;
 	char csep[SEP_LEN];
 	char format_out[PATH_MAX];

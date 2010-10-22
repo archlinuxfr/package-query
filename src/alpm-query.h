@@ -70,6 +70,9 @@ int search_pkg (pmdb_t *db, alpm_list_t *targets);
 int list_db (pmdb_t *db, alpm_list_t *targets);
 int alpm_search_local (alpm_list_t **res);
 
+
+off_t get_size_pkg (pmpkg_t *pkg);
+
 /*
  * alpm_pkg_get_str() get info for package
  * alpm_grp_get_str() get info for group

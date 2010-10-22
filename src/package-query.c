@@ -66,6 +66,7 @@ void init_config (const char *myname)
 	config.colors = 1; 
 	config.custom_out = 0; 
 	config.get_res = 0;
+	config.show_size = 0;
 	strcpy (config.csep, " ");
 	strcpy (config.root_dir, "");
 	strcpy (config.dbpath, "");
@@ -183,6 +184,7 @@ int main (int argc, char **argv)
 		{"nocolor",    no_argument,       0, 1003},
 		{"number",     no_argument,       0, 1004},
 		{"get-res",    no_argument,       0, 1005},
+		{"show-size",  no_argument,       0, 1006},
 		{"version",    no_argument,       0, 'v'},
 
 		{0, 0, 0, 0}
@@ -301,6 +303,9 @@ int main (int argc, char **argv)
 			case 1005: /* --get-res */
 				if (dup2(FD_RES, FD_RES) == FD_RES)
 					config.get_res = 1;
+				break;
+			case 1006: /* --show-size */
+				config.show_size = 1;
 				break;
 			case 'u':
 				config.filter |= F_UPGRADES;

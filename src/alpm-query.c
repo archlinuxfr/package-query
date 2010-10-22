@@ -201,6 +201,11 @@ int parse_config_file (alpm_list_t **dbs, const char *config_file, int reg)
 					}
 				}
 			}
+			else if (in_option)
+			{
+				if (strcmp (line, "ShowSize") == 0)
+					config.show_size=1;
+			}
 		}
 	}
 	fclose (conf);
@@ -500,6 +505,21 @@ pmpkg_t *get_sync_pkg (pmpkg_t *pkg)
 	return sync_pkg;
 }
 
+off_t get_size_pkg (pmpkg_t *pkg)
+{
+	pmpkg_t *sync_pkg = get_sync_pkg (pkg);
+	if (config.filter & F_UPGRADES)
+	{
+		if (sync_pkg) 
+			return alpm_pkg_download_size (sync_pkg);
+	}
+	else if (sync_pkg != pkg)
+		return alpm_pkg_get_isize (pkg);
+	else
+		return alpm_pkg_get_size (pkg);
+	return 0;
+}
+
 off_t alpm_pkg_get_realsize (pmpkg_t *pkg)
 {
 	alpm_list_t *f, *files;
@@ -551,6 +571,12 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 	{
 		case '2':
 			info = ltostr (alpm_pkg_get_isize(pkg));
+			free_info=1;
+			break;
+		case '5':
+			pkg = get_sync_pkg (pkg);
+			if (!pkg) break;
+			info = ltostr (alpm_pkg_download_size(pkg));
 			free_info=1;
 			break;
 		case 'a': info = (char *) alpm_pkg_get_arch (pkg); break;

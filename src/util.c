@@ -527,7 +527,8 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 {
 	static char cstr[PATH_MAX];
 	static int number=0;
-	const char *info, *ver=NULL, *lver;
+	const char *info, *lver;
+	char *ver=NULL;
 	char *pcstr;
 	cstr[0]='\0';
 	pcstr = cstr;
@@ -585,6 +586,17 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 	}
 	/* show version */
 	pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), ver, color (C_NO));
+	/* show size */
+	if (config.show_size)
+	{
+		info = f(p, 'r');
+		if (info)
+		{
+			if (strcmp (info, "aur")!=0)
+				pcstr += sprintf (pcstr, " [%.2f M]", (double) get_size_pkg (p) / (1024.0 * 1024));
+		}
+	}
+	
 	/* show groups */
 	info = f(p, 'g');
 	if (info)
@@ -594,8 +606,8 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 	/* show install information */
 	if (lver)
 	{
-		const char *repo = f(p, 'r');
-		if (repo && strcmp (repo, "local")!=0)
+		info = f(p, 'r');
+		if (info && strcmp (info, "local")!=0)
 		{
 			pcstr += sprintf (pcstr, " %s[%s", color(C_INSTALLED), _("installed"));
 			if (strcmp (ver, lver)!=0)
