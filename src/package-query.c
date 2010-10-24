@@ -369,6 +369,8 @@ int main (int argc, char **argv)
 		/* print groups instead of packages */
 		if (config.op == OP_LIST_GROUP) config.list_group = 1;
 	}
+	else if (!config.op && (given & N_DB)) /* Show info by default */
+		config.op = OP_INFO;
 	/* TODO: release alpm before exit on failure */
 	if (!init_alpm()) exit(1);
 	if (!init_db_sync ()) goto cleanup;
