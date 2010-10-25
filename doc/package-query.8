@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: package-query
 .\"    Author: [see the "Authors" section]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 2010-07-12
+.\" Generator: DocBook XSL Stylesheets v1.76.0 <http://docbook.sf.net/>
+.\"      Date: 2010-10-25
 .\"    Manual: Package-query Manual
-.\"    Source: Package-query 0.4
+.\"    Source: Package-query 0.3-25-g3b6e
 .\"  Language: English
 .\"
-.TH "PACKAGE\-QUERY" "8" "2010\-07\-12" "Package\-query 0\&.4" "Package\-query Manual"
+.TH "PACKAGE\-QUERY" "8" "2010\-10\-25" "Package\-query 0\&.3\-25\-g3b6" "Package\-query Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -112,7 +121,7 @@ Output without colors\&.
 .PP
 \fB\-i, \-\-info\fR
 .RS 4
-Search by name\&.
+Search by name\&. (by default if no target)
 .RE
 .PP
 \fB\-g, \-\-groups\fR
@@ -184,8 +193,8 @@ Format can contain:
 %l: local version
 %n: name
 %o: only for AUR, out of date
-%r: repository, \'local\' for local packages
-%s: sync repository, respect linkman:pacman\&.conf[5] order\&.
+%r: repository, \*(Aqlocal\*(Aq for local packages
+%s: sync repository, respect \*(Aqpacman\&.conf\*(Aq order\&.
 %t: target submitted with command
 %v: version, depends on DB
 %V: package version in sync db
@@ -209,6 +218,7 @@ Format can contain:
         8: unrequired
         16: update available
         32: package part of group
+%5: download size
 .fi
 .if n \{\
 .RE
