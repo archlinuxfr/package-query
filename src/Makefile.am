@@ -9,6 +9,7 @@ DEFS = -DLOCALEDIR=\"@localedir@\" \
        -DCONFFILE=\"$(conffile)\" \
        -DROOTDIR=\"$(ROOTDIR)\" \
        -DDBPATH=\"$(dbpath)\" \
+       -DAUR_BASE_URL=\"$(AUR_BASE_URL)\" \
 	   @DEFS@
 if USE_GIT_VERSION
 DEFS += -DGIT_VERSION=\"$(GIT_VERSION)\"

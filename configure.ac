@@ -58,6 +58,12 @@ AC_ARG_WITH(root-dir,
 	[ROOTDIR=$withval], [ROOTDIR=/])
 
 AC_SUBST(ROOTDIR)
+
+AC_ARG_WITH(aur-url,
+	AS_HELP_STRING([--with-aur-url=url], [default to https://aur.archlinux.org]),
+	[AUR_BASE_URL=$withval], [AUR_BASE_URL=https://aur.archlinux.org])
+
+AC_SUBST(AUR_BASE_URL)
 AC_CONFIG_FILES([src/Makefile
 doc/Makefile
 Makefile
@@ -81,8 +87,9 @@ ${PACKAGE_NAME}:
     using git version      : ${usegitver}
        git ver             : ${gitver}
 
-  Directory and file information:
+  Variable information:
     root working directory : ${ROOTDIR}
+    aur base url           : ${AUR_BASE_URL}
 
   Compilation options:
     Use libfetch           : ${usefetch}
