@@ -76,8 +76,6 @@
 #define AUR_DL_TM 10	/* Timeout */
 #endif
 
-alpm_list_t *pkgs=NULL;
-
 aurpkg_t *aur_pkg_new ()
 {
 	aurpkg_t *pkg = NULL;
@@ -256,12 +254,44 @@ size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
 /* }}} */
 #endif
 
+
+
+static int json_start_map (void *ctx) 
+{
+	package_json_t *pkg_json = (package_json_t *) ctx;
+	if (++(pkg_json->level)>1)
+		pkg_json->pkg = aur_pkg_new();
+	return 1;
+}
+
+
+static int json_end_map (void *ctx)
+{
+	package_json_t *pkg_json = (package_json_t *) ctx;
+	if (--(pkg_json->level)==1)
+	{
+		switch (config.sort)
+		{
+			case 'w':
+				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs, 
+			        pkg_json->pkg, (alpm_list_fn_cmp) aur_pkg_votes_cmp);
+				break;
+			default:
+				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs, 
+				    pkg_json->pkg, (alpm_list_fn_cmp) aur_pkg_cmp);
+		}
+		pkg_json->pkg = NULL;
+	}
+	return 1;
+}
+	
+
 static int json_key (void * ctx, const unsigned char * stringVal,
                             unsigned int stringLen)
 {
-	package_json_t *pkg = (package_json_t *) ctx;
-	strncpy (pkg->current_key, (const char *) stringVal, stringLen);
-	pkg->current_key[stringLen] = '\0';
+	package_json_t *pkg_json = (package_json_t *) ctx;
+	strncpy (pkg_json->current_key, (const char *) stringVal, stringLen);
+	pkg_json->current_key[stringLen] = '\0';
     return 1;
 }
 
@@ -269,66 +299,60 @@ static int json_key (void * ctx, const unsigned char * stringVal,
 static int json_value (void * ctx, const unsigned char * stringVal,
                            unsigned int stringLen)
 {
+	package_json_t *pkg_json = (package_json_t *) ctx;
+	// package info in level 2
+	if (pkg_json->level<2) return 1;
 	char *s = strndup ((const char *)stringVal, stringLen);
 	int free_s = 1;
-	package_json_t *pkg = (package_json_t *) ctx;
-	if (strcmp (pkg->current_key, AUR_ID)==0 && pkg->pkg!=NULL)
-		return 0;
-	if (strcmp (pkg->current_key, AUR_ID)==0)
+	if (strcmp (pkg_json->current_key, AUR_ID)==0)
 	{
-		pkg->pkg = malloc (sizeof(aurpkg_t));
-		pkg->pkg->id = atoi (s);
+		pkg_json->pkg->id = atoi (s);
 	}
-	else if (strcmp (pkg->current_key, AUR_NAME)==0)
+	else if (strcmp (pkg_json->current_key, AUR_NAME)==0)
 	{
-		pkg->pkg->name = s;
+		pkg_json->pkg->name = s;
 		free_s = 0;
 	}
-	else if (strcmp (pkg->current_key, AUR_VER)==0)
+	else if (strcmp (pkg_json->current_key, AUR_VER)==0)
 	{
-		pkg->pkg->version = s;
+		pkg_json->pkg->version = s;
 		free_s = 0;
 	}
-	else if (strcmp (pkg->current_key, AUR_CAT)==0)
+	else if (strcmp (pkg_json->current_key, AUR_CAT)==0)
 	{
-		pkg->pkg->category = atoi (s);
+		pkg_json->pkg->category = atoi (s);
 	}
-	else if (strcmp (pkg->current_key, AUR_DESC)==0)
+	else if (strcmp (pkg_json->current_key, AUR_DESC)==0)
 	{
-		pkg->pkg->desc = s;
+		pkg_json->pkg->desc = s;
 		free_s = 0;
 	}
-	else if (strcmp (pkg->current_key, AUR_LOC)==0)
+	else if (strcmp (pkg_json->current_key, AUR_LOC)==0)
 	{
-		pkg->pkg->location = atoi(s);
+		pkg_json->pkg->location = atoi(s);
 	}
-	else if (strcmp (pkg->current_key, AUR_URL)==0)
+	else if (strcmp (pkg_json->current_key, AUR_URL)==0)
 	{
-		pkg->pkg->url = s;
+		pkg_json->pkg->url = s;
 		free_s = 0;
 	}
-	else if (strcmp (pkg->current_key, AUR_URLPATH)==0)
+	else if (strcmp (pkg_json->current_key, AUR_URLPATH)==0)
 	{
-		pkg->pkg->urlpath = s;
+		pkg_json->pkg->urlpath = s;
 		free_s = 0;
 	}
-	else if (strcmp (pkg->current_key, AUR_LICENSE)==0)
+	else if (strcmp (pkg_json->current_key, AUR_LICENSE)==0)
 	{
-		pkg->pkg->license = s;
+		pkg_json->pkg->license = s;
 		free_s = 0;
 	}
-	else if (strcmp (pkg->current_key, AUR_VOTE)==0)
+	else if (strcmp (pkg_json->current_key, AUR_VOTE)==0)
 	{
-		pkg->pkg->votes = atoi(s);
+		pkg_json->pkg->votes = atoi(s);
 	}
-	else if (strcmp (pkg->current_key, AUR_OUT)==0)
+	else if (strcmp (pkg_json->current_key, AUR_OUT)==0)
 	{
-		pkg->pkg->outofdate = atoi(s);
-	}
-	if (strcmp (pkg->current_key, AUR_LAST_ID)==0)
-	{
-		pkgs = alpm_list_add(pkgs,pkg->pkg);
-		pkg->pkg = NULL;
+		pkg_json->pkg->outofdate = atoi(s);
 	}
 	if (free_s)
 		free (s);
@@ -344,9 +368,9 @@ static yajl_callbacks callbacks = {
     NULL,
     NULL,
     json_value,
-    NULL,
+    json_start_map,
     json_key,
-    NULL,
+    json_end_map,
     NULL,
     NULL,
 };
@@ -367,7 +391,7 @@ int aur_request (alpm_list_t *targets, int type)
 	yajl_handle hand;
 	yajl_status stat;
 	yajl_parser_config cfg = { 1, 1 };
-	package_json_t pkg_json = { NULL, "" };
+	package_json_t pkg_json = { NULL, NULL, "", 0};
 	char aur_rpc[PATH_MAX];
 	string_t *res;
 	alpm_list_t *t;
@@ -425,16 +449,16 @@ int aur_request (alpm_list_t *targets, int type)
 #ifdef USE_FETCH	
 /* {{{ */
 		char *pkg_name_encode=url_encode (pkg_name);
- 		strcat (aur_rpc, pkg_name_encode);
+		strcat (aur_rpc, pkg_name_encode);
 		free (pkg_name_encode);
- 		res = string_new();
+		res = string_new();
 		hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) &pkg_json);
 		/* According to pacman code, libfetch doesn't reset error code */
 		fetchLastErrCode = 0;
 		aur_url = fetchParseURL (aur_rpc);
 		dlu = fetchGet (aur_url, "");
 		if (fetchLastErrCode == 0 && dlu)
- 		{
+		{
 			ssize_t nread=0;
 			while ((nread = fetchIO_read (dlu, buf, AUR_DL_LEN)) > 0)
 				string_ncat (res, buf, nread);
@@ -448,7 +472,7 @@ int aur_request (alpm_list_t *targets, int type)
 		strcat (aur_rpc, pkg_name_encode);
 		curl_free (pkg_name_encode);
 		res = string_new();
-    	hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) &pkg_json);
+		hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) &pkg_json);
 		curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
 		curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
 		curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
@@ -471,35 +495,30 @@ int aur_request (alpm_list_t *targets, int type)
 			else
 			{
  				alpm_list_t *p;
-				pkg_json.pkg=NULL;
 				if (type != AUR_SEARCH)
 				{
-					for (p = pkgs; p; p = alpm_list_next(p))
+					for (p = pkg_json.pkgs; p; p = alpm_list_next(p))
 					{
 						if (target_check_version (t1, aur_pkg_get_version (alpm_list_getdata (p))))
 							print_package (target, alpm_list_getdata (p), aur_get_str);
 					}
-					if (type == AUR_INFO_P && pkgs == NULL)
+					if (type == AUR_INFO_P && pkg_json.pkgs == NULL)
 					{
 						aurpkg_t *pkg = aur_pkg_new();
 						pkg->name = strdup (target);
 						print_package (target, pkg, aur_get_str);
 						aur_pkg_free (pkg);
 					}
-					alpm_list_free_inner (pkgs, (alpm_list_fn_free) aur_pkg_free);
-					alpm_list_free (pkgs);
+					alpm_list_free_inner (pkg_json.pkgs, (alpm_list_fn_free) aur_pkg_free);
+					alpm_list_free (pkg_json.pkgs);
 				}
-				else if (type == AUR_SEARCH && pkgs)
+				else if (type == AUR_SEARCH && pkg_json.pkgs)
 				{
 					alpm_list_t *l,*p;
 					char *ts = concat_str_list (list_t);
 					int found;
-					/* Aur default sort by names */
-					if (config.sort == 0)
-						pkgs = alpm_list_msort (pkgs, alpm_list_count (pkgs), 
-									(alpm_list_fn_cmp) aur_pkg_cmp);
 					/* Filter results with others targets without making more queries */
-					for (p = pkgs; p; p = alpm_list_next(p))
+					for (p = pkg_json.pkgs; p; p = alpm_list_next(p))
 					{
 						found=1;
 						for (l = alpm_list_next (list_t); l && found; l = alpm_list_next (l))
@@ -513,10 +532,10 @@ int aur_request (alpm_list_t *targets, int type)
 							//print_package (ts, alpm_list_getdata (p), aur_get_str);
 					}
 					free (ts);
-					alpm_list_free_inner (pkgs, (alpm_list_fn_free) aur_pkg_free);
-					alpm_list_free (pkgs);
+					alpm_list_free_inner (pkg_json.pkgs, (alpm_list_fn_free) aur_pkg_free);
+					alpm_list_free (pkg_json.pkgs);
 				}
-				pkgs = NULL;
+				pkg_json.pkgs = NULL;
 			}
 		}
 #ifdef USE_FETCH

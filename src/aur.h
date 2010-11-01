@@ -46,8 +46,10 @@ typedef struct _aurpkg_t
  */
 typedef struct _package_json_t
 {
+	alpm_list_t *pkgs;
 	aurpkg_t *pkg;
 	char current_key[AUR_ID_LEN];
+	int level;
 } package_json_t;
 
 aurpkg_t *aur_pkg_new ();
