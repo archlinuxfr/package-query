@@ -76,6 +76,45 @@
 #define AUR_DL_TM 10	/* Timeout */
 #endif
 
+typedef struct _request_t
+{
+	int type;
+	char *arg;
+	const char *target;
+	target_t *t_info;
+	string_t *res;
+	int success;
+} request_t;
+
+request_t *request_new ()
+{
+	request_t *req=NULL;
+	if ((req = malloc (sizeof(request_t))) == NULL)
+	{
+		perror ("malloc");
+		exit (1);
+	}
+	req->type = 0;
+	req->arg = NULL;
+	req->target = NULL;
+	req->t_info = NULL;
+	req->res = NULL;
+	req->success = 0;
+	return req;
+}
+
+request_t *request_free (request_t *req)
+{
+	if (req == NULL)
+		return NULL;
+
+	if (req->arg) free (req->arg);
+	if (req->t_info) target_free (req->t_info);
+	if (req->res) string_free (req->res);
+	free (req);
+	return NULL;
+}
+
 aurpkg_t *aur_pkg_new ()
 {
 	aurpkg_t *pkg = NULL;
@@ -375,6 +414,72 @@ static yajl_callbacks callbacks = {
     NULL,
 };
 
+static int aur_fetch (request_t *req)
+{
+	char url[PATH_MAX];
+	if (req->type == AUR_SEARCH)
+		sprintf (url, "%s%s%s", AUR_BASE_URL, AUR_RPC, AUR_RPC_SEARCH);
+	else
+		sprintf (url, "%s%s%s", AUR_BASE_URL, AUR_RPC, AUR_RPC_INFO);
+	req->res = string_new();
+#ifdef USE_FETCH	
+/* {{{ */
+	struct url *f_url;
+	char buf[AUR_DL_LEN];
+	char *encoded_arg = url_encode (req->arg);
+	strcat (url, encoded_arg);
+	free (encoded_arg);
+	fetchIO *dlu = NULL;
+	fetchTimeout = AUR_DL_TM;
+	fetchLastErrCode = 0;
+	f_url = fetchParseURL ((const char *) url);
+	dlu = fetchGet (f_url, "");
+	if (fetchLastErrCode == 0 && dlu)
+	{
+		ssize_t nread=0;
+		while ((nread = fetchIO_read (dlu, buf, AUR_DL_LEN)) > 0)
+			string_ncat (req->res, buf, nread);
+		fetchIO_close (dlu);
+	}
+	fetchFreeURL (f_url);
+	if (fetchLastErrCode != 0)
+	{
+		fprintf(stderr, "AUR rpc error: %s\n", fetchLastErrString);
+		return 0;
+	}
+/* }}} */
+#else
+	CURL *curl;
+	CURLcode curl_code;
+	curl = curl_easy_init ();
+	if (!curl)
+	{
+		perror ("curl");
+		return 0;
+	}
+	char *encoded_arg = curl_easy_escape (curl, req->arg, 0);
+	if (encoded_arg == NULL)
+	{
+		curl_easy_cleanup(curl);
+		return 0;
+	}
+	strcat (url, encoded_arg);
+	curl_free (encoded_arg);
+	curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
+	curl_easy_setopt (curl, CURLOPT_WRITEDATA, req->res);
+	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
+	curl_easy_setopt (curl, CURLOPT_URL, (const char *) url);
+	if ((curl_code = curl_easy_perform (curl)) != CURLE_OK)
+	{
+		fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
+		curl_easy_cleanup(curl);
+		return 0;
+	}
+	curl_easy_cleanup(curl);
+#endif
+	req->success = 1;
+	return 1;
+}
 
 int aur_parse_result (const unsigned char *s, jsonpkg_t *pkg_json)
 {
@@ -400,187 +505,100 @@ int aur_parse_result (const unsigned char *s, jsonpkg_t *pkg_json)
 int aur_request (alpm_list_t *targets, int type)
 {
 	int ret=0;
+	request_t *req;
 	alpm_list_t *list_t=NULL;
-#ifdef USE_FETCH	
-	struct url *aur_url;
-	fetchIO *dlu = NULL;
-	char buf[AUR_DL_LEN];
-#else
-	CURL *curl;
-	CURLcode curl_code;
-#endif
 	jsonpkg_t pkg_json = { NULL, NULL, "", 0};
-	char aur_rpc[PATH_MAX];
-	string_t *res;
 	alpm_list_t *t;
-	const char *target, *pkg_name;
-	char *aur_target = NULL;
-	target_t *t1=NULL;
+
 
 	if (targets == NULL)
 		return 0;
 
-#ifdef USE_FETCH	
-	fetchTimeout = AUR_DL_TM;
-#else
-	curl = curl_easy_init ();
-	if (!curl)
-	{
-		perror ("curl");
-		return 0;
-	}
-#endif
-	sprintf (aur_rpc, "%s%s", AUR_BASE_URL, AUR_RPC);
 	if (type == AUR_SEARCH)
 	{
-		strcat (aur_rpc, AUR_RPC_SEARCH);
 		list_t = targets;
 		targets = alpm_list_add (NULL, strdup (alpm_list_getdata (list_t)));
 	}
-	else
-		strcat (aur_rpc, AUR_RPC_INFO);
 	
+#ifndef USE_FETCH
+	curl_global_init(CURL_GLOBAL_SSL);
+#endif
+
 	for(t = targets; t; t = alpm_list_next(t)) 
 	{
-		target = alpm_list_getdata(t);
-		pkg_name = target;
+		req = request_new ();
+		req->target = alpm_list_getdata(t);
+		req->type = type;
 		if (type == AUR_SEARCH)
 		{
-			if (strchr (target, '*'))
+			if (strchr (req->target, '*'))
 			{
 				char *c;
-				aur_target = strdup (target);
-				while ((c = strchr (aur_target, '*')) != NULL)
+				req->arg = strdup (req->target);
+				while ((c = strchr (req->arg, '*')) != NULL)
 					*c='%';
-				pkg_name = aur_target;
 			}
-			aur_rpc[strlen(AUR_BASE_URL) + strlen(AUR_RPC) + strlen(AUR_RPC_SEARCH)] = '\0';
 		}
 		else
 		{
-			t1 = target_parse (target);
-			if (t1->db && strcmp (t1->db, AUR_REPO)!=0)
+			req->t_info = target_parse (req->target);
+			if (req->t_info->db && strcmp (req->t_info->db, AUR_REPO)!=0)
+			{
+				req = request_free (req);
 				continue;
-			pkg_name = t1->name;
-			aur_rpc[strlen(AUR_BASE_URL) + strlen(AUR_RPC) + strlen(AUR_RPC_INFO)] = '\0';
-		}
-#ifdef USE_FETCH	
-/* {{{ */
-		char *pkg_name_encode=url_encode (pkg_name);
-		strcat (aur_rpc, pkg_name_encode);
-		free (pkg_name_encode);
-		res = string_new();
-		/* According to pacman code, libfetch doesn't reset error code */
-		fetchLastErrCode = 0;
-		aur_url = fetchParseURL (aur_rpc);
-		dlu = fetchGet (aur_url, "");
-		if (fetchLastErrCode == 0 && dlu)
-		{
-			ssize_t nread=0;
-			while ((nread = fetchIO_read (dlu, buf, AUR_DL_LEN)) > 0)
-				string_ncat (res, buf, nread);
-			fetchIO_close (dlu);
-/* }}} */
-#else
-/* {{{ */
-		char *pkg_name_encode=curl_easy_escape(curl, pkg_name, 0);
-		if (pkg_name_encode==NULL) 
-			continue;
-		strcat (aur_rpc, pkg_name_encode);
-		curl_free (pkg_name_encode);
-		res = string_new();
-		curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
-		curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
-		curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
-		curl_easy_setopt (curl, CURLOPT_URL, aur_rpc);
-		if ((curl_code = curl_easy_perform (curl)) == CURLE_OK)
-		{
-/* }}} */
-#endif		
-			if (!aur_parse_result ((const unsigned char *) res->s, &pkg_json))
-			{
-				target_free (t1);
-				string_free (res);
-				break;
 			}
-			else
+			req->arg = strdup (req->t_info->name);
+		}
+		if (!req->arg) req->arg = strdup (req->target);
+		if (aur_fetch (req) &&
+		    aur_parse_result ((const unsigned char *) req->res->s, &pkg_json))
+		{
+			alpm_list_t *p;
+			if (type != AUR_SEARCH)
 			{
- 				alpm_list_t *p;
-				if (type != AUR_SEARCH)
+				for (p = pkg_json.pkgs; p; p = alpm_list_next(p))
 				{
-					for (p = pkg_json.pkgs; p; p = alpm_list_next(p))
-					{
-						if (target_check_version (t1, aur_pkg_get_version (alpm_list_getdata (p))))
-							print_package (target, alpm_list_getdata (p), aur_get_str);
-					}
-					if (type == AUR_INFO_P && pkg_json.pkgs == NULL)
-					{
-						aurpkg_t *pkg = aur_pkg_new();
-						pkg->name = strdup (target);
-						print_package (target, pkg, aur_get_str);
-						aur_pkg_free (pkg);
-					}
-					alpm_list_free_inner (pkg_json.pkgs, (alpm_list_fn_free) aur_pkg_free);
-					alpm_list_free (pkg_json.pkgs);
+					if (target_check_version (req->t_info, aur_pkg_get_version (alpm_list_getdata (p))))
+						print_package (req->target, alpm_list_getdata (p), aur_get_str);
 				}
-				else if (type == AUR_SEARCH && pkg_json.pkgs)
+				if (type == AUR_INFO_P && pkg_json.pkgs == NULL)
 				{
-					alpm_list_t *l,*p;
-					char *ts = concat_str_list (list_t);
-					int found;
-					/* Filter results with others targets without making more queries */
-					for (p = pkg_json.pkgs; p; p = alpm_list_next(p))
-					{
-						found=1;
-						for (l = alpm_list_next (list_t); l && found; l = alpm_list_next (l))
-						{
-							if (strcasestr (aur_pkg_get_name (alpm_list_getdata (p)), alpm_list_getdata (l))==NULL &&
-								strcasestr (aur_pkg_get_desc (alpm_list_getdata (p)), alpm_list_getdata (l))==NULL)
-								found=0;
-						}
-						if (found)
-							print_or_add_result (alpm_list_getdata (p), R_AUR_PKG);
-							//print_package (ts, alpm_list_getdata (p), aur_get_str);
-					}
-					free (ts);
-					alpm_list_free_inner (pkg_json.pkgs, (alpm_list_fn_free) aur_pkg_free);
-					alpm_list_free (pkg_json.pkgs);
+					aurpkg_t *pkg = aur_pkg_new();
+					pkg->name = strdup (req->target);
+					print_package (req->target, pkg, aur_get_str);
+					aur_pkg_free (pkg);
 				}
-				pkg_json.pkgs = NULL;
+				alpm_list_free_inner (pkg_json.pkgs, (alpm_list_fn_free) aur_pkg_free);
+				alpm_list_free (pkg_json.pkgs);
 			}
+			else if (type == AUR_SEARCH && pkg_json.pkgs)
+			{
+				alpm_list_t *l,*p;
+				char *ts = concat_str_list (list_t);
+				int found;
+				/* Filter results with others targets without making more queries */
+				for (p = pkg_json.pkgs; p; p = alpm_list_next(p))
+				{
+					found=1;
+					for (l = alpm_list_next (list_t); l && found; l = alpm_list_next (l))
+					{
+						if (strcasestr (aur_pkg_get_name (alpm_list_getdata (p)), alpm_list_getdata (l))==NULL &&
+							strcasestr (aur_pkg_get_desc (alpm_list_getdata (p)), alpm_list_getdata (l))==NULL)
+							found=0;
+					}
+					if (found)
+						print_or_add_result (alpm_list_getdata (p), R_AUR_PKG);
+						//print_package (ts, alpm_list_getdata (p), aur_get_str);
+				}
+				free (ts);
+				alpm_list_free_inner (pkg_json.pkgs, (alpm_list_fn_free) aur_pkg_free);
+				alpm_list_free (pkg_json.pkgs);
+			}
+			pkg_json.pkgs = NULL;
 		}
-#ifdef USE_FETCH
-		fetchFreeURL (aur_url);
-#endif		
-		if (type != AUR_SEARCH)
-			target_free (t1);
-		string_free (res);
-		if (aur_target)
-		{
-			free (aur_target);
-			aur_target = NULL;
-			target = NULL;
-		}
-#ifdef USE_FETCH
-/* {{{ */
-		if (fetchLastErrCode != 0)
- 		{
-			fprintf(stderr, "AUR rpc error: %s\n", fetchLastErrString);
- 			break;
- 		}
-/* }}} */
-#else		
-/* {{{ */
-		if (curl_code != CURLE_OK)
-		{
-			fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
-			break;
-		}
-/* }}} */
-#endif
+		req = request_free (req);
 	}
 #ifndef USE_FETCH
-	curl_easy_cleanup(curl);
 	curl_global_cleanup();
 #endif
 	if (list_t)
