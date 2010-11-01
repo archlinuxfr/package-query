@@ -19,6 +19,9 @@
 #include "config.h"
 #include <string.h>
 #include <alpm_list.h>
+#include <pthread.h>
+#include <semaphore.h>
+
 
 #ifdef USE_FETCH
 #include <ctype.h>
@@ -76,6 +79,12 @@
 #define AUR_DL_TM 10	/* Timeout */
 #endif
 
+/*
+ * AUR concurrent connections
+ */
+#define AUR_MAX_CONNECT 10
+sem_t sem;
+
 typedef struct _request_t
 {
 	int type;
@@ -84,6 +93,7 @@ typedef struct _request_t
 	target_t *t_info;
 	string_t *res;
 	int success;
+	pthread_t thread;
 } request_t;
 
 request_t *request_new ()
@@ -481,16 +491,33 @@ static int aur_fetch (request_t *req)
 	return 1;
 }
 
+void *thread_aur_fetch (void *arg)
+{
+	if (sem_wait (&sem)!=0)
+	{
+		perror ("sem_wait");
+		exit (3);
+	}
+	aur_fetch (arg);
+	if (sem_post (&sem)!=0)
+	{
+		perror ("sem_post");
+		exit (3);
+	}
+
+	pthread_exit(NULL);
+}
+
 int aur_parse_result (const unsigned char *s, jsonpkg_t *pkg_json)
 {
 	yajl_handle hand;
 	yajl_status stat;
 	yajl_parser_config cfg = { 1, 1 };
 	hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) pkg_json);
-	stat = yajl_parse(hand, s, strlen (s));
+	stat = yajl_parse(hand, s, strlen ((const char *) s));
 	if (stat != yajl_status_ok && stat != yajl_status_insufficient_data)
 	{
-		unsigned char * str = yajl_get_error(hand, 1, (const unsigned char *) s, strlen (s));
+		unsigned char * str = yajl_get_error(hand, 1, s, strlen ((const char *) s));
 		fprintf(stderr, (const char *) str);
 		yajl_free_error(hand, str);
 		yajl_free(hand);
@@ -500,12 +527,12 @@ int aur_parse_result (const unsigned char *s, jsonpkg_t *pkg_json)
 	return 1;
 }
 
-
-
 int aur_request (alpm_list_t *targets, int type)
 {
 	int ret=0;
 	request_t *req;
+	alpm_list_t *reqs=NULL;
+	pthread_attr_t attr;
 	alpm_list_t *list_t=NULL;
 	jsonpkg_t pkg_json = { NULL, NULL, "", 0};
 	alpm_list_t *t;
@@ -550,8 +577,36 @@ int aur_request (alpm_list_t *targets, int type)
 			req->arg = strdup (req->t_info->name);
 		}
 		if (!req->arg) req->arg = strdup (req->target);
-		if (aur_fetch (req) &&
-		    aur_parse_result ((const unsigned char *) req->res->s, &pkg_json))
+		reqs = alpm_list_add (reqs, req);
+	}
+	if (sem_init (&sem, 0, AUR_MAX_CONNECT) != 0)
+	{
+		perror ("sem_init");
+		exit (3);
+	}
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	for(t = reqs; t; t = alpm_list_next(t)) 
+	{
+		req = alpm_list_getdata (t);
+		int rc = pthread_create(&(req->thread), &attr, thread_aur_fetch, (void *)req);
+		if (rc) 
+		{
+			fprintf(stderr, "pthread error %d\n", rc);
+			exit (2);
+		}
+	}
+	pthread_attr_destroy(&attr);
+	for(t = reqs; t; t = alpm_list_next(t)) 
+	{
+		req = alpm_list_getdata (t);
+		int rc = pthread_join(req->thread, NULL);
+		if (rc) 
+		{
+			fprintf(stderr, "pthread error %d\n", rc);
+			exit (2);
+		}
+		if (req->success && aur_parse_result ((const unsigned char *) req->res->s, &pkg_json))
 		{
 			alpm_list_t *p;
 			if (type != AUR_SEARCH)
@@ -598,6 +653,7 @@ int aur_request (alpm_list_t *targets, int type)
 		}
 		req = request_free (req);
 	}
+	sem_destroy (&sem);
 #ifndef USE_FETCH
 	curl_global_cleanup();
 #endif
