@@ -258,7 +258,7 @@ size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
 
 static int json_start_map (void *ctx) 
 {
-	package_json_t *pkg_json = (package_json_t *) ctx;
+	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 	if (++(pkg_json->level)>1)
 		pkg_json->pkg = aur_pkg_new();
 	return 1;
@@ -267,7 +267,7 @@ static int json_start_map (void *ctx)
 
 static int json_end_map (void *ctx)
 {
-	package_json_t *pkg_json = (package_json_t *) ctx;
+	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 	if (--(pkg_json->level)==1)
 	{
 		switch (config.sort)
@@ -289,7 +289,7 @@ static int json_end_map (void *ctx)
 static int json_key (void * ctx, const unsigned char * stringVal,
                             unsigned int stringLen)
 {
-	package_json_t *pkg_json = (package_json_t *) ctx;
+	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 	strncpy (pkg_json->current_key, (const char *) stringVal, stringLen);
 	pkg_json->current_key[stringLen] = '\0';
     return 1;
@@ -299,7 +299,7 @@ static int json_key (void * ctx, const unsigned char * stringVal,
 static int json_value (void * ctx, const unsigned char * stringVal,
                            unsigned int stringLen)
 {
-	package_json_t *pkg_json = (package_json_t *) ctx;
+	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 	// package info in level 2
 	if (pkg_json->level<2) return 1;
 	char *s = strndup ((const char *)stringVal, stringLen);
@@ -376,6 +376,27 @@ static yajl_callbacks callbacks = {
 };
 
 
+int aur_parse_result (const unsigned char *s, jsonpkg_t *pkg_json)
+{
+	yajl_handle hand;
+	yajl_status stat;
+	yajl_parser_config cfg = { 1, 1 };
+	hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) pkg_json);
+	stat = yajl_parse(hand, s, strlen (s));
+	if (stat != yajl_status_ok && stat != yajl_status_insufficient_data)
+	{
+		unsigned char * str = yajl_get_error(hand, 1, (const unsigned char *) s, strlen (s));
+		fprintf(stderr, (const char *) str);
+		yajl_free_error(hand, str);
+		yajl_free(hand);
+		return 0;
+	}	
+	yajl_free(hand);
+	return 1;
+}
+
+
+
 int aur_request (alpm_list_t *targets, int type)
 {
 	int ret=0;
@@ -388,10 +409,7 @@ int aur_request (alpm_list_t *targets, int type)
 	CURL *curl;
 	CURLcode curl_code;
 #endif
-	yajl_handle hand;
-	yajl_status stat;
-	yajl_parser_config cfg = { 1, 1 };
-	package_json_t pkg_json = { NULL, NULL, "", 0};
+	jsonpkg_t pkg_json = { NULL, NULL, "", 0};
 	char aur_rpc[PATH_MAX];
 	string_t *res;
 	alpm_list_t *t;
@@ -452,7 +470,6 @@ int aur_request (alpm_list_t *targets, int type)
 		strcat (aur_rpc, pkg_name_encode);
 		free (pkg_name_encode);
 		res = string_new();
-		hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) &pkg_json);
 		/* According to pacman code, libfetch doesn't reset error code */
 		fetchLastErrCode = 0;
 		aur_url = fetchParseURL (aur_rpc);
@@ -472,7 +489,6 @@ int aur_request (alpm_list_t *targets, int type)
 		strcat (aur_rpc, pkg_name_encode);
 		curl_free (pkg_name_encode);
 		res = string_new();
-		hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) &pkg_json);
 		curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
 		curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
 		curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
@@ -481,15 +497,10 @@ int aur_request (alpm_list_t *targets, int type)
 		{
 /* }}} */
 #endif		
-			stat = yajl_parse(hand, (const unsigned char *) res->s, strlen (res->s));
-			if (stat != yajl_status_ok && stat != yajl_status_insufficient_data)
+			if (!aur_parse_result ((const unsigned char *) res->s, &pkg_json))
 			{
-				unsigned char * str = yajl_get_error(hand, 1, (const unsigned char *) res->s, strlen (res->s));
-				fprintf(stderr, (const char *) str);
-				yajl_free_error(hand, str);
 				target_free (t1);
 				string_free (res);
-				yajl_free(hand);
 				break;
 			}
 			else
@@ -544,7 +555,6 @@ int aur_request (alpm_list_t *targets, int type)
 		if (type != AUR_SEARCH)
 			target_free (t1);
 		string_free (res);
-		yajl_free(hand);
 		if (aur_target)
 		{
 			free (aur_target);

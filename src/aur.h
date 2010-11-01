@@ -44,13 +44,13 @@ typedef struct _aurpkg_t
 /*
  * JSON parse packages
  */
-typedef struct _package_json_t
+typedef struct _jsonpkg_t
 {
 	alpm_list_t *pkgs;
 	aurpkg_t *pkg;
 	char current_key[AUR_ID_LEN];
 	int level;
-} package_json_t;
+} jsonpkg_t;
 
 aurpkg_t *aur_pkg_new ();
 aurpkg_t *aur_pkg_free (aurpkg_t *pkg);
