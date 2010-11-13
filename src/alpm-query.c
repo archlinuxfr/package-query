@@ -293,6 +293,8 @@ int _search_pkg_by (pmdb_t *db, alpm_list_t *targets,
 			for(t = targets; t; t = alpm_list_next(t)) 
 			{
 				target_t *t2 = target_parse (alpm_list_getdata(t));
+				if (t2->db && strcmp (t2->db, alpm_db_get_name (db))!=0)
+					continue;
 				if (target_compatible (t1, t2) && filter (pkg, config.filter))
 				{
 					ret++;
