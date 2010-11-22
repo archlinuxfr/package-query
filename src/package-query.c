@@ -32,6 +32,7 @@
 #include <getopt.h>
 #include <locale.h>
 #include <libintl.h>
+#include <signal.h>
 
 #include "util.h"
 #include "alpm-query.h"
@@ -42,6 +43,28 @@
 
 extern char *optarg;
 extern int optind;
+
+alpm_list_t *targets=NULL;
+alpm_list_t *dbs=NULL;
+int alpm_initialized=0;
+
+void cleanup (int ret)
+{
+	alpm_list_free (dbs);
+	if (alpm_initialized && alpm_release()==-1)
+		fprintf (stderr, alpm_strerrorlast());
+	FREELIST(targets);
+	free (config.myname);
+	alpm_cleanup ();
+	aur_cleanup ();
+	color_cleanup ();
+	exit (ret);
+}
+
+void handler (int signum)
+{
+	cleanup (signum);
+}
 
 void init_config (const char *myname)
 {
@@ -146,9 +169,13 @@ int main (int argc, char **argv)
 	int ret=0;
 	int need=0, given=0, cycle_db=0;
 	pmdb_t *db;
-	alpm_list_t *targets=NULL;
-	alpm_list_t *dbs=NULL;
 	alpm_list_t *t;
+
+	struct sigaction a;
+	a.sa_handler = handler;
+	sigemptyset(&a.sa_mask);
+	sigaction(SIGINT, &a, NULL);
+	sigaction(SIGTERM, &a, NULL);
 
 	init_config (argv[0]);
 
@@ -327,8 +354,7 @@ int main (int argc, char **argv)
 				printf ("%s\n", (char *)alpm_list_getdata(t));
 			FREELIST (dbs);
 		}
-		free (config.myname);
-		exit (0);
+		cleanup (0);
 	}
 	if (config.colors)
 	{
@@ -371,10 +397,9 @@ int main (int argc, char **argv)
 	}
 	else if (!config.op && (given & N_DB)) /* Show info by default */
 		config.op = OP_INFO;
-	/* TODO: release alpm before exit on failure */
-	if (!init_alpm()) exit(1);
-	if (!init_db_sync ()) goto cleanup;
-	if (!init_db_local()) goto cleanup;
+	if ((alpm_initialized = init_alpm()) == 0) cleanup(1);
+	if (!init_db_sync ()) cleanup(1);
+	if (!init_db_local()) cleanup(1);
 	if (config.is_file)
 	{
 		for(t = targets; t; t = alpm_list_next(t))
@@ -389,7 +414,7 @@ int main (int argc, char **argv)
 			print_package (filename, pkg, alpm_pkg_get_str);
 			ret++;
 		}
-		goto cleanup;
+		cleanup(!ret);
 	}
 	/* we can add local to dbs, so copy the list instead of just get alpm's one */
 	if (config.db_sync) dbs = alpm_list_copy (alpm_option_get_syncdbs());
@@ -453,21 +478,9 @@ int main (int argc, char **argv)
 
 	show_results();
 
-cleanup:
 	/* Some cleanups */
-	alpm_list_free (dbs);
-	if (alpm_release()==-1)
-		fprintf (stderr, alpm_strerrorlast());
-	FREELIST(targets);
-	free (config.myname);
-	alpm_cleanup ();
-	aur_cleanup ();
-	color_cleanup ();
-	/* Anything left ? */
-	if (ret != 0)
-		return 0;
-	else
-		return 1;
+	cleanup(!ret);
+	return 0;
 }
 
 /* vim: set ts=4 sw=4 noet: */

@@ -110,7 +110,7 @@ int parse_config_file (alpm_list_t **dbs, const char *config_file, int reg)
 	if ((conf = fopen (config_file, "r")) == NULL)
 	{
 		fprintf(stderr, "Unable to open file: %s\n", config_file);
-		exit(2);
+		return 0;
 	}
 	while (fgets (line, PATH_MAX, conf))
 	{
