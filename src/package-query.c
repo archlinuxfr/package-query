@@ -174,6 +174,7 @@ int main (int argc, char **argv)
 	struct sigaction a;
 	a.sa_handler = handler;
 	sigemptyset(&a.sa_mask);
+	a.sa_flags = 0;
 	sigaction(SIGINT, &a, NULL);
 	sigaction(SIGTERM, &a, NULL);
 

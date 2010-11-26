@@ -491,7 +491,7 @@ static int aur_fetch (request_t *req)
 	return 1;
 }
 
-void *thread_aur_fetch (void *arg)
+static void *thread_aur_fetch (void *arg)
 {
 	if (sem_wait (&sem)!=0)
 	{
@@ -654,6 +654,7 @@ int aur_request (alpm_list_t *targets, int type)
 		req = request_free (req);
 	}
 	sem_destroy (&sem);
+	alpm_list_free (reqs);
 #ifndef USE_FETCH
 	curl_global_cleanup();
 #endif

@@ -294,7 +294,11 @@ int _search_pkg_by (pmdb_t *db, alpm_list_t *targets,
 			{
 				target_t *t2 = target_parse (alpm_list_getdata(t));
 				if (t2->db && strcmp (t2->db, alpm_db_get_name (db))!=0)
+				{
+					target_free (t1);
+					target_free (t2);
 					continue;
+				}
 				if (target_compatible (t1, t2) && filter (pkg, config.filter))
 				{
 					ret++;
@@ -341,7 +345,10 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
 		const char *target=alpm_list_getdata(t);
 		target_t *t1 = target_parse (target);
 		if (t1->db && strcmp (t1->db, db_name)!=0)
+		{
+			target_free (t1);
 			continue;
+		}
 		pkg_found = alpm_db_get_pkg (db, t1->name);
 		if (pkg_found != NULL 
 			&& filter (pkg_found, config.filter)
@@ -362,6 +369,7 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
 					free (data);
 			}			
 		}
+		target_free (t1);
 	}
 	if (modify)
 	{
