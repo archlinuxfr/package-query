@@ -295,7 +295,6 @@ int _search_pkg_by (pmdb_t *db, alpm_list_t *targets,
 				target_t *t2 = target_parse (alpm_list_getdata(t));
 				if (t2->db && strcmp (t2->db, alpm_db_get_name (db))!=0)
 				{
-					target_free (t1);
 					target_free (t2);
 					continue;
 				}
