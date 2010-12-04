@@ -21,6 +21,8 @@
 #include <alpm_list.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <errno.h>
+#include <unistd.h>
 
 
 #ifdef USE_FETCH
@@ -83,6 +85,7 @@
  * AUR concurrent connections
  */
 #define AUR_MAX_CONNECT 10
+#define AUR_THREAD_RETRIES 3
 sem_t sem;
 
 typedef struct _request_t
@@ -588,11 +591,16 @@ int aur_request (alpm_list_t *targets, int type)
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 	for(t = reqs; t; t = alpm_list_next(t)) 
 	{
+		int rc=0,retries=AUR_THREAD_RETRIES;
 		req = alpm_list_getdata (t);
-		int rc = pthread_create(&(req->thread), &attr, thread_aur_fetch, (void *)req);
+		do
+		{
+			if (rc) sleep (1);
+			rc = pthread_create(&(req->thread), &attr, thread_aur_fetch, (void *)req);
+		} while (rc == EAGAIN && retries-- > 0);
 		if (rc) 
 		{
-			fprintf(stderr, "pthread error %d\n", rc);
+			perror ("pthread: ");
 			exit (2);
 		}
 	}
