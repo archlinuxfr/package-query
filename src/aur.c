@@ -22,7 +22,6 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <errno.h>
-#include <unistd.h>
 
 
 #ifdef USE_FETCH
@@ -84,8 +83,9 @@
 /*
  * AUR concurrent connections
  */
+#ifndef AUR_MAX_CONNECT
 #define AUR_MAX_CONNECT 10
-#define AUR_THREAD_RETRIES 3
+#endif
 sem_t sem;
 
 typedef struct _request_t
@@ -496,18 +496,12 @@ static int aur_fetch (request_t *req)
 
 static void *thread_aur_fetch (void *arg)
 {
-	if (sem_wait (&sem)!=0)
-	{
-		perror ("sem_wait");
-		exit (3);
-	}
 	aur_fetch (arg);
 	if (sem_post (&sem)!=0)
 	{
 		perror ("sem_post");
 		exit (3);
 	}
-
 	pthread_exit(NULL);
 }
 
@@ -591,13 +585,13 @@ int aur_request (alpm_list_t *targets, int type)
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 	for(t = reqs; t; t = alpm_list_next(t)) 
 	{
-		int rc=0,retries=AUR_THREAD_RETRIES;
-		req = alpm_list_getdata (t);
-		do
+		if (sem_wait (&sem)!=0)
 		{
-			if (rc) sleep (1);
-			rc = pthread_create(&(req->thread), &attr, thread_aur_fetch, (void *)req);
-		} while (rc == EAGAIN && retries-- > 0);
+			perror ("sem_wait");
+			exit (3);
+		}
+		req = alpm_list_getdata (t);
+		int rc = pthread_create(&(req->thread), &attr, thread_aur_fetch, (void *)req);
 		if (rc) 
 		{
 			perror ("pthread: ");
@@ -611,7 +605,7 @@ int aur_request (alpm_list_t *targets, int type)
 		int rc = pthread_join(req->thread, NULL);
 		if (rc) 
 		{
-			fprintf(stderr, "pthread error %d\n", rc);
+			perror ("pthread: ");
 			exit (2);
 		}
 		if (req->success && aur_parse_result ((const unsigned char *) req->res->s, &pkg_json))
