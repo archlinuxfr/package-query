@@ -39,11 +39,11 @@ typedef struct _aurpkg_t
 	unsigned short outofdate;
 } aurpkg_t;
 
-#define AUR_ID_LEN 	20
 
 /*
  * JSON parse packages
  */
+#define AUR_ID_LEN 	20
 typedef struct _jsonpkg_t
 {
 	alpm_list_t *pkgs;
@@ -51,6 +51,7 @@ typedef struct _jsonpkg_t
 	char current_key[AUR_ID_LEN];
 	int level;
 } jsonpkg_t;
+
 
 aurpkg_t *aur_pkg_new ();
 aurpkg_t *aur_pkg_free (aurpkg_t *pkg);
@@ -73,12 +74,9 @@ unsigned short aur_pkg_get_outofdate (const aurpkg_t * pkg);
 /*
  * AUR search function
  * Returns number of packages found
- * This function call print_package()
  */
 int aur_search (alpm_list_t *targets);
 int aur_info (alpm_list_t *targets);
-/* aur_info_none print infomation even if package is not found */
-int aur_info_none (alpm_list_t *targets);
 
 /*
  * aur_get_str() get info for package

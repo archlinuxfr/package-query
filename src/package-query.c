@@ -471,7 +471,7 @@ int main (int argc, char **argv)
 					/* -AQma */
 					config.aur_foreign = 1;
 					alpm_search_local (&targets);
-					ret += aur_info_none (targets);
+					ret += aur_info (targets);
 				}
 				break;
 		}
