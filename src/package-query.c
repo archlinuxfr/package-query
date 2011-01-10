@@ -50,6 +50,9 @@ int alpm_initialized=0;
 
 void cleanup (int ret)
 {
+	static cleaned=0;
+	if (cleaned) return;
+	cleaned=1;
 	alpm_list_free (dbs);
 	if (alpm_initialized && alpm_release()==-1)
 		fprintf (stderr, alpm_strerrorlast());
@@ -172,13 +175,12 @@ int main (int argc, char **argv)
 	alpm_list_t *t;
 
 	struct sigaction a;
+	init_config (argv[0]);
 	a.sa_handler = handler;
 	sigemptyset(&a.sa_mask);
 	a.sa_flags = 0;
 	sigaction(SIGINT, &a, NULL);
 	sigaction(SIGTERM, &a, NULL);
-
-	init_config (argv[0]);
 
 	int opt;
 	int opt_index=0;
