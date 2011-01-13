@@ -72,6 +72,7 @@ int alpm_search_local (alpm_list_t **res);
 
 
 off_t get_size_pkg (pmpkg_t *pkg);
+pmpkg_t *get_sync_pkg (pmpkg_t *pkg);
 
 /*
  * alpm_pkg_get_str() get info for package

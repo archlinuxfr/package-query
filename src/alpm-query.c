@@ -230,16 +230,7 @@ int filter (pmpkg_t *pkg, unsigned int _filter)
 {
 	int found=0;
 	if (_filter & F_FOREIGN)
-	{
-		const char *pkg_name = alpm_pkg_get_name (pkg);
-		alpm_list_t *i;
-		for (i = alpm_option_get_syncdbs(); i && !found; i = alpm_list_next (i))
-		{
-			if (alpm_db_get_pkg (alpm_list_getdata (i), pkg_name) != NULL)
-				found = 1;
-		}
-		if (found) return 0;
-	}
+		return (get_sync_pkg (pkg) == NULL);
 	if ((_filter & F_EXPLICIT) == F_EXPLICIT && alpm_pkg_get_reason(pkg) != PM_PKG_REASON_EXPLICIT)
 		return 0;
 	if ((_filter & F_DEPS) == F_DEPS && alpm_pkg_get_reason(pkg) != PM_PKG_REASON_DEPEND)
