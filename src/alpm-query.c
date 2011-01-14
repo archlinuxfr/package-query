@@ -326,8 +326,8 @@ int search_pkg_by_replaces (pmdb_t *db, alpm_list_t *targets)
 int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
 {
 	int ret=0;
-	alpm_list_t *t, *targets_copy=*targets;
-	int targets_copied=0;
+	alpm_list_t *t, *pkgs_found=NULL;
+	alpm_list_t *targets_copy=*targets;
 	pmpkg_t *pkg_found;
 	const char *db_name = alpm_db_get_name (db);
 	for(t = *targets; t; t = alpm_list_next(t)) 
@@ -340,33 +340,32 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
 			continue;
 		}
 		pkg_found = alpm_db_get_pkg (db, t1->name);
-		if (pkg_found != NULL 
+		if (pkg_found != NULL
 			&& filter (pkg_found, config.filter)
 			&& target_check_version (t1, alpm_pkg_get_version (pkg_found)))
 		{
 			ret++;
-			print_package (target, pkg_found, alpm_pkg_get_str);
+			if (!modify || !alpm_list_find_ptr (pkgs_found, pkg_found))
+				print_package (target, pkg_found, alpm_pkg_get_str);
 			if (modify)
 			{
-				if (!targets_copied)
-				{
+				pkgs_found = alpm_list_add (pkgs_found, pkg_found);
+				if (*targets == targets_copy)
 					targets_copy = alpm_list_copy (*targets);
-					targets_copied = 1;
-				}
-				char *data;
-				targets_copy = alpm_list_remove_str (targets_copy, t1->name, &data);
+				char *data=NULL;
+				targets_copy = alpm_list_remove_str (targets_copy, target, &data);
 				if (data)
 					free (data);
 			}			
 		}
 		target_free (t1);
 	}
-	if (modify)
+	if (modify && *targets != targets_copy)
 	{
-		if (targets_copied)
-			alpm_list_free (*targets);
+		alpm_list_free (*targets);
 		*targets=targets_copy;
 	}
+	alpm_list_free (pkgs_found);
 	return ret;
 }
 
