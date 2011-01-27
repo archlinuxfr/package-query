@@ -444,9 +444,9 @@ static int aur_fetch (request_t *req)
 {
 	char url[PATH_MAX];
 	if (req->type == AUR_SEARCH)
-		sprintf (url, "%s%s%s", AUR_BASE_URL, AUR_RPC, AUR_RPC_SEARCH);
+		sprintf (url, "%s%s%s", config.aur_url, AUR_RPC, AUR_RPC_SEARCH);
 	else
-		sprintf (url, "%s%s%s", AUR_BASE_URL, AUR_RPC, AUR_RPC_INFO);
+		sprintf (url, "%s%s%s", config.aur_url, AUR_RPC, AUR_RPC_INFO);
 	req->res = string_new();
 #ifdef USE_FETCH	
 /* {{{ */
@@ -498,6 +498,8 @@ static int aur_fetch (request_t *req)
 	curl_easy_setopt (curl, CURLOPT_WRITEDATA, req->res);
 	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
 	curl_easy_setopt (curl, CURLOPT_URL, (const char *) url);
+	if (config.insecure)
+		curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
 	if ((curl_code = curl_easy_perform (curl)) != CURLE_OK)
 	{
 		fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
@@ -701,11 +703,11 @@ const char *aur_get_str (void *p, unsigned char c)
 		case 'r': info = strdup (AUR_REPO); free_info=1; break;
 		case 'u': 
 			info = (char *) malloc (sizeof (char) * 
-				(strlen (AUR_BASE_URL) + 
+				(strlen (config.aur_url) + 
 				strlen (aur_pkg_get_urlpath (pkg)) +
 				2 /* '/' separate url and filename */
 				));
-			strcpy (info, AUR_BASE_URL);
+			strcpy (info, config.aur_url);
 			strcat (info, aur_pkg_get_urlpath (pkg));
 			free_info = 1;
 			break;

@@ -74,31 +74,33 @@ void init_config (const char *myname)
 	char *_myname=strdup (myname);
 	config.myname = strdup(basename(_myname));
 	free (_myname);
-	config.op = 0;
-	config.quiet = 0;
-	config.db_local = 0;
-	config.db_sync = 0;
 	config.aur = 0;
-	config.query=ALL;
-	config.is_file = 0;
-	config.list = 0;
-	config.list_group = 0;
-	config.escape = 0;
-	config.just_one = 0;
-	config.filter = 0;
-	config.sort = 0;
-	config.numbering = 0;
 	config.aur_foreign = 0;
 	config.colors = 1; 
-	config.custom_out = 0; 
-	config.get_res = 0;
-	config.show_size = 0;
-	strcpy (config.csep, " ");
-	strcpy (config.root_dir, "");
-	strcpy (config.dbpath, "");
 	config.custom_dbpath = 0;
+	config.custom_out = 0; 
+	config.db_local = 0;
+	config.db_sync = 0;
+	config.escape = 0;
+	config.filter = 0;
+	config.get_res = 0;
+	config.insecure = 0;
+	config.is_file = 0;
+	config.just_one = 0;
+	config.list = 0;
+	config.list_group = 0;
+	config.numbering = 0;
+	config.op = 0;
+	config.quiet = 0;
+	config.query=ALL;
+	config.show_size = 0;
+	strcpy (config.aur_url, AUR_BASE_URL);
 	strcpy (config.config_file, "");
+	strcpy (config.csep, " ");
+	strcpy (config.dbpath, "");
 	strcpy (config.format_out, "");
+	strcpy (config.root_dir, "");
+	config.sort = 0;
 }
 
 
@@ -215,6 +217,8 @@ int main (int argc, char **argv)
 		{"number",     no_argument,       0, 1004},
 		{"get-res",    no_argument,       0, 1005},
 		{"show-size",  no_argument,       0, 1006},
+		{"aur-url",    required_argument, 0, 1007},
+		{"insecure",   no_argument,       0, 1008},
 		{"version",    no_argument,       0, 'v'},
 
 		{0, 0, 0, 0}
@@ -336,6 +340,12 @@ int main (int argc, char **argv)
 				break;
 			case 1006: /* --show-size */
 				config.show_size = 1;
+				break;
+			case 1007: /* --aur-url */
+				strcpy (config.aur_url, optarg);
+				break;
+			case 1008: /* --insecure */
+				config.insecure = 1;
 				break;
 			case 'u':
 				config.filter |= F_UPGRADES;
