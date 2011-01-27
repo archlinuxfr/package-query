@@ -1,3 +1,16 @@
 *.o
 *.swp
 package-query
+pq
+src/.deps/*
+aclocal.m4
+autom4te.cache
+config.h
+config.h.in
+config.log
+config.status
+configure
+Makefile
+Makefile.in
+libtool
+stamp-h1
