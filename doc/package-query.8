@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: package-query
 .\"    Author: [see the "Authors" section]
-.\" Generator: DocBook XSL Stylesheets v1.76.0 <http://docbook.sf.net/>
-.\"      Date: 2010-10-25
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 2011-01-28
 .\"    Manual: Package-query Manual
-.\"    Source: Package-query 0.3-25-g3b6e
+.\"    Source: Package-query 0.6
 .\"  Language: English
 .\"
-.TH "PACKAGE\-QUERY" "8" "2010\-10\-25" "Package\-query 0\&.3\-25\-g3b6" "Package\-query Manual"
+.TH "PACKAGE\-QUERY" "8" "2011\-01\-28" "Package\-query 0\&.6" "Package\-query Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -67,6 +67,12 @@ Display version and exit\&.
 Show help\&.
 .RE
 .PP
+\fB\-\-aur\-url <AUR url>\fR
+.RS 4
+Specify a custom AUR url (default to
+https://aur\&.archlinux\&.org)\&.
+.RE
+.PP
 \fB\-b, \-\-dbpath <database path>\fR
 .RS 4
 Specify new database location, default to <root>/var/lib/pacman\&.
@@ -75,11 +81,6 @@ Specify new database location, default to <root>/var/lib/pacman\&.
 \fB\-c, \-\-config <configuration file>\fR
 .RS 4
 Specify a custom config, default to <root>/etc:pacman\&.conf\&.
-.RE
-.PP
-\fB\-r, \-\-root <root path>\fR
-.RS 4
-Specify a new root, default to /\&.
 .RE
 .PP
 \fB\-f, \-\-format <format>\fR
@@ -98,6 +99,11 @@ Query file\&.
 No output, return 0 if packages found, else 1\&.
 .RE
 .PP
+\fB\-r, \-\-root <root path>\fR
+.RS 4
+Specify a new root, default to /\&.
+.RE
+.PP
 \fB\-u, \-\-upgrades\fR
 .RS 4
 List updates available\&.
@@ -108,9 +114,9 @@ List updates available\&.
 Escape \e" in output\&.
 .RE
 .PP
-\fB\-1, \-\-just\-one\fR
+\fB\-\-insecure\fR
 .RS 4
-Show first answer for each target (\fI\-i\fR)\&.
+Perform insecure ssl connection (if compiled with curl support)\&.
 .RE
 .PP
 \fB\-\-nocolor\fR
@@ -118,6 +124,11 @@ Show first answer for each target (\fI\-i\fR)\&.
 Output without colors\&.
 .RE
 .SH "COMMON SEARCH OPTIONS"
+.PP
+\fB\-1, \-\-just\-one\fR
+.RS 4
+Show first answer for each target (\fI\-i\fR)\&.
+.RE
 .PP
 \fB\-i, \-\-info\fR
 .RS 4
