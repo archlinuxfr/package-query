@@ -474,7 +474,7 @@ int main (int argc, char **argv)
 	{
 		switch (config.op)
 		{
-			case OP_INFO: ret += aur_info (targets); break;
+			case OP_INFO: ret += aur_info (&targets); break;
 			case OP_SEARCH: ret += aur_search (targets); break;
 			default:
 				if (config.db_local && config.filter == F_FOREIGN 
@@ -483,7 +483,7 @@ int main (int argc, char **argv)
 					/* -AQma */
 					config.aur_foreign = 1;
 					alpm_search_local (&targets);
-					ret += aur_info (targets);
+					ret += aur_info (&targets);
 				}
 				break;
 		}

@@ -75,8 +75,8 @@ unsigned short aur_pkg_get_outofdate (const aurpkg_t * pkg);
  * AUR search function
  * Returns number of packages found
  */
+int aur_info (alpm_list_t **targets);
 int aur_search (alpm_list_t *targets);
-int aur_info (alpm_list_t *targets);
 
 /*
  * aur_get_str() get info for package
