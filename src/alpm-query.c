@@ -43,11 +43,11 @@ char *ret_depname (void *data)
 		
 void init_path ()
 {
-	if (config.root_dir[0]=='\0') strcpy (config.root_dir, ROOTDIR);
 	if (config.dbpath[0]=='\0') 
 		sprintf (config.dbpath, "%s%s", config.root_dir, DBPATH);
 	if (config.config_file[0]=='\0')
 		sprintf (config.config_file, "%s%s", config.root_dir, CONFFILE);
+	if (config.root_dir[0]=='\0') strcpy (config.root_dir, ROOTDIR);
 }
 
 int init_alpm ()
