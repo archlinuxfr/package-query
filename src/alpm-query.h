@@ -37,7 +37,6 @@
  * Init alpm
  */
 int init_alpm ();
-int init_db_local ();
 
 /*
  * Parse pacman config to find sync databases

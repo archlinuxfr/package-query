@@ -438,7 +438,6 @@ int main (int argc, char **argv)
 		config.op = OP_INFO;
 	if ((alpm_initialized = init_alpm()) == 0) cleanup(1);
 	if (!init_db_sync ()) cleanup(1);
-	if (!init_db_local()) cleanup(1);
 	if (config.is_file)
 	{
 		for(t = targets; t; t = alpm_list_next(t))
