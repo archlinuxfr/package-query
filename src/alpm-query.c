@@ -323,14 +323,18 @@ int search_pkg_by_replaces (pmdb_t *db, alpm_list_t *targets)
 }
 
 
-int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
+int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets)
 {
 	int ret=0;
 	alpm_list_t *t, *pkgs_found=NULL;
-	alpm_list_t *targets_copy=*targets;
+	alpm_list_t *targets_copy;
 	pmpkg_t *pkg_found;
 	const char *db_name = alpm_db_get_name (db);
-	for(t = *targets; t; t = alpm_list_next(t)) 
+	if (config.just_one)
+		targets_copy = alpm_list_copy (*targets);
+	else
+		targets_copy = *targets;
+	for(t = targets_copy; t; t = alpm_list_next(t))
 	{
 		const char *target=alpm_list_getdata(t);
 		target_t *t1 = target_parse (target);
@@ -345,33 +349,30 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets, int modify)
 			&& target_check_version (t1, alpm_pkg_get_version (pkg_found)))
 		{
 			ret++;
-			if (!modify || !alpm_list_find_ptr (pkgs_found, pkg_found))
+			if (!config.just_one
+			    || !alpm_list_find_ptr (pkgs_found, pkg_found))
 				print_package (target, pkg_found, alpm_pkg_get_str);
-			if (modify)
+			if (config.just_one)
 			{
 				pkgs_found = alpm_list_add (pkgs_found, pkg_found);
-				if (*targets == targets_copy)
-					targets_copy = alpm_list_copy (*targets);
 				char *data=NULL;
-				targets_copy = alpm_list_remove_str (targets_copy, target, &data);
-				if (data)
-					free (data);
+				*targets = alpm_list_remove_str (*targets, target, &data);
+				if (data) free (data);
 			}			
 		}
 		target_free (t1);
 	}
-	if (modify && *targets != targets_copy)
+	if (config.just_one)
 	{
-		alpm_list_free (*targets);
-		*targets=targets_copy;
+		alpm_list_free (targets_copy);
+		alpm_list_free (pkgs_found);
 	}
-	alpm_list_free (pkgs_found);
 	return ret;
 }
 
-void print_grp (pmgrp_t *grp, int listp)
+void print_grp (pmgrp_t *grp)
 {
-	if (listp)
+	if (!config.list_group)
 	{
 		alpm_list_t *i;
 		for (i=alpm_grp_get_pkgs (grp); i; i=alpm_list_next (i))
@@ -381,7 +382,7 @@ void print_grp (pmgrp_t *grp, int listp)
 		print_package ("", grp, alpm_grp_get_str);
 }
 
-int list_grp (pmdb_t *db, alpm_list_t *targets, int listp)
+int list_grp (pmdb_t *db, alpm_list_t *targets)
 {
 	int ret=0;
 	pmgrp_t *grp;
@@ -395,7 +396,7 @@ int list_grp (pmdb_t *db, alpm_list_t *targets, int listp)
 			if (grp) 
 			{
 				ret++;
-				print_grp (grp, listp);
+				print_grp (grp);
 			}
 		}
 	}
@@ -404,7 +405,7 @@ int list_grp (pmdb_t *db, alpm_list_t *targets, int listp)
 		for(t = alpm_db_get_grpcache(db); t; t = alpm_list_next(t)) 
 		{
 			ret++;
-			print_grp (alpm_list_getdata(t), listp);
+			print_grp (alpm_list_getdata(t));
 		}
 	}
 	return ret;
@@ -474,10 +475,7 @@ int list_db (pmdb_t *db, alpm_list_t *targets)
 	for(i = alpm_db_get_pkgcache(db); i; i = alpm_list_next(i)) 
 	{
 		pmpkg_t *info = alpm_list_getdata(i);
-		if (target)
-			print_package (target, info, alpm_pkg_get_str);
-		else
-			print_package ("-", info, alpm_pkg_get_str);
+		print_or_add_result ((void *) info, R_ALPM_PKG);
 		ret++;
 	}
 	return ret;
