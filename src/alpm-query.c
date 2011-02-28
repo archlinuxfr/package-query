@@ -261,7 +261,7 @@ int _search_pkg_by (pmdb_t *db, alpm_list_t *targets,
 	alpm_list_t *t;
 	alpm_list_t *i, *j;
 
-	for(i = alpm_db_get_pkgcache_list(db); i; i = alpm_list_next(i))
+	for(i = alpm_db_get_pkgcache(db); i; i = alpm_list_next(i))
 	{
 		pmpkg_t *pkg = alpm_list_getdata(i);
 		for(j = f(pkg); j; j = alpm_list_next(j)) 
@@ -421,7 +421,7 @@ int alpm_search_local (alpm_list_t **res)
 	alpm_list_t *i;
 	int ret=0;
 
-	for(i = alpm_db_get_pkgcache_list(alpm_option_get_localdb());
+	for(i = alpm_db_get_pkgcache(alpm_option_get_localdb());
 	    i; i = alpm_list_next(i))
 	{
 		if (filter (alpm_list_getdata (i), config.filter))
@@ -461,7 +461,7 @@ int list_db (pmdb_t *db, alpm_list_t *targets)
 	else
 		db_present=1;
 	if (!db_present) return 0;
-	for(i = alpm_db_get_pkgcache_list(db); i; i = alpm_list_next(i))
+	for(i = alpm_db_get_pkgcache(db); i; i = alpm_list_next(i))
 	{
 		pmpkg_t *info = alpm_list_getdata(i);
 		print_or_add_result ((void *) info, R_ALPM_PKG);
