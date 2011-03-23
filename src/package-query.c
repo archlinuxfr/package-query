@@ -417,7 +417,9 @@ int main (int argc, char **argv)
 	}
 	for (i = optind; i < argc; i++)
 	{
-		targets = alpm_list_add(targets, strdup(argv[i]));
+		if (!config.just_one ||
+		    !alpm_list_find_str (targets, argv[i]))
+			targets = alpm_list_add(targets, strdup(argv[i]));
 	}
 	if (i!=optind) 
 	{

@@ -86,7 +86,8 @@
 #endif
 static alpm_list_t *reqs=NULL;
 static alpm_list_t *targets_left=NULL;
-static int aur_pkgs_found=0;
+static alpm_list_t *aur_pkgs_found=NULL;
+static int aur_pkgs_found_count=0;
 
 static pthread_mutex_t aur_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t aur_mp = PTHREAD_MUTEX_INITIALIZER;
@@ -536,32 +537,44 @@ static int aur_parse (request_t *req)
 		{
 			if (target_check_version (req->t_info, aur_pkg_get_version (alpm_list_getdata (p))))
 			{
-				print_package (req->target, alpm_list_getdata (p), aur_get_str);
+				if (!config.just_one ||
+				    !alpm_list_find (aur_pkgs_found, alpm_list_getdata (p),
+				                     (alpm_list_fn_cmp) aur_pkg_cmp))
+					print_package (req->target, alpm_list_getdata (p), aur_get_str);
 				if (targets_left)
 				{
+					if (!alpm_list_find (aur_pkgs_found, alpm_list_getdata (p),
+				                     (alpm_list_fn_cmp) aur_pkg_cmp))
+						aur_pkgs_found = alpm_list_add (aur_pkgs_found,
+						  aur_pkg_dup (alpm_list_getdata (p)));
 					char *data=NULL;
-					targets_left = alpm_list_remove_str (targets_left, req->target, &data);
+					targets_left = alpm_list_remove_str (targets_left,
+					  req->target, &data);
 					if (data) free (data);
 				}
-				found = 1;
+				found++;
 			}
 		}
 	}
 	else
 	{
+		int match=0;
 		/* Filter results with others targets without making more queries */
 		for (p = req->pkgs; p; p = alpm_list_next(p))
 		{
 			alpm_list_t *t;
-			found=1;
-			for (t = req->list_t; t && found; t = alpm_list_next (t))
+			match=1;
+			for (t = req->list_t; t && match; t = alpm_list_next (t))
 			{
 				if (strcasestr (aur_pkg_get_name (alpm_list_getdata (p)), alpm_list_getdata (t))==NULL &&
 					strcasestr (aur_pkg_get_desc (alpm_list_getdata (p)), alpm_list_getdata (t))==NULL)
-					found=0;
+					match=0;
 			}
-			if (found)
-				print_or_add_result (alpm_list_getdata (p), R_AUR_PKG);
+			if (match)
+			{
+				found++;
+				print_or_add_result (aur_pkg_dup (alpm_list_getdata (p)), R_AUR_PKG);
+			}
 		}
 	}
 	alpm_list_free_inner (req->pkgs, (alpm_list_fn_free) aur_pkg_free);
@@ -583,7 +596,7 @@ static void *thread_aur_fetch (void *arg)
 		if (aur_fetch (req) || config.aur_foreign) 
 		{
 			pthread_mutex_lock(&aur_mp);
-			aur_pkgs_found += aur_parse (req);
+			aur_pkgs_found_count += aur_parse (req);
 			pthread_mutex_unlock(&aur_mp);
 		}
 		request_free (req);
@@ -603,7 +616,7 @@ int aur_request (alpm_list_t **targets, int type)
 	if (targets == NULL)
 		return 0;
 
-	aur_pkgs_found = 0;
+	aur_pkgs_found_count = 0;
 	if (config.just_one && type != AUR_SEARCH)
 		targets_left = *targets;
 	else
@@ -674,8 +687,13 @@ int aur_request (alpm_list_t **targets, int type)
 #endif
 
 	if (config.just_one)
+	{
+		alpm_list_free_inner (aur_pkgs_found, (alpm_list_fn_free) aur_pkg_free);
+		alpm_list_free (aur_pkgs_found);
+		aur_pkgs_found = NULL;
 		*targets = targets_left;
-	return aur_pkgs_found;
+	}
+	return aur_pkgs_found_count;
 }
 
 int aur_info (alpm_list_t **targets)
