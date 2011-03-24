@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT([package-query], [0.6], [tuxce.net@gmail.com])
+AC_INIT([package-query], [0.7], [tuxce.net@gmail.com])
 AM_INIT_AUTOMAKE([-Wall])
 AC_CONFIG_SRCDIR([src/package-query.c])
 AC_CONFIG_HEADER([config.h])
@@ -60,8 +60,8 @@ AC_ARG_WITH(root-dir,
 AC_SUBST(ROOTDIR)
 
 AC_ARG_WITH(aur-url,
-	AS_HELP_STRING([--with-aur-url=url], [default to https://aur.archlinux.org]),
-	[AUR_BASE_URL=$withval], [AUR_BASE_URL=https://aur.archlinux.org])
+	AS_HELP_STRING([--with-aur-url=url], [default to http://aur.archlinux.org]),
+	[AUR_BASE_URL=$withval], [AUR_BASE_URL=http://aur.archlinux.org])
 
 AC_SUBST(AUR_BASE_URL)
 AC_CONFIG_FILES([src/Makefile
