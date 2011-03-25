@@ -396,24 +396,17 @@ alpm_list_t *aur_json_parse (const char *s)
 	return pkg_json.pkgs;
 }
 
-static int aur_fetch (request_t *req)
+static int aur_fetch (CURL *curl, request_t *req)
 {
 	char url[PATH_MAX];
+	CURLcode curl_code;
 	string_t *res;
 	if (req->type == AUR_SEARCH)
 		sprintf (url, "%s%s%s", config.aur_url, AUR_RPC, AUR_RPC_SEARCH);
 	else
 		sprintf (url, "%s%s%s", config.aur_url, AUR_RPC, AUR_RPC_INFO);
 	res = string_new();
-	CURL *curl;
-	CURLcode curl_code;
-	curl = curl_easy_init ();
-	if (!curl)
-	{
-		perror ("curl");
-		res = string_free (res);
-		return 0;
-	}
+
 	char *encoded_arg = curl_easy_escape (curl, req->arg, 0);
 	if (encoded_arg == NULL)
 	{
@@ -423,12 +416,8 @@ static int aur_fetch (request_t *req)
 	}
 	strcat (url, encoded_arg);
 	curl_free (encoded_arg);
-	curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
 	curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
-	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
 	curl_easy_setopt (curl, CURLOPT_URL, (const char *) url);
-	if (config.insecure)
-		curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
 	if ((curl_code = curl_easy_perform (curl)) != CURLE_OK)
 	{
 		fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
@@ -436,7 +425,6 @@ static int aur_fetch (request_t *req)
 		res = string_free (res);
 		return 0;
 	}
-	curl_easy_cleanup(curl);
 	req->pkgs = aur_json_parse ((const char *) res->s);
 	res = string_free (res);
 	return (req->pkgs != NULL);
@@ -500,6 +488,18 @@ static int aur_parse (request_t *req)
 static void *thread_aur_fetch (void *arg)
 {
 	request_t *req;
+	CURL *curl;
+	curl = curl_easy_init ();
+	if (!curl)
+	{
+		perror ("curl");
+		pthread_exit(NULL);
+		return 0;
+	}
+	curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
+	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
+	if (config.insecure)
+		curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
 	while (1)
 	{
 		pthread_mutex_lock(&aur_mutex);
@@ -507,7 +507,7 @@ static void *thread_aur_fetch (void *arg)
 		reqs = alpm_list_next (reqs);
 		pthread_mutex_unlock(&aur_mutex);
 		if (!req) break;
-		if (aur_fetch (req) || config.aur_foreign) 
+		if (aur_fetch (curl, req) || config.aur_foreign)
 		{
 			pthread_mutex_lock(&aur_mp);
 			aur_pkgs_found_count += aur_parse (req);
@@ -515,6 +515,7 @@ static void *thread_aur_fetch (void *arg)
 		}
 		request_free (req);
 	}
+	curl_easy_cleanup(curl);
 	pthread_exit(NULL);
 	return 0;
 }
