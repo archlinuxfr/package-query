@@ -52,10 +52,7 @@ int init_db_sync ();
  * Returns number of packages found
  * Those functions call print_package()
  */
-int search_pkg_by_depends (pmdb_t *db, alpm_list_t *targets);
-int search_pkg_by_conflicts (pmdb_t *db, alpm_list_t *targets);
-int search_pkg_by_provides (pmdb_t *db, alpm_list_t *targets);
-int search_pkg_by_replaces (pmdb_t *db, alpm_list_t *targets);
+int search_pkg_by_type (pmdb_t *db, alpm_list_t *targets, int query_type);
 
 /* search by name or db/name and if modify is true, 
  * remove found items from targets.

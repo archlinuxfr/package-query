@@ -42,6 +42,7 @@
 #define OP_Q_CONFLICTS 2
 #define OP_Q_PROVIDES  3
 #define OP_Q_REPLACES  4
+#define OP_Q_REQUIRES  5
 
 #define SEP_LEN 10
 

@@ -41,6 +41,11 @@
 #define N_DB     1
 #define N_TARGET 2
 
+#define SETQUERY(x) do { \
+if (config.op) break; \
+config.op = OP_QUERY; config.query = x; \
+need |= N_TARGET | N_DB; } while (0)
+
 extern char *optarg;
 extern int optind;
 
@@ -177,18 +182,7 @@ int deal_db (pmdb_t *db)
 		case OP_LIST_GROUP:
 			return list_grp (db, targets);
 		case OP_QUERY:
-			switch (config.query)
-			{
-				case OP_Q_DEPENDS:
-					return search_pkg_by_depends (db, targets);
-				case OP_Q_CONFLICTS:
-					return search_pkg_by_conflicts (db, targets);
-				case OP_Q_PROVIDES:
-					return search_pkg_by_provides (db, targets);
-				case OP_Q_REPLACES:
-					return search_pkg_by_replaces (db, targets);
-				default: return 0;
-			}
+			return search_pkg_by_type (db, targets, config.query);
 		default: return 0;
 	}
 }
@@ -243,6 +237,11 @@ int main (int argc, char **argv)
 		{"show-size",  no_argument,       0, 1006},
 		{"aur-url",    required_argument, 0, 1007},
 		{"insecure",   no_argument,       0, 1008},
+		{"qdepends",   no_argument,       0, 1009},
+		{"qconflicts", no_argument,       0, 1010},
+		{"qprovide",   no_argument,       0, 1011},
+		{"qreplaces",  no_argument,       0, 1012},
+		{"qrequires",  no_argument,       0, 1013},
 		{"version",    no_argument,       0, 'v'},
 
 		{0, 0, 0, 0}
@@ -349,6 +348,16 @@ int main (int argc, char **argv)
 					config.query = OP_Q_REPLACES;
 				need |= N_TARGET | N_DB;
 				break;
+			case 1009: /* --qdepends */
+				SETQUERY (OP_Q_DEPENDS); break;
+			case 1010: /* --qconflicts */
+				SETQUERY (OP_Q_CONFLICTS); break;
+			case 1011: /* --qprovides */
+				SETQUERY (OP_Q_PROVIDES); break;
+			case 1012: /* --qreplaces */
+				SETQUERY (OP_Q_REPLACES); break;
+			case 1013: /* --qrequires */
+				SETQUERY (OP_Q_REQUIRES); break;
 			case 1001: /* --csep */
 				strncpy (config.csep, optarg, SEP_LEN);
 				break;

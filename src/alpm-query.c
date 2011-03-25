@@ -29,18 +29,8 @@
 
 #include "util.h"
 #include "alpm-query.h"
+typedef const char *(*retcharfn) (void *);
 
-
-char *ret_char (void *data)
-{
-	return strdup ((char *) data);
-}
-
-char *ret_depname (void *data)
-{
-	return alpm_dep_compute_string (data);
-}
-		
 void init_path ()
 {
 	if (config.dbpath[0]=='\0') 
@@ -253,22 +243,49 @@ int filter_state (pmpkg_t *pkg)
 }
 
 
-int _search_pkg_by (pmdb_t *db, alpm_list_t *targets,  
-	alpm_list_t *(*f)(pmpkg_t *), 
-	char *(*g) (void *))
+int search_pkg_by_type (pmdb_t *db, alpm_list_t *targets, int query_type)
 {
 	int ret=0;
 	alpm_list_t *t;
 	alpm_list_t *i, *j;
 
+	alpm_list_t *(*f)(pmpkg_t *);
+	retcharfn g;
+	int free_fn_ret=0;
+	/* free_fn_ret=1 to free f() return
+	 * free_fn_ret=2 to free g() return 
+	 *            =3 to free both
+	 */
+
+	g = NULL;
+	switch (query_type)
+	{
+		case OP_Q_DEPENDS:
+			f = alpm_pkg_get_depends;
+			g = (retcharfn) alpm_dep_compute_string;
+			free_fn_ret = 2;
+			break;
+		case OP_Q_CONFLICTS: f = alpm_pkg_get_conflicts; break;
+		case OP_Q_PROVIDES: f = alpm_pkg_get_provides; break;
+		case OP_Q_REPLACES: f = alpm_pkg_get_replaces; break;
+		case OP_Q_REQUIRES:
+			f = alpm_pkg_compute_requiredby;
+			free_fn_ret = 3;
+			break;
+		default: return 0;
+	}
+
+
 	for(i = alpm_db_get_pkgcache(db); i; i = alpm_list_next(i))
 	{
 		pmpkg_t *pkg = alpm_list_getdata(i);
-		for(j = f(pkg); j; j = alpm_list_next(j)) 
+		alpm_list_t *pkg_info_list = f(pkg);
+		for(j = pkg_info_list; j; j = alpm_list_next(j)) 
 		{
-			char *str = g(alpm_list_getdata(j));
+			char *str;
+			str = (char *) ((g) ? g(alpm_list_getdata(j)) : alpm_list_getdata(j));
 			target_t *t1 = target_parse (str);
-			free (str);
+			if (free_fn_ret & 1) free(str);
 			for(t = targets; t; t = alpm_list_next(t)) 
 			{
 				target_t *t2 = target_parse (alpm_list_getdata(t));
@@ -286,30 +303,10 @@ int _search_pkg_by (pmdb_t *db, alpm_list_t *targets,
 			}
 			target_free (t1);
 		}
+		if (free_fn_ret & 2) alpm_list_free (pkg_info_list);
 	}
 	return ret;
 }
-
-int search_pkg_by_depends (pmdb_t *db, alpm_list_t *targets)
-{
-	return _search_pkg_by (db, targets, alpm_pkg_get_depends, ret_depname);
-}
-
-int search_pkg_by_conflicts (pmdb_t *db, alpm_list_t *targets)
-{
-	return _search_pkg_by (db, targets, alpm_pkg_get_conflicts, ret_char);
-}
-
-int search_pkg_by_provides (pmdb_t *db, alpm_list_t *targets)
-{
-	return _search_pkg_by (db, targets, alpm_pkg_get_provides, ret_char);
-}
-
-int search_pkg_by_replaces (pmdb_t *db, alpm_list_t *targets)
-{
-	return _search_pkg_by (db, targets, alpm_pkg_get_replaces, ret_char);
-}
-
 
 int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets)
 {
