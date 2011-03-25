@@ -23,14 +23,9 @@
 #include <errno.h>
 
 
-#ifdef USE_FETCH
-#include <ctype.h>
-#include <fetch.h>
-#else
 #include <curl/curl.h>
 #include <curl/types.h>
 #include <curl/easy.h>
-#endif
 #include <yajl/yajl_parse.h>
 #include <yajl/yajl_gen.h>
 
@@ -72,11 +67,6 @@
  */
 #define AUR_INFO        1
 #define AUR_SEARCH      2
-
-#ifdef USE_FETCH
-#define AUR_DL_LEN 1024 * 10
-#define AUR_DL_TM 10	/* Timeout */
-#endif
 
 /*
  * AUR concurrent connections
@@ -262,46 +252,12 @@ unsigned short aur_pkg_get_outofdate (const aurpkg_t * pkg)
 	return 0;
 }
 
-#ifdef USE_FETCH
-/* {{{ */
-/* http://www.geekhideout.com/urlcode.shtml */
-/* Converts an integer value to its hex character*/
-char to_hex (char code) 
-{
-	static char hex[] = "0123456789abcdef";
-	return hex[code & 15];
-}
-
-/* Returns a url-encoded version of str */
-char *url_encode (const char *str) 
-{
-	const char *pstr = str;
-	char *buf = malloc(strlen(str) * 3 + 1), *pbuf = buf;
-	while (*pstr) 
-	{
-		if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~')
-			*pbuf++ = *pstr;
-		else if (*pstr == ' ') 
-			*pbuf++ = '+';
-	 	else 
-			*pbuf++ = '%', *pbuf++ = to_hex(*pstr >> 4), *pbuf++ = to_hex(*pstr & 15);
-		pstr++;
-	}
-	*pbuf = '\0';
-	return buf;
-}
-
-/* }}} */
-#else
-/* {{{ */
 size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
 {
 	string_t *s = (string_t *) userdata;
 	string_ncat (s, data, nmemb);
 	return nmemb;
 }
-/* }}} */
-#endif
 
 static int json_start_map (void *ctx) 
 {
@@ -449,34 +405,6 @@ static int aur_fetch (request_t *req)
 	else
 		sprintf (url, "%s%s%s", config.aur_url, AUR_RPC, AUR_RPC_INFO);
 	res = string_new();
-#ifdef USE_FETCH	
-/* {{{ */
-	struct url *f_url;
-	char buf[AUR_DL_LEN];
-	char *encoded_arg = url_encode (req->arg);
-	strcat (url, encoded_arg);
-	free (encoded_arg);
-	fetchIO *dlu = NULL;
-	fetchTimeout = AUR_DL_TM;
-	fetchLastErrCode = 0;
-	f_url = fetchParseURL ((const char *) url);
-	dlu = fetchGet (f_url, "");
-	if (fetchLastErrCode == 0 && dlu)
-	{
-		ssize_t nread=0;
-		while ((nread = fetchIO_read (dlu, buf, AUR_DL_LEN)) > 0)
-			string_ncat (res, buf, nread);
-		fetchIO_close (dlu);
-	}
-	fetchFreeURL (f_url);
-	if (fetchLastErrCode != 0)
-	{
-		fprintf(stderr, "AUR rpc error: %s\n", fetchLastErrString);
-		res = string_free (res);
-		return 0;
-	}
-/* }}} */
-#else
 	CURL *curl;
 	CURLcode curl_code;
 	curl = curl_easy_init ();
@@ -509,7 +437,6 @@ static int aur_fetch (request_t *req)
 		return 0;
 	}
 	curl_easy_cleanup(curl);
-#endif
 	req->pkgs = aur_json_parse ((const char *) res->s);
 	res = string_free (res);
 	return (req->pkgs != NULL);
@@ -607,9 +534,7 @@ int aur_request (alpm_list_t **targets, int type)
 	ta = target_arg_init ((ta_dup_fn) strdup,
 	                      (alpm_list_fn_cmp) strcmp,
 	                      (alpm_list_fn_free) free);
-#ifndef USE_FETCH
 	curl_global_init(CURL_GLOBAL_SSL);
-#endif
 
 	for(t = *targets; t; t = alpm_list_next(t)) 
 	{
@@ -667,9 +592,7 @@ int aur_request (alpm_list_t **targets, int type)
 	free (thread);
 	alpm_list_free (req_list);
 
-#ifndef USE_FETCH
 	curl_global_cleanup();
-#endif
 
 	*targets = target_arg_close (ta, *targets);
 	ta = NULL;
