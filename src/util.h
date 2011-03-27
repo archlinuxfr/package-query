@@ -16,12 +16,31 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _UTIL_H
-#define _UTIL_H
+#ifndef _PQ_UTIL_H
+#define _PQ_UTIL_H
 #include <limits.h>
 #include <alpm.h>
 #include <alpm_list.h>
 #include "aur.h"
+
+
+#define STRDUP(s) (s) ? strdup (s) : s
+#define CALLOC(p, l, s) do { \
+    if ((p=calloc (l, s)) == NULL) { \
+      perror ("calloc"); \
+      exit (1); \
+    } \
+  } while (0)
+#define MALLOC(p, s) CALLOC (p, 1, s)
+#define REALLOC(p, s) do { \
+    if ((p=realloc (p, s)) == NULL) { \
+      perror ("malloc"); \
+      exit (1); \
+    } \
+  } while (0)
+#define FREE(p) do { free(p); p =NULL; } while (0)
+
+
 
 /*
  * Operations

@@ -94,11 +94,7 @@ typedef struct _request_t
 request_t *request_new ()
 {
 	request_t *req=NULL;
-	if ((req = malloc (sizeof(request_t))) == NULL)
-	{
-		perror ("malloc");
-		exit (1);
-	}
+	MALLOC (req, sizeof(request_t));
 	req->type = 0;
 	req->arg = NULL;
 	req->target = NULL;
@@ -114,20 +110,16 @@ request_t *request_free (request_t *req)
 	if (req == NULL)
 		return NULL;
 
-	if (req->arg) free (req->arg);
-	if (req->t_info) target_free (req->t_info);
-	free (req);
+	FREE (req->arg);
+	target_free (req->t_info);
+	FREE (req);
 	return NULL;
 }
 
 aurpkg_t *aur_pkg_new ()
 {
 	aurpkg_t *pkg = NULL;
-	if ((pkg = malloc (sizeof(aurpkg_t))) == NULL)
-	{
-		perror ("malloc");
-		exit (1);
-	}
+	MALLOC (pkg, sizeof(aurpkg_t));
 	pkg->id = 0;
 	pkg->name = NULL;
 	pkg->version = NULL;
@@ -146,13 +138,13 @@ aurpkg_t *aur_pkg_free (aurpkg_t *pkg)
 {
 	if (pkg == NULL)
 		return NULL;
-	free (pkg->name);
-	free (pkg->version);
-	free (pkg->desc);
-	free (pkg->url);
-	free (pkg->urlpath);
-	free (pkg->license);
-	free (pkg);
+	FREE (pkg->name);
+	FREE (pkg->version);
+	FREE (pkg->desc);
+	FREE (pkg->url);
+	FREE (pkg->urlpath);
+	FREE (pkg->license);
+	FREE (pkg);
 	return NULL;
 }
 
@@ -162,14 +154,14 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 		return NULL;
 	aurpkg_t *pkg_ret = aur_pkg_new();
 	pkg_ret->id = pkg->id;
-	pkg_ret->name = strdup (pkg->name);
-	pkg_ret->version = strdup (pkg->version);
+	pkg_ret->name = STRDUP (pkg->name);
+	pkg_ret->version = STRDUP (pkg->version);
 	pkg_ret->category = pkg->category;
-	pkg_ret->desc = strdup (pkg->desc);
+	pkg_ret->desc = STRDUP (pkg->desc);
 	pkg_ret->location = pkg->location;
-	pkg_ret->url = strdup (pkg->url);
-	pkg_ret->urlpath = strdup (pkg->urlpath);
-	pkg_ret->license = strdup (pkg->license);
+	pkg_ret->url = STRDUP (pkg->url);
+	pkg_ret->urlpath = STRDUP (pkg->urlpath);
+	pkg_ret->license = STRDUP (pkg->license);
 	pkg_ret->votes = pkg->votes;
 	pkg_ret->outofdate = pkg->outofdate;
 	return pkg_ret;
@@ -522,7 +514,7 @@ static void *thread_aur_fetch (void *arg)
 
 int aur_request (alpm_list_t **targets, int type)
 {
-	int ret=0, i, n;
+	int i, n;
 	request_t *req;
 	pthread_t *thread;
 	pthread_attr_t attr;
@@ -571,7 +563,7 @@ int aur_request (alpm_list_t **targets, int type)
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 	n = alpm_list_count (reqs);
 	n = (n>AUR_MAX_CONNECT) ? AUR_MAX_CONNECT : n;
-	thread = calloc (n, sizeof (pthread_t));
+	CALLOC (thread, n, sizeof (pthread_t));
 	req_list = reqs;
 	for(i=0; i<n; i++) 
 	{
@@ -590,7 +582,7 @@ int aur_request (alpm_list_t **targets, int type)
 			exit (2);
 		}
 	}
-	free (thread);
+	FREE (thread);
 	alpm_list_free (req_list);
 
 	curl_global_cleanup();

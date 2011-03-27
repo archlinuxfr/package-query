@@ -35,6 +35,7 @@
 #include <signal.h>
 
 #include "util.h"
+#include "color.h"
 #include "alpm-query.h"
 #include "aur.h"
 
@@ -54,13 +55,13 @@ static int alpm_initialized=0;
 
 void cleanup (int ret)
 {
-	static cleaned=0;
+	static int cleaned=0;
 	if (cleaned) return;
 	cleaned=1;
 	if (alpm_initialized && alpm_release()==-1)
 		fprintf (stderr, alpm_strerrorlast());
 	FREELIST(targets);
-	free (config.myname);
+	FREE (config.myname);
 	alpm_cleanup ();
 	aur_cleanup ();
 	color_cleanup ();
@@ -76,7 +77,7 @@ void init_config (const char *myname)
 {
 	char *_myname=strdup (myname);
 	config.myname = strdup(basename(_myname));
-	free (_myname);
+	FREE (_myname);
 	config.aur = 0;
 	config.aur_foreign = 0;
 	config.colors = 1; 
@@ -194,7 +195,6 @@ int deal_db (pmdb_t *db)
 
 int main (int argc, char **argv)
 {
-	char str[PATH_MAX];
 	int ret=0, i;
 	int need=0, given=0, cycle_db=0, db_order=0;
 	alpm_list_t *t;

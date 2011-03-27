@@ -16,8 +16,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _AUR_H
-#define _AUR_H
+#ifndef _PQ_AUR_H
+#define _PQ_AUR_H
 #include <alpm_list.h>
 
 

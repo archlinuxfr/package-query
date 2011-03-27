@@ -16,8 +16,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _COLOR_H
-#define _COLOR_H
+#ifndef _PQ_COLOR_H
+#define _PQ_COLOR_H
 
 #define C_NB        "nb"
 #define C_OTHER     "other"

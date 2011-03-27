@@ -42,11 +42,7 @@ alpm_list_t *results=NULL;
 results_t *results_new (void *ele, unsigned short type)
 {
 	results_t *r = NULL;
-	if ((r = malloc (sizeof (results_t))) == NULL)
-	{
-		perror ("malloc");
-		exit (1);
-	}
+	MALLOC (r, sizeof (results_t));
 	if (type == R_AUR_PKG)
 		r->ele = (void *) aur_pkg_dup ((aurpkg_t *) ele);
 	else
@@ -184,12 +180,7 @@ target_t *target_parse (const char *str)
 {
 	target_t *ret=NULL;
 	char *c, *s=(char *)str;
-	if ((ret = malloc (sizeof (target_t))) == NULL)
-	{
-		perror ("malloc");
-		exit (1);
-	}
-
+	MALLOC (ret, sizeof (target_t));
 	if ((c = strchr (s, '/')) != NULL)
 	{
 		/* target include db ("db/pkg*") */
@@ -240,10 +231,10 @@ target_t* target_free (target_t *t)
 {
 	if (t == NULL)
 		return NULL;
-	free (t->db);
-	free (t->name);
-	free (t->ver);
-	free (t);
+	FREE (t->db);
+	FREE (t->name);
+	FREE (t->ver);
+	FREE (t);
 	return NULL;
 }
 	
@@ -277,11 +268,7 @@ int target_compatible (target_t *t1, target_t *t2)
 string_t *string_new ()
 {
 	string_t *str = NULL;
-	if ((str = malloc (sizeof (string_t))) == NULL)
-	{
-		perror ("malloc");
-		exit (1);
-	}
+	MALLOC (str, sizeof (string_t));
 	str->s = strdup ("");
 	return str;
 }
@@ -290,8 +277,8 @@ string_t *string_free (string_t *dest)
 {
 	if (dest == NULL)
 		return NULL;
-	free (dest->s);
-	free (dest);
+	FREE (dest->s);
+	FREE (dest);
 	return NULL;
 }
 
@@ -300,13 +287,7 @@ string_t *string_free (string_t *dest)
 
 string_t *string_ncat (string_t *dest, char *src, size_t n)
 {
-	dest->s = realloc (dest->s, (strlen (dest->s)+1+n) * sizeof (char));
-	if (dest->s == NULL)
-	{
-		perror ("realloc");
-		exit (1);
-	}
-
+	REALLOC (dest->s, (strlen (dest->s)+1+n) * sizeof (char));
 	strncat (dest->s, src, n);
 	return dest;
 }
@@ -344,16 +325,6 @@ char *strtrim(char *str)
 	return(str);
 }
 
-void strins (char *dest, const char *src)
-{
-	char *prov;
-	prov = malloc (sizeof (char) * (strlen (dest) + strlen (src) + 1));
-	strcpy (prov, src);
-	strcat (prov, dest);
-	strcpy (dest, prov);
-	free (prov);
-}
-
 char *concat_str_list (alpm_list_t *l)
 {
 	char *ret;
@@ -373,7 +344,7 @@ char *concat_str_list (alpm_list_t *l)
 		if (len)
 		{
 			len++; /* '\0' at the end */
-			ret = (char *) malloc (sizeof (char) * len);
+			CALLOC (ret, len, sizeof (char));
 			strcpy (ret, "");
 			for(i = l; i; i = alpm_list_next(i)) 
 			{
@@ -521,7 +492,7 @@ void indent (const char *str)
 		fprintf (stdout, "\n%-*s%s\n", 4, "", c);
 	else
 		fprintf (stdout, "%s\n", c);
-	free (s);
+	FREE (s);
 }
 
 void color_print_package (void * p, printpkgfn f)
@@ -579,7 +550,7 @@ void color_print_package (void * p, printpkgfn f)
 			if (alpm_pkg_vercmp (ver, lver)>0)
 				pcstr += sprintf (pcstr, " ( aur: %s )", ver);
 			fprintf (stdout, "%saur/%s%s\n", color_repo ("aur"), color (C_NO), cstr);
-			free (ver);
+			FREE (ver);
 		}
 		else
 			fprintf (stdout, "%slocal/%s%s\n", color_repo ("local"), color (C_NO), cstr);
@@ -619,7 +590,7 @@ void color_print_package (void * p, printpkgfn f)
 		}
 	}
 	/* ver no more needed */
-	free (ver);
+	FREE (ver);
 
 	info = f(p, 'o');
 	if (info && info[0]=='1')
@@ -684,7 +655,7 @@ void print_package (const char * target, void * pkg, printpkgfn f)
 	}
 	if (ptr != end)
 		printf ("%s", ptr);
-	free (format_cpy);
+	FREE (format_cpy);
 	printf ("\n");
 	fflush (NULL);
 		
@@ -694,11 +665,7 @@ target_arg_t *target_arg_init (ta_dup_fn dup_fn, alpm_list_fn_cmp cmp_fn,
                                alpm_list_fn_free free_fn)
 {
 	target_arg_t *t;
-	if ((t = malloc (sizeof (target_arg_t))) == NULL)
-	{
-		perror ("malloc");
-		exit (1);
-	}
+	MALLOC (t, sizeof (target_arg_t));
 	t->args = NULL;
 	t->items = NULL;
 	t->dup_fn = dup_fn;
@@ -732,7 +699,7 @@ target_t *target_arg_free (target_arg_t *t)
 			alpm_list_free_inner (t->items, (alpm_list_fn_free) t->free_fn);
 		alpm_list_free (t->items);
 		alpm_list_free (t->args);
-		free (t);
+		FREE (t);
 	}
 	return NULL;
 }

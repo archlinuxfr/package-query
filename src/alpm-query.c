@@ -154,7 +154,7 @@ int parse_config_file (alpm_list_t **dbs, const char *config_file, int reg)
 						free(temp);
 					}
 					alpm_db_setserver(db, server);
-					free (server);
+					FREE (server);
 				}
 				else if (reg && in_option)
 				{
@@ -206,7 +206,6 @@ int init_db_sync (const char * config_file)
 
 int filter (pmpkg_t *pkg, unsigned int _filter)
 {
-	int found=0;
 	if (_filter & F_FOREIGN)
 		return (get_sync_pkg (pkg) == NULL);
 	if ((_filter & F_EXPLICIT) == F_EXPLICIT && alpm_pkg_get_reason(pkg) != PM_PKG_REASON_EXPLICIT)
@@ -287,7 +286,7 @@ int search_pkg_by_type (pmdb_t *db, alpm_list_t **targets, int query_type)
 			char *str;
 			str = (char *) ((g) ? g(alpm_list_getdata(j)) : alpm_list_getdata(j));
 			target_t *t1 = target_parse (str);
-			if (free_fn_ret & 1) free(str);
+			if (free_fn_ret & 1) FREE (str);
 			for(t = *targets; t; t = alpm_list_next(t))
 			{
 				target_t *t2 = target_parse (alpm_list_getdata(t));
@@ -504,7 +503,7 @@ off_t alpm_pkg_get_realsize (pmpkg_t *pkg)
 	{
 		chdir (config.root_dir);
 		len = alpm_list_count (files);
-		inodes=calloc (len, sizeof (ino_t));
+		CALLOC (inodes, len, sizeof (ino_t));
 		j=0;
 		for (f = files; f; f = alpm_list_next (f))
 		{
@@ -523,7 +522,7 @@ off_t alpm_pkg_get_realsize (pmpkg_t *pkg)
 			inodes[j++]=buf.st_ino;
 			size+=buf.st_size;
 		}
-		free (inodes);
+		FREE (inodes);
 	}
 	return size;
 }
@@ -575,7 +574,7 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			const char *dburl= alpm_db_get_url((alpm_pkg_get_db (pkg)));
 			if (!dburl) return NULL;
 			const char *pkgfilename = alpm_pkg_get_filename (pkg);
-			info = (char *) malloc (sizeof (char) * (strlen (dburl) + strlen(pkgfilename) + 2));
+			CALLOC (info, strlen (dburl) + strlen(pkgfilename) + 2, sizeof (char));
 			sprintf (info, "%s/%s", dburl, pkgfilename);
 			free_info = 1;
 			}
@@ -612,7 +611,7 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 				time_t idate;
 				idate = alpm_pkg_get_installdate(pkg);
 				if (!idate) break;
-				info = (char *) malloc (sizeof (char) * 50);
+				CALLOC (info, 50, sizeof (char));
 				strftime(info, 50, "%s", localtime(&idate));
 				free_info=1;
 			}
