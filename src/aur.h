@@ -20,6 +20,11 @@
 #define _PQ_AUR_H
 #include <alpm_list.h>
 
+/*
+ * AUR FETCH
+ */
+#define AUR_FETCH_SIMPLE 1
+#define AUR_FETCH_LONG   2
 
 /*
  * AUR package
@@ -37,6 +42,7 @@ typedef struct _aurpkg_t
 	char *license;
 	unsigned int votes;
 	unsigned short outofdate;
+	char *maintainer;
 } aurpkg_t;
 
 
@@ -68,8 +74,7 @@ const char * aur_pkg_get_urlpath (const aurpkg_t * pkg);
 const char * aur_pkg_get_license (const aurpkg_t * pkg);
 unsigned int aur_pkg_get_votes (const aurpkg_t * pkg);
 unsigned short aur_pkg_get_outofdate (const aurpkg_t * pkg);
-
-
+const char * aur_pkg_get_maintainer (const aurpkg_t * pkg);
 
 /*
  * AUR search function

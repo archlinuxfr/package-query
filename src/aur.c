@@ -38,6 +38,13 @@
 #define AUR_RPC	"/rpc.php"
 #define AUR_RPC_SEARCH "?type=search&arg="
 #define AUR_RPC_INFO "?type=info&arg="
+#define AUR_URL_ID	"/packages.php?setlang=en&ID="
+
+/*
+ * AUR PAGE
+ */
+#define AUR_M_START "<span class='f3'>Maintainer: "
+#define AUR_M_END   "</span>"
 
 /*
  * AUR repo name
@@ -131,6 +138,7 @@ aurpkg_t *aur_pkg_new ()
 	pkg->license = NULL;
 	pkg->votes = 0;
 	pkg->outofdate = 0;
+	pkg->maintainer = NULL;
 	return pkg;
 }
 
@@ -144,6 +152,7 @@ aurpkg_t *aur_pkg_free (aurpkg_t *pkg)
 	FREE (pkg->url);
 	FREE (pkg->urlpath);
 	FREE (pkg->license);
+	FREE (pkg->maintainer);
 	FREE (pkg);
 	return NULL;
 }
@@ -164,6 +173,7 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->license = STRDUP (pkg->license);
 	pkg_ret->votes = pkg->votes;
 	pkg_ret->outofdate = pkg->outofdate;
+	pkg_ret->maintainer = STRDUP (pkg->maintainer);
 	return pkg_ret;
 }
 
@@ -243,6 +253,23 @@ unsigned short aur_pkg_get_outofdate (const aurpkg_t * pkg)
 		return pkg->outofdate;
 	return 0;
 }
+
+const char * aur_pkg_get_maintainer (const aurpkg_t * pkg)
+{
+	if (pkg!=NULL)
+		return pkg->maintainer;
+	return NULL;
+}
+
+void aur_fetch_type ()
+{
+	char *c;
+	config.aur_fetch = AUR_FETCH_SIMPLE;
+	c = strstr (config.format_out, "%m");
+	if (c && (c==config.format_out || *(c-1) != '%'))
+		config.aur_fetch = AUR_FETCH_LONG;
+}
+
 
 size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
 {
@@ -388,6 +415,37 @@ alpm_list_t *aur_json_parse (const char *s)
 	return pkg_json.pkgs;
 }
 
+static void aur_fetch_page (CURL *curl, aurpkg_t *pkg)
+{
+	if (config.aur_fetch != AUR_FETCH_LONG) return;
+	char url[PATH_MAX];
+	CURLcode curl_code;
+	string_t *res;
+	char *c1, *c2;
+	sprintf (url, "%s%s%d", config.aur_url, AUR_URL_ID, aur_pkg_get_id (pkg));
+	res = string_new();
+
+	curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
+	curl_easy_setopt (curl, CURLOPT_URL, (const char *) url);
+	if ((curl_code = curl_easy_perform (curl)) != CURLE_OK)
+	{
+		fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
+		curl_easy_cleanup(curl);
+		res = string_free (res);
+		return;
+	}
+	c1 = strstr (res->s, AUR_M_START);
+	if (c1)
+	{
+		c1+= strlen (AUR_M_START);
+		c2 = strstr (c1, AUR_M_END);
+		if (c2)
+			pkg->maintainer = strndup (c1, c2-c1);
+	}
+	res = string_free (res);
+}
+
+
 static int aur_fetch (CURL *curl, request_t *req)
 {
 	char url[PATH_MAX];
@@ -422,7 +480,7 @@ static int aur_fetch (CURL *curl, request_t *req)
 	return (req->pkgs != NULL);
 }
 
-static int aur_parse (request_t *req)
+static int aur_parse (CURL *curl, request_t *req)
 {
 	alpm_list_t *p;
 	int found = 0;
@@ -445,7 +503,10 @@ static int aur_parse (request_t *req)
 			if (target_check_version (req->t_info, aur_pkg_get_version (pkg)))
 			{
 				if (target_arg_add (ta, req->target, (void *) aur_pkg_get_name (pkg)))
+				{
+					aur_fetch_page (curl, pkg);
 					print_package (req->target, alpm_list_getdata (p), aur_get_str);
+				}
 				found++;
 			}
 		}
@@ -467,6 +528,7 @@ static int aur_parse (request_t *req)
 			if (match)
 			{
 				found++;
+				aur_fetch_page (curl, alpm_list_getdata (p));
 				print_or_add_result (aur_pkg_dup (alpm_list_getdata (p)), R_AUR_PKG);
 			}
 		}
@@ -502,7 +564,7 @@ static void *thread_aur_fetch (void *arg)
 		if (aur_fetch (curl, req) || config.aur_foreign)
 		{
 			pthread_mutex_lock(&aur_mp);
-			aur_pkgs_found_count += aur_parse (req);
+			aur_pkgs_found_count += aur_parse (curl, req);
 			pthread_mutex_unlock(&aur_mp);
 		}
 		request_free (req);
@@ -527,6 +589,7 @@ int aur_request (alpm_list_t **targets, int type)
 	ta = target_arg_init ((ta_dup_fn) strdup,
 	                      (alpm_list_fn_cmp) strcmp,
 	                      (alpm_list_fn_free) free);
+	aur_fetch_type ();
 	curl_global_init(CURL_GLOBAL_SSL);
 
 	for(t = *targets; t; t = alpm_list_next(t)) 
@@ -620,6 +683,7 @@ const char *aur_get_str (void *p, unsigned char c)
 			info = itostr (aur_pkg_get_id (pkg)); 
 			free_info = 1;
 			break;
+		case 'm': info = (char *) aur_pkg_get_maintainer (pkg); break;
 		case 'n': info = (char *) aur_pkg_get_name (pkg); break;
 		case 'o': 
 			info = itostr (aur_pkg_get_outofdate (pkg)); 
