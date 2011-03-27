@@ -28,10 +28,11 @@
  */
 #define OP_LIST_GROUP  1
 #define OP_INFO        2
-#define OP_LIST_REPO   3
-#define OP_LIST_REPO_S 4
-#define OP_SEARCH      5
-#define OP_QUERY       6
+#define OP_INFO_P      3
+#define OP_LIST_REPO   4
+#define OP_LIST_REPO_S 5
+#define OP_SEARCH      6
+#define OP_QUERY       7
 
 /*
  * Query type
@@ -127,6 +128,29 @@ int target_check_version (target_t *t, const char *ver);
 int target_compatible (target_t *t1, target_t *t2);
 
 /*
+ * Target passed as argument
+ */
+
+typedef void *(*ta_dup_fn)(void *);
+typedef struct _target_arg_t
+{
+	alpm_list_t *args;
+	alpm_list_t *items;
+	ta_dup_fn dup_fn;
+	alpm_list_fn_cmp cmp_fn;
+	alpm_list_fn_free free_fn;
+} target_arg_t;
+
+target_arg_t *target_arg_init (ta_dup_fn dup_fn,
+                               alpm_list_fn_cmp cmp_fn,
+                               alpm_list_fn_free free_fn);
+int target_arg_add (target_arg_t *t, const char *s, void *item);
+target_t *target_arg_free (target_arg_t *t);
+alpm_list_t *target_arg_clear (target_arg_t *t, alpm_list_t *targets);
+alpm_list_t *target_arg_close (target_arg_t *t, alpm_list_t *targets);
+
+
+/*
  * String for curl usage
  */
 typedef struct _string_t
@@ -155,11 +179,12 @@ int check_version (void *pkg, pmdepmod_t mod, const char *ver,
 char * itostr (int i);
 char * ltostr (long i);
 
-/* escape " */
-void print_escape (const char *str);
+/*
+ * Package output
+ */
+typedef const char *(*printpkgfn)(void *, unsigned char);
+void print_package (const char * target, void * pkg, printpkgfn f);
 
-void print_package (const char * target, 
-	void * pkg, const char *(*f)(void *p, unsigned char c));
 
 #endif
 

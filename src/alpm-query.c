@@ -243,7 +243,7 @@ int filter_state (pmpkg_t *pkg)
 }
 
 
-int search_pkg_by_type (pmdb_t *db, alpm_list_t *targets, int query_type)
+int search_pkg_by_type (pmdb_t *db, alpm_list_t **targets, int query_type)
 {
 	int ret=0;
 	alpm_list_t *t;
@@ -256,6 +256,7 @@ int search_pkg_by_type (pmdb_t *db, alpm_list_t *targets, int query_type)
 	 * free_fn_ret=2 to free g() return 
 	 *            =3 to free both
 	 */
+	target_arg_t *ta=NULL;
 
 	g = NULL;
 	switch (query_type)
@@ -274,19 +275,20 @@ int search_pkg_by_type (pmdb_t *db, alpm_list_t *targets, int query_type)
 			break;
 		default: return 0;
 	}
+	ta = target_arg_init (NULL, NULL, NULL);
 
 
-	for(i = alpm_db_get_pkgcache(db); i; i = alpm_list_next(i))
+	for(i = alpm_db_get_pkgcache(db); i && *targets; i = alpm_list_next(i))
 	{
 		pmpkg_t *pkg = alpm_list_getdata(i);
 		alpm_list_t *pkg_info_list = f(pkg);
-		for(j = pkg_info_list; j; j = alpm_list_next(j)) 
+		for(j = pkg_info_list; j && *targets; j = alpm_list_next(j))
 		{
 			char *str;
 			str = (char *) ((g) ? g(alpm_list_getdata(j)) : alpm_list_getdata(j));
 			target_t *t1 = target_parse (str);
 			if (free_fn_ret & 1) free(str);
-			for(t = targets; t; t = alpm_list_next(t)) 
+			for(t = *targets; t; t = alpm_list_next(t))
 			{
 				target_t *t2 = target_parse (alpm_list_getdata(t));
 				if (t2->db && strcmp (t2->db, alpm_db_get_name (db))!=0)
@@ -297,29 +299,28 @@ int search_pkg_by_type (pmdb_t *db, alpm_list_t *targets, int query_type)
 				if (target_compatible (t1, t2) && filter (pkg, config.filter))
 				{
 					ret++;
-					print_package (alpm_list_getdata(t), pkg, alpm_pkg_get_str);
+					if (target_arg_add (ta, alpm_list_getdata(t), pkg))
+						print_package (alpm_list_getdata(t), pkg, alpm_pkg_get_str);
 				}
 				target_free (t2);
 			}
+			*targets = target_arg_clear (ta, *targets);
 			target_free (t1);
 		}
 		if (free_fn_ret & 2) alpm_list_free (pkg_info_list);
 	}
+	*targets = target_arg_close (ta, *targets);
 	return ret;
 }
 
 int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets)
 {
 	int ret=0;
-	alpm_list_t *t, *pkgs_found=NULL;
-	alpm_list_t *targets_copy;
+	alpm_list_t *t;
 	pmpkg_t *pkg_found;
 	const char *db_name = alpm_db_get_name (db);
-	if (config.just_one)
-		targets_copy = alpm_list_copy (*targets);
-	else
-		targets_copy = *targets;
-	for(t = targets_copy; t; t = alpm_list_next(t))
+	target_arg_t *ta = target_arg_init (NULL, NULL, NULL);
+	for(t = *targets; t; t = alpm_list_next(t))
 	{
 		const char *target=alpm_list_getdata(t);
 		target_t *t1 = target_parse (target);
@@ -334,24 +335,12 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets)
 			&& target_check_version (t1, alpm_pkg_get_version (pkg_found)))
 		{
 			ret++;
-			if (!config.just_one
-			    || !alpm_list_find_ptr (pkgs_found, pkg_found))
+			if (target_arg_add (ta, target, pkg_found))
 				print_package (target, pkg_found, alpm_pkg_get_str);
-			if (config.just_one)
-			{
-				pkgs_found = alpm_list_add (pkgs_found, pkg_found);
-				char *data=NULL;
-				*targets = alpm_list_remove_str (*targets, target, &data);
-				if (data) free (data);
-			}			
 		}
 		target_free (t1);
 	}
-	if (config.just_one)
-	{
-		alpm_list_free (targets_copy);
-		alpm_list_free (pkgs_found);
-	}
+	*targets = target_arg_close (ta, *targets);
 	return ret;
 }
 

@@ -33,6 +33,7 @@
 #include "color.h"
 
 #define _(x) gettext(x)
+#define FORMAT_LOCAL_PKG "l134"
 
 alpm_list_t *results=NULL;
 
@@ -523,7 +524,7 @@ void indent (const char *str)
 	free (s);
 }
 
-void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
+void color_print_package (void * p, printpkgfn f)
 {
 	static char cstr[PATH_MAX];
 	static int number=0;
@@ -638,8 +639,7 @@ void color_print_package (void * p, const char *(*f)(void *p, unsigned char c))
 	fprintf (stdout, "%s", color(C_NO));
 }
 
-void print_package (const char * target, 
-	void * pkg, const char *(*f)(void *p, unsigned char c))
+void print_package (const char * target, void * pkg, printpkgfn f)
 {
 	if (config.quiet) return;
 	if (!config.custom_out) { color_print_package (pkg, f); return; }
@@ -663,7 +663,7 @@ void print_package (const char * target,
 		else
 		{
 			info = NULL;
-			if (strchr ("l134", c[1]))
+			if (strchr (FORMAT_LOCAL_PKG, c[1]))
 				info = alpm_local_pkg_get_str (f(pkg, 'n'), c[1]);
 			else if (c[1]=='t')
 				info = target; 
@@ -688,6 +688,75 @@ void print_package (const char * target,
 	printf ("\n");
 	fflush (NULL);
 		
+}
+
+target_arg_t *target_arg_init (ta_dup_fn dup_fn, alpm_list_fn_cmp cmp_fn,
+                               alpm_list_fn_free free_fn)
+{
+	target_arg_t *t;
+	if ((t = malloc (sizeof (target_arg_t))) == NULL)
+	{
+		perror ("malloc");
+		exit (1);
+	}
+	t->args = NULL;
+	t->items = NULL;
+	t->dup_fn = dup_fn;
+	t->cmp_fn = cmp_fn;
+	t->free_fn = free_fn;
+	return t;
+}
+
+int target_arg_add (target_arg_t *t, const char *s, void *item)
+{
+	int ret=1;
+	if (t && config.just_one)
+	{
+		if ((t->cmp_fn && alpm_list_find (t->items, item, t->cmp_fn)) ||
+		    (!t->cmp_fn && alpm_list_find_ptr (t->items, item)))
+			ret = 0;
+		else if (t->dup_fn)
+			t->items = alpm_list_add (t->items, t->dup_fn (item));
+		else
+			t->items = alpm_list_add (t->items, item);
+		t->args = alpm_list_add (t->args, (void *) s);
+	}
+	return ret;
+}
+
+target_t *target_arg_free (target_arg_t *t)
+{
+	if (t)
+	{
+		if (t->free_fn)
+			alpm_list_free_inner (t->items, (alpm_list_fn_free) t->free_fn);
+		alpm_list_free (t->items);
+		alpm_list_free (t->args);
+		free (t);
+	}
+	return NULL;
+}
+
+alpm_list_t *target_arg_clear (target_arg_t *t, alpm_list_t *targets)
+{
+	alpm_list_t *i;
+	char *data=NULL;
+	if (t && targets && config.just_one)
+	{
+		for (i=t->args; i; i=alpm_list_next (i))
+		{
+			targets = alpm_list_remove_str (targets, alpm_list_getdata (i), &data);
+			if (data) free (data);
+		}
+	}
+	return targets;
+}
+
+alpm_list_t *target_arg_close (target_arg_t *t, alpm_list_t *targets)
+{
+	targets = target_arg_clear (t, targets);
+	target_arg_free (t);
+	return targets;
 }
 
 /* vim: set ts=4 sw=4 noet: */

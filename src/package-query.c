@@ -171,18 +171,23 @@ void usage (unsigned short _error)
 
 int deal_db (pmdb_t *db)
 {
+	int ret;
 	switch (config.op)
 	{
 		case OP_LIST_REPO:
 		case OP_LIST_REPO_S:
 			return list_db (db, targets);
 		case OP_INFO:
-			return search_pkg_by_name (db, &targets);
+		case OP_INFO_P:
+			ret = search_pkg_by_name (db, &targets);
+			if (!ret && config.op == OP_INFO_P)
+				ret = search_pkg_by_type (db, &targets, OP_Q_PROVIDES);
+			return ret;
 		case OP_SEARCH: return search_pkg (db, targets);
 		case OP_LIST_GROUP:
 			return list_grp (db, targets);
 		case OP_QUERY:
-			return search_pkg_by_type (db, targets, config.query);
+			return search_pkg_by_type (db, &targets, config.query);
 		default: return 0;
 	}
 }
@@ -288,7 +293,11 @@ int main (int argc, char **argv)
 				cycle_db = 1;
 				break;
 			case 'i':
-				if (config.op) break;
+				if (config.op)
+				{
+					config.op |= OP_INFO_P;
+					break;
+				}
 				config.op = OP_INFO;
 				need |= N_TARGET | N_DB;
 				break;
@@ -479,7 +488,8 @@ int main (int argc, char **argv)
 			else if (config.aur == i)
 				switch (config.op)
 				{
-					case OP_INFO: ret += aur_info (&targets); break;
+					case OP_INFO:
+					case OP_INFO_P: ret += aur_info (&targets); break;
 					case OP_SEARCH: ret += aur_search (targets); break;
 					default: break;
 				}

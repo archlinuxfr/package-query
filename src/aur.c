@@ -85,8 +85,7 @@
 #define AUR_MAX_CONNECT 10
 #endif
 static alpm_list_t *reqs=NULL;
-static alpm_list_t *targets_left=NULL;
-static alpm_list_t *aur_pkgs_found=NULL;
+static target_arg_t *ta=NULL;
 static int aur_pkgs_found_count=0;
 
 static pthread_mutex_t aur_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -535,23 +534,11 @@ static int aur_parse (request_t *req)
 	{
 		for (p = req->pkgs; p; p = alpm_list_next(p))
 		{
-			if (target_check_version (req->t_info, aur_pkg_get_version (alpm_list_getdata (p))))
+			aurpkg_t *pkg = alpm_list_getdata (p);
+			if (target_check_version (req->t_info, aur_pkg_get_version (pkg)))
 			{
-				if (!config.just_one ||
-				    !alpm_list_find (aur_pkgs_found, alpm_list_getdata (p),
-				                     (alpm_list_fn_cmp) aur_pkg_cmp))
+				if (target_arg_add (ta, req->target, (void *) aur_pkg_get_name (pkg)))
 					print_package (req->target, alpm_list_getdata (p), aur_get_str);
-				if (targets_left)
-				{
-					if (!alpm_list_find (aur_pkgs_found, alpm_list_getdata (p),
-				                     (alpm_list_fn_cmp) aur_pkg_cmp))
-						aur_pkgs_found = alpm_list_add (aur_pkgs_found,
-						  aur_pkg_dup (alpm_list_getdata (p)));
-					char *data=NULL;
-					targets_left = alpm_list_remove_str (targets_left,
-					  req->target, &data);
-					if (data) free (data);
-				}
 				found++;
 			}
 		}
@@ -617,11 +604,9 @@ int aur_request (alpm_list_t **targets, int type)
 		return 0;
 
 	aur_pkgs_found_count = 0;
-	if (config.just_one && type != AUR_SEARCH)
-		targets_left = *targets;
-	else
-		targets_left = NULL;
-
+	ta = target_arg_init ((ta_dup_fn) strdup,
+	                      (alpm_list_fn_cmp) strcmp,
+	                      (alpm_list_fn_free) free);
 #ifndef USE_FETCH
 	curl_global_init(CURL_GLOBAL_SSL);
 #endif
@@ -686,13 +671,8 @@ int aur_request (alpm_list_t **targets, int type)
 	curl_global_cleanup();
 #endif
 
-	if (config.just_one)
-	{
-		alpm_list_free_inner (aur_pkgs_found, (alpm_list_fn_free) aur_pkg_free);
-		alpm_list_free (aur_pkgs_found);
-		aur_pkgs_found = NULL;
-		*targets = targets_left;
-	}
+	*targets = target_arg_close (ta, *targets);
+	ta = NULL;
 	return aur_pkgs_found_count;
 }
 
