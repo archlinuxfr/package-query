@@ -455,6 +455,18 @@ int list_db (pmdb_t *db, alpm_list_t *targets)
 	return ret;
 }
 
+pmpkg_t *get_sync_pkg_by_name (const char *pkgname)
+{
+	pmpkg_t *sync_pkg = NULL;
+	alpm_list_t *i;
+	for (i=alpm_option_get_syncdbs(); i; i = alpm_list_next (i))
+	{
+		sync_pkg = alpm_db_get_pkg (alpm_list_getdata(i), pkgname);
+		if (sync_pkg) break;
+	}
+	return sync_pkg;
+}
+
 /* get_sync_pkg() returns the first pkg with same name in sync dbs */
 pmpkg_t *get_sync_pkg (pmpkg_t *pkg)
 {
@@ -462,17 +474,9 @@ pmpkg_t *get_sync_pkg (pmpkg_t *pkg)
 	const char *dbname;
 	dbname = alpm_db_get_name (alpm_pkg_get_db (pkg));
 	if (dbname==NULL || strcmp ("local", dbname)==0)
-	{
-		alpm_list_t *i;
-		const char *pkgname;
-		pkgname = alpm_pkg_get_name (pkg);
-		for (i=alpm_option_get_syncdbs(); i; i = alpm_list_next (i))
-		{
-			sync_pkg = alpm_db_get_pkg (alpm_list_getdata(i), pkgname);
-			if (sync_pkg) break;
-		}
-	}
-	else sync_pkg = pkg;
+		sync_pkg = get_sync_pkg_by_name (alpm_pkg_get_name (pkg));
+	else
+		sync_pkg = pkg;
 	return sync_pkg;
 }
 
@@ -551,20 +555,58 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			free_info=1;
 			break;
 		case 'a': info = (char *) alpm_pkg_get_arch (pkg); break;
-		case 'b': 
+		case 'b':
+		case 'B':
 			info = concat_str_list (alpm_pkg_get_backup (pkg)); 
 			free_info = 1;
 			break;
-		case 'c': 
+		case 'c':
+		case 'C':
 			info = concat_str_list (alpm_pkg_get_conflicts (pkg)); 
 			free_info = 1;
 			break;
 		case 'd': info = (char *) alpm_pkg_get_desc (pkg); break;
+		case 'D':
+			{
+				alpm_list_t *i, *deps=NULL;
+				for (i=alpm_pkg_get_depends (pkg); i; i = alpm_list_next (i))
+					deps = alpm_list_add (deps, alpm_dep_compute_string (alpm_list_getdata (i)));
+				info = concat_str_list (deps);
+				FREELIST (deps);
+				free_info = 1;
+			}
+			break;
+		case 'f': info = (char *) alpm_pkg_get_filename (pkg); break;
+		case 'I':
+			info = itostr (alpm_pkg_has_scriptlet (pkg));
+			free_info = 1;
+			break;
 		case 'g':
 			info = concat_str_list (alpm_pkg_get_groups (pkg)); 
 			free_info = 1;
 			break;
+		case 'm': info = (char *) alpm_pkg_get_packager (pkg); break;
 		case 'n': info = (char *) alpm_pkg_get_name (pkg); break;
+		case 'N':
+			{
+				alpm_list_t *reqs=alpm_pkg_compute_requiredby (pkg);
+				info = concat_str_list (reqs);
+				FREELIST (reqs);
+				free_info = 1;
+			}
+			break;
+		case 'O':
+			info = concat_str_list (alpm_pkg_get_optdepends (pkg));
+			free_info = 1;
+			break;
+		case 'P':
+			info = concat_str_list (alpm_pkg_get_provides (pkg));
+			free_info = 1;
+			break;
+		case 'R':
+			info = concat_str_list (alpm_pkg_get_replaces (pkg));
+			free_info = 1;
+			break;
 		case 's': 
 			pkg = get_sync_pkg (pkg);
 			if (!pkg) pkg = (pmpkg_t *) p;
@@ -579,6 +621,7 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			free_info = 1;
 			}
 			break;
+		case 'U': info = (char *) alpm_pkg_get_url (pkg); break;
 		case 'V': 
 			pkg = get_sync_pkg (pkg);
 			if (!pkg) break;
@@ -606,6 +649,10 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 	switch (c)
 	{
 		case 'l': info = (char *) alpm_pkg_get_version (pkg); break;
+		case 'F':
+			info = concat_str_list (alpm_pkg_get_files (pkg));
+			free_info = 1;
+			break;
 		case '1':
 			{
 				time_t idate;

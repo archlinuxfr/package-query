@@ -286,6 +286,7 @@ int main (int argc, char **argv)
 				config.custom_out = 1;
 				config.colors=0;
 				strcpy (config.format_out, optarg);
+				format_str (config.format_out);
 				break;
 			case 'g':
 				if (config.op) break;
@@ -370,6 +371,7 @@ int main (int argc, char **argv)
 				SETQUERY (OP_Q_REQUIRES); break;
 			case 1001: /* --csep */
 				strncpy (config.csep, optarg, SEP_LEN);
+				format_str (config.csep);
 				break;
 			case 1002: /* --sort */
 				config.sort = optarg[0];

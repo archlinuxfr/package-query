@@ -68,6 +68,7 @@ int alpm_search_local (alpm_list_t **res);
 
 
 off_t get_size_pkg (pmpkg_t *pkg);
+pmpkg_t *get_sync_pkg_by_name (const char *pkgname);
 pmpkg_t *get_sync_pkg (pmpkg_t *pkg);
 
 /*

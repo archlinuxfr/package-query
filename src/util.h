@@ -203,6 +203,7 @@ char * ltostr (long i);
  * Package output
  */
 typedef const char *(*printpkgfn)(void *, unsigned char);
+void format_str (char *s);
 void print_package (const char * target, void * pkg, printpkgfn f);
 
 

@@ -30,6 +30,7 @@
 #include <yajl/yajl_gen.h>
 
 #include "aur.h"
+#include "alpm-query.h"
 #include "util.h"
 
 /*
@@ -700,6 +701,13 @@ const char *aur_get_str (void *p, unsigned char c)
 			strcpy (info, config.aur_url);
 			strcat (info, aur_pkg_get_urlpath (pkg));
 			free_info = 1;
+			break;
+		case 'V':
+			{
+				pmpkg_t *syncpkg = get_sync_pkg_by_name (aur_pkg_get_name (pkg));
+				if (syncpkg)
+					info = (char *) alpm_pkg_get_version (syncpkg);
+			}
 			break;
 		case 'v': info = (char *) aur_pkg_get_version (pkg); break;
 		case 'w': 

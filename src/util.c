@@ -33,7 +33,7 @@
 #include "color.h"
 
 #define _(x) gettext(x)
-#define FORMAT_LOCAL_PKG "l134"
+#define FORMAT_LOCAL_PKG "lF134"
 
 alpm_list_t *results=NULL;
 
@@ -361,6 +361,27 @@ char *concat_str_list (alpm_list_t *l)
 }
 
 
+void format_str (char *s)
+{
+	char *c=s; int mod;
+	while ((c=strchr (c, '\\')))
+	{
+		mod = 1;
+		switch (c[1])
+		{
+			case '\\': c[0] = '\\'; break;
+			case 'e': c[0] = '\033'; break;
+			case 'n': c[0] = '\n'; break;
+			case 'r': c[0] = '\r'; break;
+			case 't': c[0] = '\t'; break;
+			default: mod = 0; break;
+		}
+		if (mod)
+			memcpy (&(c[1]), &(c[2]), (strlen (&(c[2]))+1) * sizeof (char));
+		c++;
+	}
+}
+
 void print_escape (const char *str)
 {
 	const char *c=str;
@@ -628,9 +649,7 @@ void print_package (const char * target, void * pkg, printpkgfn f)
 			break;
 		c[0] = '\0'; 
 		if (c[1] == '%' )
-		{
 			printf ("%s\%\%", ptr);
-		}
 		else
 		{
 			info = NULL;
