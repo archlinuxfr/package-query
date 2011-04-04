@@ -266,8 +266,10 @@ void aur_fetch_type ()
 {
 	char *c;
 	config.aur_fetch = AUR_FETCH_SIMPLE;
-	c = strstr (config.format_out, "%m");
-	if (c && (c==config.format_out || *(c-1) != '%'))
+	if ( config.aur_foreign ||
+	     ((c=strstr (config.format_out, "%m")) &&
+	     (c==config.format_out || *(c-1) != '%'))
+	   )
 		config.aur_fetch = AUR_FETCH_LONG;
 }
 

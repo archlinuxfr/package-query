@@ -558,13 +558,17 @@ void color_print_package (void * p, printpkgfn f)
 	if (config.aur_foreign)
 	{
 		/* show foreign package */
-		info = f(p, 'o');
-		if (info && info[0]=='1')
-		{
-			pcstr += sprintf (pcstr, "%s%s%s", color(C_OD), lver, color (C_NO));
-		}
+		info = f(p, 'm');
+		if (ver && (!info || info[0]=='-'))
+			pcstr += sprintf (pcstr, "%s%s%s", color(C_ORPHAN), lver, color (C_NO));
 		else
-			pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), lver, color (C_NO));
+		{
+			info = f(p, 'o');
+			if (info && info[0]=='1')
+				pcstr += sprintf (pcstr, "%s%s%s", color(C_OD), lver, color (C_NO));
+			else
+				pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), lver, color (C_NO));
+		}
 		if (ver)
 		{
 			/* package found in AUR */

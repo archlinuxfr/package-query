@@ -29,6 +29,7 @@
 #define C_OD        "od"
 #define C_VOTES     "votes"
 #define C_DSC       "dsc"
+#define C_ORPHAN    "orphan"
 #define C_NO        "no"
 
 void color_init (void);
