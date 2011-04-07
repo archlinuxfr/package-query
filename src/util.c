@@ -639,21 +639,32 @@ void print_package (const char * target, void * pkg, printpkgfn f)
 {
 	if (config.quiet) return;
 	if (!config.custom_out) { color_print_package (pkg, f); return; }
-	char *format_cpy;
-	char *ptr;
-	char *end;
-	char *c;
+	char *s = pkg_to_str (target, pkg, f, config.format_out);
+	if (config.escape)
+		print_escape (s);
+	else
+		printf ("%s\n", s);
+	free (s);
+	fflush (NULL);
+}
+
+char *pkg_to_str (const char * target, void * pkg, printpkgfn f, const char *format)
+{
+	if (!format) return NULL;
+	const char *ptr, *end, *c;
 	const char *info;
-	format_cpy = strdup (config.format_out);
-	ptr = format_cpy;
-	end = &(format_cpy[strlen(format_cpy)]);
+	char ret[PATH_MAX]="";
+	ptr = format;
+	end = &(format[strlen(format)]);
 	while ((c=strchr (ptr, '%')))
 	{
 		if (&(c[1])==end)
 			break;
-		c[0] = '\0'; 
 		if (c[1] == '%' )
-			printf ("%s\%\%", ptr);
+		{
+			strncat (ret, ptr, (c-ptr));
+			strcat (ret, "%%");
+		}
 		else
 		{
 			info = NULL;
@@ -663,25 +674,16 @@ void print_package (const char * target, void * pkg, printpkgfn f)
 				info = target; 
 			else
 				info = f (pkg, c[1]);
-			printf ("%s", ptr);
+			if (c!=ptr) strncat (ret, ptr, (c-ptr));
 			if (info)
-			{
-				if (config.escape)
-					print_escape (info);
-				else
-					printf ("%s", info);
-			}
+				strcat (ret, info);
 			else
-				printf ("-");
+				strcat (ret, "-");
 		}
 		ptr = &(c[2]);
 	}
-	if (ptr != end)
-		printf ("%s", ptr);
-	FREE (format_cpy);
-	printf ("\n");
-	fflush (NULL);
-		
+	if (ptr != end) strncat (ret, ptr, (end-ptr));
+	return strdup (ret);
 }
 
 target_arg_t *target_arg_init (ta_dup_fn dup_fn, alpm_list_fn_cmp cmp_fn,
