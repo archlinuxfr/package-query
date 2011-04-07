@@ -500,14 +500,14 @@ int main (int argc, char **argv)
 	}
 	else if (!config.aur && config.db_local)
 	{
-		ret += alpm_search_local (NULL);
+		ret += alpm_search_local (config.filter, NULL, NULL);
 	}
 	if (config.aur && config.db_local && config.filter == F_FOREIGN
 		&& !(given & N_TARGET))
 	{
 		/* -AQm */
 		config.aur_foreign = 1;
-		alpm_search_local (&targets);
+		alpm_search_local (F_FOREIGN, "%n", &targets);
 		ret += aur_info (&targets);
 	}
 

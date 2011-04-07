@@ -401,20 +401,25 @@ int search_pkg (pmdb_t *db, alpm_list_t *targets)
 	return ret;
 }
 
-int alpm_search_local (alpm_list_t **res)
+int alpm_search_local (unsigned short _filter, const char *format,
+                       alpm_list_t **res)
 {
 	alpm_list_t *i;
+	pmpkg_t *pkg;
 	int ret=0;
 
 	for(i = alpm_db_get_pkgcache(alpm_option_get_localdb());
 	    i; i = alpm_list_next(i))
 	{
-		if (filter (alpm_list_getdata (i), config.filter))
+		pkg = alpm_list_getdata (i);
+		if (filter (pkg, _filter))
 		{
 			if (res)
-				*res = alpm_list_add (*res, strdup (alpm_pkg_get_name (alpm_list_getdata (i))));
+				*res = alpm_list_add (*res, pkg_to_str (NULL, pkg,
+				    (printpkgfn) alpm_pkg_get_str,
+				    (format) ? format : "%n"));
 			else
-				print_or_add_result ((void *) alpm_list_getdata (i), R_ALPM_PKG);
+				print_or_add_result (pkg, R_ALPM_PKG);
 			ret++;
 		}
 	}
