@@ -705,12 +705,6 @@ const char *aur_get_str (void *p, unsigned char c)
 			free_info = 1;
 			break;
 		case 'V':
-			{
-				pmpkg_t *syncpkg = get_sync_pkg_by_name (aur_pkg_get_name (pkg));
-				if (syncpkg)
-					info = (char *) alpm_pkg_get_version (syncpkg);
-			}
-			break;
 		case 'v': info = (char *) aur_pkg_get_version (pkg); break;
 		case 'w': 
 			info = itostr (aur_pkg_get_votes (pkg)); 

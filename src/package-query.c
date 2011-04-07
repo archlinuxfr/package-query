@@ -499,16 +499,23 @@ int main (int argc, char **argv)
 		}
 	}
 	else if (!config.aur && config.db_local)
-	{
 		ret += alpm_search_local (config.filter, NULL, NULL);
-	}
-	if (config.aur && config.db_local && config.filter == F_FOREIGN
-		&& !(given & N_TARGET))
+	else if (config.aur && config.db_local && !(given & N_TARGET))
 	{
-		/* -AQm */
-		config.aur_foreign = 1;
-		alpm_search_local (F_FOREIGN, "%n", &targets);
-		ret += aur_info (&targets);
+		if (config.filter == F_FOREIGN)
+		{
+			/* -AQm */
+			config.aur_foreign = 1;
+			alpm_search_local (F_FOREIGN, "%n", &targets);
+			ret += aur_info (&targets);
+		}
+		else if (config.filter == F_UPGRADES)
+		{
+			/* -AQu */
+			ret += alpm_search_local (config.filter, NULL, NULL);
+			alpm_search_local (F_FOREIGN, "%n>%v", &targets);
+			ret += aur_info (&targets);
+		}
 	}
 
 	show_results();
