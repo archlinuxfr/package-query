@@ -282,18 +282,12 @@ string_t *string_free (string_t *dest)
 	return NULL;
 }
 
-
-
-
 string_t *string_ncat (string_t *dest, char *src, size_t n)
 {
 	REALLOC (dest->s, (strlen (dest->s)+1+n) * sizeof (char));
 	strncat (dest->s, src, n);
 	return dest;
 }
-
-
-
 
 char *strtrim(char *str)
 {

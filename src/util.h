@@ -85,7 +85,6 @@ typedef struct _aq_config
 	unsigned short aur_fetch;
 	unsigned short aur_foreign;
 	unsigned short colors;
-	unsigned short custom_dbpath;
 	unsigned short custom_out;
 	unsigned short db_local;
 	unsigned short db_sync;
@@ -103,19 +102,18 @@ typedef struct _aq_config
 	unsigned short query;
 	unsigned short show_size;
 	unsigned short updates;
-	char aur_url[PATH_MAX];
-	char config_file[PATH_MAX];
+	char *aur_url;
+	char *configfile;
 	char csep[SEP_LEN];
-	char dbpath[PATH_MAX];
+	char *dbpath;
 	char format_out[PATH_MAX];
-	char root_dir[PATH_MAX];
+	char *rootdir;
 	char sort;
 } aq_config;
 
 aq_config config;
 
 void init_config (const char *myname);
-
 
 /* Results */
 typedef struct _results_t

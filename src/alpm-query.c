@@ -29,38 +29,55 @@
 
 #include "util.h"
 #include "alpm-query.h"
+
 typedef const char *(*retcharfn) (void *);
 
-void init_path ()
+static int _alpm_option_set_root (const char *s)
 {
-	if (config.dbpath[0]=='\0') 
-		sprintf (config.dbpath, "%s%s", config.root_dir, DBPATH);
-	if (config.config_file[0]=='\0')
-		sprintf (config.config_file, "%s%s", config.root_dir, CONFFILE);
-	if (config.root_dir[0]=='\0') strcpy (config.root_dir, ROOTDIR);
+	if (alpm_option_set_root (s)!=0)
+	{
+		fprintf (stderr, "problem setting rootdir '%s' (%s)\n",
+			s, alpm_strerrorlast());
+		return 0;
+	}
+	return 1;
 }
+static int _alpm_option_set_dbpath (const char *s)
+{
+	if (alpm_option_set_dbpath (s)!=0)
+	{
+		fprintf (stderr, "problem setting dbpath '%s' (%s)\n",
+			s, alpm_strerrorlast());
+		return 0;
+	}
+	return 1;
+}
+
 
 int init_alpm ()
 {
-	init_path();
 	if (alpm_initialize()!=	0)
 	{
 		fprintf(stderr, "failed to initialize alpm library (%s)\n", 
 			alpm_strerrorlast());
 		return 0;
 	}
-	if (alpm_option_set_root (config.root_dir)!=0)
+	if (config.rootdir)
 	{
-		fprintf (stderr, "problem setting rootdir '%s' (%s)\n", 
-			config.root_dir, alpm_strerrorlast());
-		return 0;
+		if (!_alpm_option_set_root (config.rootdir)) return 0;
+		if (!config.dbpath)
+		{
+			char path[PATH_MAX];
+			snprintf (path, PATH_MAX, "%s%s", alpm_option_get_root(), DBPATH+1);
+			config.dbpath = strdup (path);
+		}
 	}
-	if (alpm_option_set_dbpath (config.dbpath)!=0)
-	{
-		fprintf (stderr, "problem setting dbpath '%s' (%s)\n", 
-			config.dbpath, alpm_strerrorlast());
-		return 0;
-	}
+	else
+		if (!_alpm_option_set_root (ROOTDIR)) return 0;
+	if (config.dbpath)
+		return _alpm_option_set_dbpath (config.dbpath);
+	else
+		return _alpm_option_set_dbpath (DBPATH);
 	return 1;
 }
 
@@ -76,18 +93,17 @@ static void setarch(const char *arch)
 	}
 }
 
-int parse_config_file (alpm_list_t **dbs, const char *config_file, int reg)
+int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 {
 	char line[PATH_MAX+1];
 	char *ptr;
 	char *equal;
 	FILE *conf;
-	static int file_closed=0;
 	static pmdb_t *db=NULL;
 	static int in_option=0;
-	if ((conf = fopen (config_file, "r")) == NULL)
+	if ((conf = fopen (configfile, "r")) == NULL)
 	{
-		fprintf(stderr, "Unable to open file: %s\n", config_file);
+		fprintf(stderr, "Unable to open file: %s\n", configfile);
 		return 0;
 	}
 	while (fgets (line, PATH_MAX, conf))
@@ -114,7 +130,6 @@ int parse_config_file (alpm_list_t **dbs, const char *config_file, int reg)
 						fprintf(stderr, 
 							"could not register '%s' database (%s)\n", ptr,
 							alpm_strerrorlast());
-						file_closed=1;
 						fclose (conf);
 						return 0;
 					}
@@ -136,9 +151,9 @@ int parse_config_file (alpm_list_t **dbs, const char *config_file, int reg)
 				if (strcmp (line, "Include") == 0)
 				{
 					strtrim (ptr);
-					if (!parse_config_file (dbs, ptr, reg))
+					if (!parse_configfile (dbs, ptr, reg))
 					{
-						if (!file_closed) fclose (conf);
+						fclose (conf);
 						return 0;
 					}
 				}
@@ -163,16 +178,12 @@ int parse_config_file (alpm_list_t **dbs, const char *config_file, int reg)
 						strtrim (ptr);
 						setarch (ptr);
 					}
-					else if (!config.custom_dbpath && 
+					else if (!config.dbpath &&
 						strcmp (line, "DBPath") == 0)
 					{
 						strtrim (ptr);
-						strcpy (config.dbpath, ptr);
-						if (alpm_option_set_dbpath (config.dbpath)!=0)
+						if (!_alpm_option_set_dbpath (ptr))
 						{
-							fprintf (stderr, "problem setting dbpath '%s' (%s)\n", 
-								config.dbpath, alpm_strerrorlast());
-							file_closed=1;
 							fclose (conf);
 							return 0;
 						}					
@@ -194,14 +205,13 @@ int parse_config_file (alpm_list_t **dbs, const char *config_file, int reg)
 alpm_list_t * get_db_sync ()
 {
 	alpm_list_t *dbs=NULL;
-	init_path();
-	parse_config_file (&dbs, config.config_file, 0);
+	parse_configfile (&dbs, config.configfile, 0);
 	return dbs;
 }
 
-int init_db_sync (const char * config_file)
+int init_db_sync (const char * configfile)
 {
-	return parse_config_file (NULL, config.config_file, 1);
+	return parse_configfile (NULL, config.configfile, 1);
 }
 
 int filter (pmpkg_t *pkg, unsigned int _filter)
@@ -510,7 +520,7 @@ off_t alpm_pkg_get_realsize (pmpkg_t *pkg)
 	files = alpm_pkg_get_files (pkg);
 	if (files)
 	{
-		chdir (config.root_dir);
+		chdir (config.rootdir);
 		len = alpm_list_count (files);
 		CALLOC (inodes, len, sizeof (ino_t));
 		j=0;

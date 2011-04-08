@@ -62,6 +62,10 @@ void cleanup (int ret)
 		fprintf (stderr, alpm_strerrorlast());
 	FREELIST(targets);
 	FREE (config.myname);
+	FREE (config.aur_url);
+	FREE (config.configfile);
+	FREE (config.dbpath);
+	FREE (config.rootdir);
 	alpm_cleanup ();
 	aur_cleanup ();
 	color_cleanup ();
@@ -82,7 +86,6 @@ void init_config (const char *myname)
 	config.aur_fetch = 0;
 	config.aur_foreign = 0;
 	config.colors = 1; 
-	config.custom_dbpath = 0;
 	config.custom_out = 0; 
 	config.db_local = 0;
 	config.db_sync = 0;
@@ -99,12 +102,12 @@ void init_config (const char *myname)
 	config.quiet = 0;
 	config.query=ALL;
 	config.show_size = 0;
-	strcpy (config.aur_url, AUR_BASE_URL);
-	strcpy (config.config_file, "");
+	config.aur_url = strdup (AUR_BASE_URL);
+	config.configfile = strndup (CONFFILE, PATH_MAX);
 	strcpy (config.csep, " ");
-	strcpy (config.dbpath, "");
+	config.dbpath = NULL;
 	strcpy (config.format_out, "");
-	strcpy (config.root_dir, "");
+	config.rootdir = NULL;
 	config.sort = 0;
 }
 
@@ -267,11 +270,12 @@ int main (int argc, char **argv)
 				given |= N_DB;
 				break;
 			case 'c':
-				strcpy (config.config_file, optarg);
+				FREE (config.configfile);
+				config.configfile = strndup (optarg, PATH_MAX);
 				break;
 			case 'b':
-				strcpy (config.dbpath, optarg);
-				config.custom_dbpath = 1;
+				FREE (config.dbpath);
+				config.dbpath = strndup (optarg, PATH_MAX);
 				break;
 			case 'd':
 				config.filter |= F_DEPS;
@@ -285,7 +289,7 @@ int main (int argc, char **argv)
 			case 'f':
 				config.custom_out = 1;
 				config.colors=0;
-				strcpy (config.format_out, optarg);
+				strncpy (config.format_out, optarg, PATH_MAX);
 				format_str (config.format_out);
 				break;
 			case 'g':
@@ -328,9 +332,8 @@ int main (int argc, char **argv)
 				config.quiet = 1;
 				break;
 			case 'r':
-				strcpy(config.root_dir, optarg);
-				if (config.root_dir[strlen(config.root_dir)] != '/')
-					strcat (config.root_dir, "/");
+				FREE (config.rootdir);
+				config.rootdir = strndup (optarg, PATH_MAX);
 				break;
 			case 's':
 				if (config.op) break;
@@ -390,7 +393,8 @@ int main (int argc, char **argv)
 				config.show_size = 1;
 				break;
 			case 1007: /* --aur-url */
-				strcpy (config.aur_url, optarg);
+				FREE (config.aur_url);
+				config.aur_url = strdup (optarg);
 				break;
 			case 1008: /* --insecure */
 				config.insecure = 1;
