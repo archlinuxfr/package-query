@@ -434,7 +434,6 @@ static void aur_fetch_page (CURL *curl, aurpkg_t *pkg)
 	if ((curl_code = curl_easy_perform (curl)) != CURLE_OK)
 	{
 		fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
-		curl_easy_cleanup(curl);
 		string_free (res);
 		return;
 	}
@@ -464,7 +463,6 @@ static int aur_fetch (CURL *curl, request_t *req)
 	char *encoded_arg = curl_easy_escape (curl, req->arg, 0);
 	if (encoded_arg == NULL)
 	{
-		curl_easy_cleanup(curl);
 		string_free (res);
 		return 0;
 	}
@@ -475,7 +473,6 @@ static int aur_fetch (CURL *curl, request_t *req)
 	if ((curl_code = curl_easy_perform (curl)) != CURLE_OK)
 	{
 		fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
-		curl_easy_cleanup(curl);
 		string_free (res);
 		return 0;
 	}
