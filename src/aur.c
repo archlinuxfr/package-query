@@ -82,6 +82,21 @@
 #ifndef AUR_MAX_CONNECT
 #define AUR_MAX_CONNECT 10
 #endif
+
+
+/*
+ * JSON parse packages
+ */
+#define AUR_ID_LEN 	20
+typedef struct _jsonpkg_t
+{
+	alpm_list_t *pkgs;
+	aurpkg_t *pkg;
+	char current_key[AUR_ID_LEN];
+	int level;
+} jsonpkg_t;
+
+
 static alpm_list_t *reqs=NULL;
 static target_arg_t *ta=NULL;
 static int aur_pkgs_found_count=0;
@@ -99,7 +114,7 @@ typedef struct _request_t
 	alpm_list_t *pkgs;
 } request_t;
 
-request_t *request_new ()
+static request_t *request_new ()
 {
 	request_t *req=NULL;
 	MALLOC (req, sizeof(request_t));
@@ -113,15 +128,14 @@ request_t *request_new ()
 	return req;
 }
 
-request_t *request_free (request_t *req)
+static void request_free (request_t *req)
 {
 	if (req == NULL)
-		return NULL;
+		return;
 
 	FREE (req->arg);
 	target_free (req->t_info);
 	FREE (req);
-	return NULL;
 }
 
 aurpkg_t *aur_pkg_new ()
@@ -143,10 +157,10 @@ aurpkg_t *aur_pkg_new ()
 	return pkg;
 }
 
-aurpkg_t *aur_pkg_free (aurpkg_t *pkg)
+void aur_pkg_free (aurpkg_t *pkg)
 {
 	if (pkg == NULL)
-		return NULL;
+		return;
 	FREE (pkg->name);
 	FREE (pkg->version);
 	FREE (pkg->desc);
@@ -155,7 +169,6 @@ aurpkg_t *aur_pkg_free (aurpkg_t *pkg)
 	FREE (pkg->license);
 	FREE (pkg->maintainer);
 	FREE (pkg);
-	return NULL;
 }
 
 aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
@@ -262,7 +275,7 @@ const char * aur_pkg_get_maintainer (const aurpkg_t * pkg)
 	return NULL;
 }
 
-void aur_fetch_type ()
+static void aur_fetch_type ()
 {
 	char *c;
 	config.aur_fetch = AUR_FETCH_SIMPLE;
@@ -274,7 +287,7 @@ void aur_fetch_type ()
 }
 
 
-size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
+static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
 {
 	string_t *s = (string_t *) userdata;
 	string_ncat (s, data, nmemb);
@@ -397,7 +410,7 @@ static yajl_callbacks callbacks = {
     NULL,
 };
 
-alpm_list_t *aur_json_parse (const char *s)
+static alpm_list_t *aur_json_parse (const char *s)
 {
 	jsonpkg_t pkg_json = { NULL, NULL, "", 0};
 	yajl_handle hand;
@@ -575,7 +588,7 @@ static void *thread_aur_fetch (void *arg)
 	return 0;
 }
 
-int aur_request (alpm_list_t **targets, int type)
+static int aur_request (alpm_list_t **targets, int type)
 {
 	int i, n;
 	request_t *req;
@@ -610,7 +623,7 @@ int aur_request (alpm_list_t **targets, int type)
 			req->t_info = target_parse (req->target);
 			if (req->t_info->db && strcmp (req->t_info->db, AUR_REPO)!=0)
 			{
-				req = request_free (req);
+				request_free (req);
 				continue;
 			}
 			req->arg = strdup (req->t_info->name);
@@ -718,4 +731,4 @@ void aur_cleanup ()
 	aur_get_str (NULL, 0);
 }
 
-/* vim: set ts=4 sw=4 noet foldmarker={{{,}}} foldmethod=marker: */
+/* vim: set ts=4 sw=4 noet: */

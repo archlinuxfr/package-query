@@ -36,45 +36,45 @@ typedef struct _colors_t
 	char *color;
 } colors_t;
 
-alpm_list_t *colors=NULL;
+static alpm_list_t *colors=NULL;
 
-void colors_free (colors_t *c)
+static void colors_free (colors_t *c)
 {
-	free (c->id);
-	free (c->color);
-	free (c);
+	FREE (c->id);
+	FREE (c->color);
+	FREE (c);
 }
 
-int colors_cmp (void *c1, void *c2)
+static int colors_cmp (void *c1, void *c2)
 {
 	return strcmp (((colors_t *)c1)->id, ((colors_t *)c2)->id);
 }
 
-int colors_cmp_id (void *c1, void *id)
+static int colors_cmp_id (void *c1, void *id)
 {
 	return strcmp (((colors_t *)c1)->id, (char *)id);
 }
 
-void colors_set_color (const char* id, const char *color)
+static void colors_set_color (const char* id, const char *color)
 {
 	colors_t *c;
 	c = alpm_list_find (colors, id, (alpm_list_fn_cmp) colors_cmp_id);
 	if (c)
 	{
-		free (c->color);
+		FREE (c->color);
 	}
 	else
 	{
-		c = malloc (sizeof (colors_t));
+		MALLOC (c, sizeof (colors_t));
 		c->id = strdup (id);
 		colors = alpm_list_add_sorted (colors, c, (alpm_list_fn_cmp)colors_cmp);
 	}
-	c->color = malloc (sizeof (char) * (strlen (color) + 4)); /* + "\033[m" */
+	CALLOC (c->color, (strlen (color) + 4), sizeof (char)); /* + "\033[m" */
 	sprintf (c->color, "\033[%sm", color);
 }
 	
 
-void parse_var (const char *s)
+static void parse_var (const char *s)
 {
 	char *src, *t;
 	char *sid, *sval;

@@ -53,15 +53,8 @@ int init_db_sync ();
  * Those functions call print_package()
  */
 int search_pkg_by_type (pmdb_t *db, alpm_list_t **targets, int query_type);
-
-/* search by name or db/name and if modify is true, 
- * remove found items from targets.
- */
 int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets);
-
 int list_grp (pmdb_t *db, alpm_list_t *targets);
-
-
 int search_pkg (pmdb_t *db, alpm_list_t *targets);
 int list_db (pmdb_t *db, alpm_list_t *targets);
 int alpm_search_local (unsigned short filter, const char *format,
@@ -74,6 +67,7 @@ pmpkg_t *get_sync_pkg (pmpkg_t *pkg);
 
 /*
  * alpm_pkg_get_str() get info for package
+ * alpm_local_pkg_get_str() get info for local package
  * alpm_grp_get_str() get info for group
  * str returned should not be passed to free
  */

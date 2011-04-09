@@ -45,22 +45,8 @@ typedef struct _aurpkg_t
 	char *maintainer;
 } aurpkg_t;
 
-
-/*
- * JSON parse packages
- */
-#define AUR_ID_LEN 	20
-typedef struct _jsonpkg_t
-{
-	alpm_list_t *pkgs;
-	aurpkg_t *pkg;
-	char current_key[AUR_ID_LEN];
-	int level;
-} jsonpkg_t;
-
-
 aurpkg_t *aur_pkg_new ();
-aurpkg_t *aur_pkg_free (aurpkg_t *pkg);
+void aur_pkg_free (aurpkg_t *pkg);
 aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg);
 int aur_pkg_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2);
 int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2);

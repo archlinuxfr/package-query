@@ -81,7 +81,7 @@ int init_alpm ()
 	return 1;
 }
 
-/* From pacman 3.4.0, set arch */
+/* from pacman */
 static void setarch(const char *arch)
 {
 	if (strcmp(arch, "auto") == 0) {
@@ -93,7 +93,7 @@ static void setarch(const char *arch)
 	}
 }
 
-int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
+static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 {
 	char line[PATH_MAX+1];
 	char *ptr;
@@ -202,19 +202,19 @@ int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 }
 
 
-alpm_list_t * get_db_sync ()
+alpm_list_t *get_db_sync ()
 {
 	alpm_list_t *dbs=NULL;
 	parse_configfile (&dbs, config.configfile, 0);
 	return dbs;
 }
 
-int init_db_sync (const char * configfile)
+int init_db_sync (const char *configfile)
 {
 	return parse_configfile (NULL, config.configfile, 1);
 }
 
-int filter (pmpkg_t *pkg, unsigned int _filter)
+static int filter (pmpkg_t *pkg, unsigned int _filter)
 {
 	if (_filter & F_FOREIGN)
 		return (get_sync_pkg (pkg) == NULL);
@@ -239,7 +239,8 @@ int filter (pmpkg_t *pkg, unsigned int _filter)
 			return 0;
 	return 1;
 }
-int filter_state (pmpkg_t *pkg)
+
+static int filter_state (pmpkg_t *pkg)
 {
 	int ret=0;
 	if (filter (pkg, F_FOREIGN)) ret |= F_FOREIGN;
@@ -353,18 +354,6 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets)
 	return ret;
 }
 
-void print_grp (pmgrp_t *grp)
-{
-	if (!config.list_group)
-	{
-		alpm_list_t *i;
-		for (i=alpm_grp_get_pkgs (grp); i; i=alpm_list_next (i))
-			print_package (alpm_grp_get_name (grp), alpm_list_getdata(i), alpm_pkg_get_str);
-	}
-	else
-		print_package ("", grp, alpm_grp_get_str);
-}
-
 int list_grp (pmdb_t *db, alpm_list_t *targets)
 {
 	int ret=0;
@@ -378,8 +367,11 @@ int list_grp (pmdb_t *db, alpm_list_t *targets)
 			grp = alpm_db_readgrp (db, grp_name);
 			if (grp) 
 			{
+				alpm_list_t *i;
 				ret++;
-				print_grp (grp);
+				for (i=alpm_grp_get_pkgs (grp); i; i=alpm_list_next (i))
+					print_package (alpm_grp_get_name (grp),
+					    alpm_list_getdata(i), alpm_pkg_get_str);
 			}
 		}
 	}
@@ -388,7 +380,7 @@ int list_grp (pmdb_t *db, alpm_list_t *targets)
 		for(t = alpm_db_get_grpcache(db); t; t = alpm_list_next(t)) 
 		{
 			ret++;
-			print_grp (alpm_list_getdata(t));
+			print_package ("", alpm_list_getdata(t), alpm_grp_get_str);
 		}
 	}
 	return ret;
@@ -397,17 +389,16 @@ int list_grp (pmdb_t *db, alpm_list_t *targets)
 int search_pkg (pmdb_t *db, alpm_list_t *targets)
 {
 	int ret=0;
-	alpm_list_t *res, *t;
-
-	res = alpm_db_search(db, targets);
-	for(t = res; t; t = alpm_list_next(t)) 
+	alpm_list_t *t, *pkgs;
+	pkgs = alpm_db_search(db, targets);
+	for(t = pkgs; t; t = alpm_list_next(t))
 	{
 		pmpkg_t *info = alpm_list_getdata(t);
 		if (!filter (info, config.filter)) continue;
 		ret++;
 		print_or_add_result ((void *) info, R_ALPM_PKG);
 	}
-	alpm_list_free (res);
+	alpm_list_free (pkgs);
 	return ret;
 }
 
@@ -441,26 +432,10 @@ int list_db (pmdb_t *db, alpm_list_t *targets)
 {
 	int ret=0;
 	const char *db_name = alpm_db_get_name (db);
-	const char *target=NULL;
-	int db_present=0;
-	alpm_list_t *t;
 	alpm_list_t *i;
 
-	if (targets)
-	{
-		for (t=targets; t; t = alpm_list_next (t))
-		{
-			target = alpm_list_getdata (t);
-			if (strcmp (db_name, target) == 0)
-			{
-				db_present=1;
-				break;
-			}
-		}
-	}
-	else
-		db_present=1;
-	if (!db_present) return 0;
+	if (targets && (alpm_list_find_str (targets, db_name))==NULL)
+		return 0;
 	for(i = alpm_db_get_pkgcache(db); i; i = alpm_list_next(i))
 	{
 		pmpkg_t *info = alpm_list_getdata(i);

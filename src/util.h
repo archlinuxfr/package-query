@@ -113,18 +113,6 @@ typedef struct _aq_config
 
 aq_config config;
 
-void init_config (const char *myname);
-
-/* Results */
-typedef struct _results_t
-{
-	void *ele;
-	unsigned short type;
-} results_t;
-
-void print_or_add_result (void *pkg, unsigned short type);
-void show_results ();
-
 /*
  * Target type
  */
@@ -185,19 +173,11 @@ string_t *string_ncat (string_t *dest, const char *src, size_t n);
 string_t *string_cat (string_t *dest, const char *src);
 string_t *string_fcat (string_t *dest, const char *format, ...);
 const char *string_cstr (string_t *str);
-
+/* strtrim, strreplace are from pacman's code */
 char *strtrim(char *str);
-void strins (char *dest, const char *src);
 char *strreplace(const char *str, const char *needle, const char *replace);
-char *concat_str_list (alpm_list_t *l);
 
-/* Split a dependance like string ("x{<=,>=,<,>,=}y") into:
- * name=x, mod={<=,>=,<,>,=}, ver=y
- */
-void split_dep_str (const char *dep, char **name, pmdepmod_t *mod, char **ver);
-typedef const char * (*pkg_get_version)(void *);
-int check_version (void *pkg, pmdepmod_t mod, const char *ver,
-	pkg_get_version f);
+char *concat_str_list (alpm_list_t *l);
 
 /* integer/long to string */
 char * itostr (int i);
@@ -210,6 +190,11 @@ typedef const char *(*printpkgfn)(void *, unsigned char);
 void format_str (char *s);
 char *pkg_to_str (const char * target, void * pkg, printpkgfn f, const char *format);
 void print_package (const char * target, void * pkg, printpkgfn f);
+
+/* Results */
+void print_or_add_result (void *pkg, unsigned short type);
+void show_results ();
+
 
 
 #endif

@@ -35,11 +35,16 @@
 #define _(x) gettext(x)
 #define FORMAT_LOCAL_PKG "lF134"
 
-alpm_list_t *results=NULL;
+static alpm_list_t *results=NULL;
 
+/* Results */
+typedef struct _results_t
+{
+	void *ele;
+	unsigned short type;
+} results_t;
 
-
-results_t *results_new (void *ele, unsigned short type)
+static results_t *results_new (void *ele, unsigned short type)
 {
 	results_t *r = NULL;
 	MALLOC (r, sizeof (results_t));
@@ -51,14 +56,14 @@ results_t *results_new (void *ele, unsigned short type)
 	return r;
 }
 	
-results_t *results_free (results_t *r)
+static results_t *results_free (results_t *r)
 {
 	if (r->type == R_AUR_PKG) aur_pkg_free (r->ele);
 	free (r);
 	return NULL;
 }
 	
-const char *results_name (const results_t *r)
+static const char *results_name (const results_t *r)
 {
 	switch (r->type)
 	{
@@ -71,7 +76,7 @@ const char *results_name (const results_t *r)
 	}
 }
 
-time_t results_installdate (const results_t *r)
+static time_t results_installdate (const results_t *r)
 {
 	const char *r_name;
 	pmpkg_t *pkg = NULL;
@@ -84,13 +89,13 @@ time_t results_installdate (const results_t *r)
 }
 			
 
-off_t results_isize (const results_t *r)
+static off_t results_isize (const results_t *r)
 {
 	if (r->type==R_AUR_PKG) return 0;
 	return alpm_pkg_get_isize(r->ele);
 }
 		
-int results_votes (const results_t *r)
+static int results_votes (const results_t *r)
 {
 	switch (r->type)
 	{
@@ -102,12 +107,12 @@ int results_votes (const results_t *r)
 }
 			
 			
-int results_cmp (const results_t *r1, const results_t *r2)
+static int results_cmp (const results_t *r1, const results_t *r2)
 {
 	return strcmp (results_name (r1), results_name (r2));
 }
 
-int results_installdate_cmp (const results_t *r1, const results_t *r2)
+static int results_installdate_cmp (const results_t *r1, const results_t *r2)
 {
 	if (results_installdate (r1)>results_installdate (r2))
 		return 1;
@@ -118,7 +123,7 @@ int results_installdate_cmp (const results_t *r1, const results_t *r2)
 }
 
 
-int results_isize_cmp (const results_t *r1, const results_t *r2)
+static int results_isize_cmp (const results_t *r1, const results_t *r2)
 {
 	if (results_isize (r1)>results_isize (r2))
 		return 1;
@@ -129,7 +134,7 @@ int results_isize_cmp (const results_t *r1, const results_t *r2)
 }
 
 
-int results_votes_cmp (const results_t *r1, const results_t *r2)
+static int results_votes_cmp (const results_t *r1, const results_t *r2)
 {
 	return (results_votes (r1) - results_votes (r2));
 }
@@ -278,7 +283,7 @@ string_t *string_new ()
 void string_free (string_t *dest)
 {
 	if (dest == NULL)
-		return NULL;
+		return;
 	FREE (dest->s);
 	FREE (dest);
 }
@@ -422,7 +427,7 @@ void format_str (char *s)
 	}
 }
 
-void print_escape (const char *str)
+static void print_escape (const char *str)
 {
 	const char *c=str;
 	while (*c!='\0')
@@ -492,7 +497,7 @@ char *strreplace(const char *str, const char *needle, const char *replace)
 	return newstr;
 }
 
-int getcols(void)
+static int getcols(void)
 {
 	if (!isatty (1)) {
 		/* We will default to 80 columns if we're not a tty
@@ -524,7 +529,7 @@ int getcols(void)
 	*/
 }
 
-void indent (const char *str)
+static void indent (const char *str)
 {
 	char *s=NULL;
 	char *c=NULL, *c1=NULL;
