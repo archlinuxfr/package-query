@@ -313,6 +313,7 @@ static int json_key (void * ctx, const unsigned char * stringVal,
                             unsigned int stringLen)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
+	stringLen = (stringLen>=AUR_ID_LEN) ? AUR_ID_LEN-1 : stringLen;
 	strncpy (pkg_json->current_key, (const char *) stringVal, stringLen);
 	pkg_json->current_key[stringLen] = '\0';
     return 1;
@@ -434,10 +435,10 @@ static void aur_fetch_page (CURL *curl, aurpkg_t *pkg)
 	{
 		fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
 		curl_easy_cleanup(curl);
-		res = string_free (res);
+		string_free (res);
 		return;
 	}
-	c1 = strstr (res->s, AUR_M_START);
+	c1 = strstr (string_cstr (res), AUR_M_START);
 	if (c1)
 	{
 		c1+= strlen (AUR_M_START);
@@ -445,7 +446,7 @@ static void aur_fetch_page (CURL *curl, aurpkg_t *pkg)
 		if (c2)
 			pkg->maintainer = strndup (c1, c2-c1);
 	}
-	res = string_free (res);
+	string_free (res);
 }
 
 
@@ -464,7 +465,7 @@ static int aur_fetch (CURL *curl, request_t *req)
 	if (encoded_arg == NULL)
 	{
 		curl_easy_cleanup(curl);
-		res = string_free (res);
+		string_free (res);
 		return 0;
 	}
 	strcat (url, encoded_arg);
@@ -475,11 +476,11 @@ static int aur_fetch (CURL *curl, request_t *req)
 	{
 		fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
 		curl_easy_cleanup(curl);
-		res = string_free (res);
+		string_free (res);
 		return 0;
 	}
-	req->pkgs = aur_json_parse ((const char *) res->s);
-	res = string_free (res);
+	req->pkgs = aur_json_parse (string_cstr (res));
+	string_free (res);
 	return (req->pkgs != NULL);
 }
 

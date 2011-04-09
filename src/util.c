@@ -269,24 +269,70 @@ string_t *string_new ()
 {
 	string_t *str = NULL;
 	MALLOC (str, sizeof (string_t));
-	str->s = strdup ("");
+	str->s = NULL;
+	str->size = 0;
+	str->used = 0;
 	return str;
 }
 
-string_t *string_free (string_t *dest)
+void string_free (string_t *dest)
 {
 	if (dest == NULL)
 		return NULL;
 	FREE (dest->s);
 	FREE (dest);
-	return NULL;
 }
 
-string_t *string_ncat (string_t *dest, char *src, size_t n)
+char *string_free2 (string_t *dest)
 {
-	REALLOC (dest->s, (strlen (dest->s)+1+n) * sizeof (char));
+	char *s;
+	if (dest == NULL)
+		return NULL;
+	s = dest->s;
+	FREE (dest);
+	return s;
+}
+
+string_t *string_ncat (string_t *dest, const char *src, size_t n)
+{
+	if (!src || !n) return dest;
+	if (dest->size <= dest->used+n)
+	{
+		dest->size += ((n/PATH_MAX) + 1) * PATH_MAX;
+		/* dest->size += dest->used + n + 1; */
+		REALLOC (dest->s, dest->size * sizeof (char));
+		if (dest->used == 0) dest->s[0]='\0';
+	}
+	dest->used += n;
 	strncat (dest->s, src, n);
 	return dest;
+}
+
+string_t *string_cat (string_t *dest, const char *src)
+{
+	return string_ncat (dest, src, strlen (src));
+}
+
+string_t *string_fcat (string_t *dest, const char *format, ...)
+{
+	if (!format || !strlen (format)) return dest;
+	char *s;
+	va_list args;
+	va_start(args, format);
+	vasprintf(&s, format, args);
+	if (!s)
+	{
+		perror ("vasprintf");
+		exit (1);
+	}
+	dest =  string_cat (dest, s);
+	free (s);
+	return dest;
+}
+
+const char *string_cstr (string_t *str)
+{
+	return (const char *) ((str->s) ? str->s : "");
 }
 
 char *strtrim(char *str)
@@ -390,16 +436,16 @@ void print_escape (const char *str)
 
 char * itostr (int i)
 {
-	char is[20];
-	sprintf (is, "%d", i);
-	return strdup (is);
+	char *is;
+	asprintf (&is, "%d", i);
+	return is;
 }
 
 char * ltostr (long i)
 {
-	char is[20];
-	sprintf (is, "%ld", i);
-	return strdup (is);
+	char *is;
+	asprintf (&is, "%ld", i);
+	return is;
 }
 
 /* Helper function for strreplace */
@@ -512,17 +558,15 @@ void indent (const char *str)
 
 void color_print_package (void * p, printpkgfn f)
 {
-	static char cstr[PATH_MAX];
+	string_t *cstr;
 	static int number=0;
 	const char *info, *lver;
 	char *ver=NULL;
-	char *pcstr;
-	cstr[0]='\0';
-	pcstr = cstr;
+	cstr=string_new ();
 	if (config.numbering)
 	{
 		/* Numbering list */
-		pcstr += sprintf (pcstr, "%s%d%s ", color (C_NB), ++number, color (C_NO));
+		cstr = string_fcat (cstr, "%s%d%s ", color (C_NB), ++number, color (C_NO));
 	}
 	if (config.get_res && config.aur_foreign)
 	{
@@ -534,16 +578,17 @@ void color_print_package (void * p, printpkgfn f)
 		if (info)
 		{
 			if (config.get_res) dprintf (FD_RES, "%s/", info);
-			pcstr += sprintf (pcstr, "%s%s/%s", color_repo (info), info, color(C_NO));
+			cstr = string_fcat (cstr, "%s%s/%s", color_repo (info), info, color(C_NO));
 		}
 	}
 	info=f(p, 'n');
 	if (config.get_res) dprintf (FD_RES, "%s\n", info);
-	pcstr += sprintf (pcstr, "%s%s%s ", color(C_PKG), info, color(C_NO));
+	cstr = string_fcat (cstr, "%s%s%s ", color(C_PKG), info, color(C_NO));
 	if (config.list_group)
 	{
 		/* no more output for -[S,Q]g and no targets */
-		fprintf (stdout, "%s\n", cstr);
+		fprintf (stdout, "%s\n", string_cstr (cstr));
+		string_free (cstr);
 		return;
 	}
 	lver = alpm_local_pkg_get_str (info, 'l');
@@ -554,29 +599,30 @@ void color_print_package (void * p, printpkgfn f)
 		/* show foreign package */
 		info = f(p, 'm');
 		if (ver && (!info || info[0]=='-'))
-			pcstr += sprintf (pcstr, "%s%s%s", color(C_ORPHAN), lver, color (C_NO));
+			cstr = string_fcat (cstr, "%s%s%s", color(C_ORPHAN), lver, color (C_NO));
 		else
 		{
 			info = f(p, 'o');
 			if (info && info[0]=='1')
-				pcstr += sprintf (pcstr, "%s%s%s", color(C_OD), lver, color (C_NO));
+				cstr = string_fcat (cstr, "%s%s%s", color(C_OD), lver, color (C_NO));
 			else
-				pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), lver, color (C_NO));
+				cstr = string_fcat (cstr, "%s%s%s", color(C_VER), lver, color (C_NO));
 		}
 		if (ver)
 		{
 			/* package found in AUR */
 			if (alpm_pkg_vercmp (ver, lver)>0)
-				pcstr += sprintf (pcstr, " ( aur: %s )", ver);
-			fprintf (stdout, "%saur/%s%s\n", color_repo ("aur"), color (C_NO), cstr);
+				cstr = string_fcat (cstr, " ( aur: %s )", ver);
+			fprintf (stdout, "%saur/%s%s\n", color_repo ("aur"), color (C_NO), string_cstr (cstr));
 			FREE (ver);
 		}
 		else
-			fprintf (stdout, "%slocal/%s%s\n", color_repo ("local"), color (C_NO), cstr);
+			fprintf (stdout, "%slocal/%s%s\n", color_repo ("local"), color (C_NO), string_cstr (cstr));
+		string_free (cstr);
 		return;
 	}
 	/* show version */
-	pcstr += sprintf (pcstr, "%s%s%s", color(C_VER), ver, color (C_NO));
+	cstr = string_fcat (cstr, "%s%s%s", color(C_VER), ver, color (C_NO));
 	/* show size */
 	if (config.show_size)
 	{
@@ -584,7 +630,7 @@ void color_print_package (void * p, printpkgfn f)
 		if (info)
 		{
 			if (strcmp (info, "aur")!=0)
-				pcstr += sprintf (pcstr, " [%.2f M]", (double) get_size_pkg (p) / (1024.0 * 1024));
+				cstr = string_fcat (cstr, " [%.2f M]", (double) get_size_pkg (p) / (1024.0 * 1024));
 		}
 	}
 	
@@ -592,7 +638,7 @@ void color_print_package (void * p, printpkgfn f)
 	info = f(p, 'g');
 	if (info)
 	{
-		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_GRP), info, color(C_NO));
+		cstr = string_fcat (cstr, " %s(%s)%s", color(C_GRP), info, color(C_NO));
 	}
 	/* show install information */
 	if (lver)
@@ -600,12 +646,12 @@ void color_print_package (void * p, printpkgfn f)
 		info = f(p, 'r');
 		if (info && strcmp (info, "local")!=0)
 		{
-			pcstr += sprintf (pcstr, " %s[%s", color(C_INSTALLED), _("installed"));
+			cstr = string_fcat (cstr, " %s[%s", color(C_INSTALLED), _("installed"));
 			if (strcmp (ver, lver)!=0)
 			{
-				pcstr += sprintf (pcstr, ": %s%s%s%s", color(C_LVER), lver, color (C_NO), color(C_INSTALLED));
+				cstr = string_fcat (cstr, ": %s%s%s%s", color(C_LVER), lver, color (C_NO), color(C_INSTALLED));
 			}
-			pcstr += sprintf (pcstr, "]%s", color(C_NO));
+			cstr = string_fcat (cstr, "]%s", color(C_NO));
 		}
 	}
 	/* ver no more needed */
@@ -614,14 +660,15 @@ void color_print_package (void * p, printpkgfn f)
 	info = f(p, 'o');
 	if (info && info[0]=='1')
 	{
-		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_OD), _("Out of Date"), color(C_NO));
+		cstr = string_fcat (cstr, " %s(%s)%s", color(C_OD), _("Out of Date"), color(C_NO));
 	}
 	info = f(p, 'w');
 	if (info)
 	{
-		pcstr += sprintf (pcstr, " %s(%s)%s", color(C_VOTES), info, color(C_NO));
+		cstr = string_fcat (cstr, " %s(%s)%s", color(C_VOTES), info, color(C_NO));
 	}
-	fprintf (stdout, "%s\n", cstr);
+	fprintf (stdout, "%s\n", string_cstr (cstr));
+	string_free (cstr);
 	/* if -Q or -Sl or -Sg <target>, don't display description */
 	if (config.op != OP_SEARCH && config.op != OP_LIST_REPO_S) return;
 	fprintf (stdout, "%s", color(C_DSC));
@@ -647,7 +694,7 @@ char *pkg_to_str (const char * target, void * pkg, printpkgfn f, const char *for
 	if (!format) return NULL;
 	const char *ptr, *end, *c;
 	const char *info;
-	char ret[PATH_MAX]="";
+	string_t *ret = string_new();
 	ptr = format;
 	end = &(format[strlen(format)]);
 	while ((c=strchr (ptr, '%')))
@@ -656,8 +703,8 @@ char *pkg_to_str (const char * target, void * pkg, printpkgfn f, const char *for
 			break;
 		if (c[1] == '%' )
 		{
-			strncat (ret, ptr, (c-ptr));
-			strcat (ret, "%%");
+			ret = string_ncat (ret, ptr, (c-ptr));
+			ret = string_cat (ret, "%%");
 		}
 		else
 		{
@@ -668,16 +715,16 @@ char *pkg_to_str (const char * target, void * pkg, printpkgfn f, const char *for
 				info = target; 
 			else
 				info = f (pkg, c[1]);
-			if (c!=ptr) strncat (ret, ptr, (c-ptr));
+			if (c!=ptr) ret = string_ncat (ret, ptr, (c-ptr));
 			if (info)
-				strcat (ret, info);
+				ret = string_cat (ret, info);
 			else
-				strcat (ret, "-");
+				ret = string_cat (ret, "-");
 		}
 		ptr = &(c[2]);
 	}
-	if (ptr != end) strncat (ret, ptr, (end-ptr));
-	return strdup (ret);
+	if (ptr != end) ret = string_ncat (ret, ptr, (end-ptr));
+	return string_free2 (ret);
 }
 
 target_arg_t *target_arg_init (ta_dup_fn dup_fn, alpm_list_fn_cmp cmp_fn,

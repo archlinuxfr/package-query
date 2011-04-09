@@ -169,16 +169,22 @@ alpm_list_t *target_arg_close (target_arg_t *t, alpm_list_t *targets);
 
 
 /*
- * String for curl usage
+ * String helper
  */
 typedef struct _string_t
 {
 	char *s;
+	size_t size;
+	size_t used;
 } string_t;
 
 string_t *string_new ();
-string_t *string_free (string_t *dest);
-string_t *string_ncat (string_t *dest, char *src, size_t n);
+void string_free (string_t *dest);
+char *string_free2 (string_t *dest);
+string_t *string_ncat (string_t *dest, const char *src, size_t n);
+string_t *string_cat (string_t *dest, const char *src);
+string_t *string_fcat (string_t *dest, const char *format, ...);
+const char *string_cstr (string_t *str);
 
 char *strtrim(char *str);
 void strins (char *dest, const char *src);
