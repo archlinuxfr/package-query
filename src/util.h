@@ -24,7 +24,7 @@
 #include "aur.h"
 
 
-#define STRDUP(s) (s) ? strdup (s) : s
+#define STRDUP(s) (s) ? strdup (s) : NULL
 #define CALLOC(p, l, s) do { \
     if ((p=calloc (l, s)) == NULL) { \
       perror ("calloc"); \
@@ -84,6 +84,7 @@ typedef struct _aq_config
 	unsigned short aur;
 	unsigned short aur_fetch;
 	unsigned short aur_foreign;
+	unsigned short aur_orphan;
 	unsigned short colors;
 	unsigned short custom_out;
 	unsigned short db_local;

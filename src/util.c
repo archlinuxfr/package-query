@@ -567,6 +567,7 @@ void color_print_package (void * p, printpkgfn f)
 	static int number=0;
 	const char *info, *lver;
 	char *ver=NULL;
+	int aur=(f == aur_get_str);
 	cstr=string_new ();
 	if (config.numbering)
 	{
@@ -598,21 +599,23 @@ void color_print_package (void * p, printpkgfn f)
 	}
 	lver = alpm_local_pkg_get_str (info, 'l');
 	info = f(p, 'v');
-	if (info) ver = strdup (info);
+	ver = STRDUP (info);
+	info = (aur && config.aur_orphan) ? f(p, 'm') : NULL;
 	if (config.aur_foreign)
 	{
 		/* show foreign package */
-		info = f(p, 'm');
-		if (ver && (!info || info[0]=='-'))
-			cstr = string_fcat (cstr, "%s%s%s", color(C_ORPHAN), lver, color (C_NO));
+		const char *lver_color = NULL;
+		if (ver && config.aur_foreign && !info)
+			lver_color=color(C_ORPHAN);
 		else
 		{
 			info = f(p, 'o');
 			if (info && info[0]=='1')
-				cstr = string_fcat (cstr, "%s%s%s", color(C_OD), lver, color (C_NO));
+				lver_color=color(C_OD);
 			else
-				cstr = string_fcat (cstr, "%s%s%s", color(C_VER), lver, color (C_NO));
+				lver_color=color(C_VER);
 		}
+		cstr = string_fcat (cstr, "%s%s%s", lver_color, lver, color (C_NO));
 		if (ver)
 		{
 			/* package found in AUR */
@@ -627,7 +630,10 @@ void color_print_package (void * p, printpkgfn f)
 		return;
 	}
 	/* show version */
-	cstr = string_fcat (cstr, "%s%s%s", color(C_VER), ver, color (C_NO));
+	if (aur && config.aur_orphan && !info)
+		cstr = string_fcat (cstr, "%s%s%s", color(C_ORPHAN), ver, color (C_NO));
+	else
+		cstr = string_fcat (cstr, "%s%s%s", color(C_VER), ver, color (C_NO));
 	/* show size */
 	if (config.show_size)
 	{

@@ -85,6 +85,7 @@ void init_config (const char *myname)
 	config.aur = 0;
 	config.aur_fetch = 0;
 	config.aur_foreign = 0;
+	config.aur_orphan = 0;
 	config.colors = 1; 
 	config.custom_out = 0; 
 	config.db_local = 0;
@@ -251,6 +252,7 @@ int main (int argc, char **argv)
 		{"qprovide",   no_argument,       0, 1011},
 		{"qreplaces",  no_argument,       0, 1012},
 		{"qrequires",  no_argument,       0, 1013},
+		{"aur-orphan", no_argument,       0, 1014},
 		{"version",    no_argument,       0, 'v'},
 
 		{0, 0, 0, 0}
@@ -398,6 +400,9 @@ int main (int argc, char **argv)
 				break;
 			case 1008: /* --insecure */
 				config.insecure = 1;
+				break;
+			case 1014: /* --aur-orphan */
+				config.aur_orphan = 1;
 				break;
 			case 'u':
 				config.filter |= F_UPGRADES;

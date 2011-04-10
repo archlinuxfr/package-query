@@ -46,6 +46,7 @@
  */
 #define AUR_M_START "<span class='f3'>Maintainer: "
 #define AUR_M_END   "</span>"
+#define AUR_M_NONE  "None"
 
 /*
  * AUR repo name
@@ -279,7 +280,7 @@ static void aur_fetch_type ()
 {
 	char *c;
 	config.aur_fetch = AUR_FETCH_SIMPLE;
-	if ( config.aur_foreign ||
+	if ( config.aur_orphan ||
 	     ((c=strstr (config.format_out, "%m")) &&
 	     (c==config.format_out || *(c-1) != '%'))
 	   )
@@ -456,7 +457,10 @@ static void aur_fetch_page (CURL *curl, aurpkg_t *pkg)
 		c1+= strlen (AUR_M_START);
 		c2 = strstr (c1, AUR_M_END);
 		if (c2)
-			pkg->maintainer = strndup (c1, c2-c1);
+		{
+			if (strncmp (c1, AUR_M_NONE, c2-c1)!=0)
+				pkg->maintainer = strndup (c1, c2-c1);
+		}
 	}
 	string_free (res);
 }
