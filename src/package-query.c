@@ -248,7 +248,7 @@ int main (int argc, char **argv)
 		{"insecure",   no_argument,       0, 1008},
 		{"qdepends",   no_argument,       0, 1009},
 		{"qconflicts", no_argument,       0, 1010},
-		{"qprovide",   no_argument,       0, 1011},
+		{"qprovides",  no_argument,       0, 1011},
 		{"qreplaces",  no_argument,       0, 1012},
 		{"qrequires",  no_argument,       0, 1013},
 		{"aur-orphan", no_argument,       0, 1014},
