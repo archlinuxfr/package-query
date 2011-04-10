@@ -547,7 +547,7 @@ static int aur_parse (CURL *curl, request_t *req)
 			{
 				found++;
 				aur_fetch_page (curl, alpm_list_getdata (p));
-				print_or_add_result (aur_pkg_dup (alpm_list_getdata (p)), R_AUR_PKG);
+				print_or_add_result (alpm_list_getdata (p), R_AUR_PKG);
 			}
 		}
 	}
