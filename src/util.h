@@ -97,7 +97,6 @@ typedef struct _aq_config
 	unsigned short just_one;
 	unsigned short numbering;
 	unsigned short list;
-	unsigned short list_group;
 	unsigned short op;
 	unsigned short quiet;
 	unsigned short query;

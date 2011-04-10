@@ -555,12 +555,15 @@ void color_print_package (void * p, printpkgfn f)
 	const char *info, *lver;
 	char *ver=NULL;
 	int aur=(f == aur_get_str);
+	int grp=(f == alpm_grp_get_str);
 	cstr=string_new ();
+
+	/* Numbering list */
 	if (config.numbering)
-	{
-		/* Numbering list */
-		cstr = string_fcat (cstr, "%s%d%s ", color (C_NB), ++number, color (C_NO));
-	}
+		cstr = string_fcat (cstr, "%s%d%s ",
+		    color (C_NB), ++number, color (C_NO));
+
+	/* repo/name */
 	if (config.get_res && config.aur_foreign)
 	{
 		dprintf (FD_RES, "local/");
@@ -571,56 +574,68 @@ void color_print_package (void * p, printpkgfn f)
 		if (info)
 		{
 			if (config.get_res) dprintf (FD_RES, "%s/", info);
-			cstr = string_fcat (cstr, "%s%s/%s", color_repo (info), info, color(C_NO));
+			cstr = string_fcat (cstr, "%s%s/%s",
+			    color_repo (info), info, color(C_NO));
 		}
 	}
 	info=f(p, 'n');
 	if (config.get_res) dprintf (FD_RES, "%s\n", info);
 	cstr = string_fcat (cstr, "%s%s%s ", color(C_PKG), info, color(C_NO));
-	if (config.list_group)
+
+	if (grp)
 	{
-		/* no more output for -[S,Q]g and no targets */
+		/* no more output for groups */
 		fprintf (stdout, "%s\n", string_cstr (cstr));
 		string_free (cstr);
 		return;
 	}
+
+	/* Version
+	 * different colors:
+	 *   C_ORPHAN if package exists in AUR and is orphaned
+	 *   C_OD if package exists and is out of date
+	 *   C_VER otherwise
+	 */
 	lver = alpm_local_pkg_get_str (info, 'l');
 	info = f(p, 'v');
 	ver = STRDUP (info);
 	info = (aur && config.aur_orphan) ? f(p, 'm') : NULL;
 	if (config.aur_foreign)
 	{
-		/* show foreign package */
-		const char *lver_color = NULL;
-		if (ver && config.aur_foreign && !info)
-			lver_color=color(C_ORPHAN);
-		else
-		{
-			info = f(p, 'o');
-			if (info && info[0]=='1')
-				lver_color=color(C_OD);
-			else
-				lver_color=color(C_VER);
-		}
-		cstr = string_fcat (cstr, "%s%s%s", lver_color, lver, color (C_NO));
+		/* Compare foreign package with AUR */
 		if (ver)
 		{
 			/* package found in AUR */
+			const char *lver_color = NULL;
+			if (config.aur_foreign && !info)
+				lver_color=color(C_ORPHAN);
+			else
+			{
+				info = f(p, 'o');
+				if (info && info[0]=='1')
+					lver_color=color(C_OD);
+			}
+			cstr = string_fcat (cstr, "%s%s%s",
+			    (lver_color) ? lver_color : color(C_VER),
+			    lver, color (C_NO));
 			if (alpm_pkg_vercmp (ver, lver)>0)
 				cstr = string_fcat (cstr, " ( aur: %s )", ver);
-			fprintf (stdout, "%saur/%s%s\n", color_repo ("aur"), color (C_NO), string_cstr (cstr));
+			fprintf (stdout, "%saur/%s%s\n", color_repo ("aur"), color (C_NO),
+			    string_cstr (cstr));
 			FREE (ver);
 		}
 		else
-			fprintf (stdout, "%slocal/%s%s\n", color_repo ("local"), color (C_NO), string_cstr (cstr));
+			fprintf (stdout, "%slocal/%s%s %s%s%s\n", color_repo ("local"),
+			    color (C_NO), string_cstr (cstr),
+				color(C_VER), lver, color(C_NO));
 		string_free (cstr);
 		return;
 	}
-	/* show version */
 	if (aur && config.aur_orphan && !info)
 		cstr = string_fcat (cstr, "%s%s%s", color(C_ORPHAN), ver, color (C_NO));
 	else
 		cstr = string_fcat (cstr, "%s%s%s", color(C_VER), ver, color (C_NO));
+
 	/* show size */
 	if (config.show_size)
 	{
@@ -628,7 +643,8 @@ void color_print_package (void * p, printpkgfn f)
 		if (info)
 		{
 			if (strcmp (info, "aur")!=0)
-				cstr = string_fcat (cstr, " [%.2f M]", (double) get_size_pkg (p) / (1024.0 * 1024));
+				cstr = string_fcat (cstr, " [%.2f M]",
+				    (double) get_size_pkg (p) / (1024.0 * 1024));
 		}
 	}
 	
@@ -638,16 +654,19 @@ void color_print_package (void * p, printpkgfn f)
 	{
 		cstr = string_fcat (cstr, " %s(%s)%s", color(C_GRP), info, color(C_NO));
 	}
+
 	/* show install information */
 	if (lver)
 	{
 		info = f(p, 'r');
 		if (info && strcmp (info, "local")!=0)
 		{
-			cstr = string_fcat (cstr, " %s[%s", color(C_INSTALLED), _("installed"));
+			cstr = string_fcat (cstr, " %s[%s",
+			    color(C_INSTALLED), _("installed"));
 			if (strcmp (ver, lver)!=0)
 			{
-				cstr = string_fcat (cstr, ": %s%s%s%s", color(C_LVER), lver, color (C_NO), color(C_INSTALLED));
+				cstr = string_fcat (cstr, ": %s%s%s%s",
+				    color(C_LVER), lver, color (C_NO), color(C_INSTALLED));
 			}
 			cstr = string_fcat (cstr, "]%s", color(C_NO));
 		}
@@ -655,19 +674,30 @@ void color_print_package (void * p, printpkgfn f)
 	/* ver no more needed */
 	FREE (ver);
 
-	info = f(p, 'o');
-	if (info && info[0]=='1')
+	/* Out of date status & votes */
+	if (aur)
 	{
-		cstr = string_fcat (cstr, " %s(%s)%s", color(C_OD), _("Out of Date"), color(C_NO));
+		info = f(p, 'o');
+		if (info && info[0]=='1')
+		{
+			cstr = string_fcat (cstr, " %s(%s)%s",
+				color(C_OD), _("Out of Date"), color(C_NO));
+		}
+		info = f(p, 'w');
+		if (info)
+		{
+			cstr = string_fcat (cstr, " %s(%s)%s",
+			    color(C_VOTES), info, color(C_NO));
+		}
 	}
-	info = f(p, 'w');
-	if (info)
-	{
-		cstr = string_fcat (cstr, " %s(%s)%s", color(C_VOTES), info, color(C_NO));
-	}
+
+	/* Display computed string */
 	fprintf (stdout, "%s\n", string_cstr (cstr));
 	string_free (cstr);
-	/* if -Q or -Sl or -Sg <target>, don't display description */
+
+	/* Description
+	 * if -Q or -Sl or -Sg <target>, don't display description
+	 */
 	if (config.op != OP_SEARCH && config.op != OP_LIST_REPO_S) return;
 	fprintf (stdout, "%s", color(C_DSC));
 	indent (f(p, 'd'));

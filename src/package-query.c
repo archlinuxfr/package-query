@@ -97,7 +97,6 @@ void init_config (const char *myname)
 	config.is_file = 0;
 	config.just_one = 0;
 	config.list = 0;
-	config.list_group = 0;
 	config.numbering = 0;
 	config.op = 0;
 	config.quiet = 0;
@@ -463,8 +462,6 @@ int main (int argc, char **argv)
 	if (targets == NULL)
 	{
 		if (config.op == OP_SEARCH)	config.op = OP_LIST_REPO_S;
-		/* print groups instead of packages */
-		if (config.op == OP_LIST_GROUP) config.list_group = 1;
 	}
 	else if (!config.op && (given & N_DB)) /* Show info by default */
 		config.op = OP_INFO;
