@@ -2,12 +2,12 @@
 .\"     Title: package-query
 .\"    Author: [see the "Authors" section]
 .\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 2011-01-28
+.\"      Date: 2011-04-10
 .\"    Manual: Package-query Manual
-.\"    Source: Package-query 0.6
+.\"    Source: Package-query 0.8
 .\"  Language: English
 .\"
-.TH "PACKAGE\-QUERY" "8" "2011\-01\-28" "Package\-query 0\&.6" "Package\-query Manual"
+.TH "PACKAGE\-QUERY" "8" "2011\-04\-10" "Package\-query 0\&.8" "Package\-query Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -39,7 +39,8 @@ Package\-query query Alpm and AUR with the possibility to format output\&.
 .PP
 \fB\-A, \-\-aur\fR
 .RS 4
-Query AUR database\&.
+Query AUR database\&. See
+AUR search\&.
 .RE
 .PP
 \fB\-L, \-\-list\-repo\fR
@@ -132,12 +133,32 @@ Show first answer for each target (\fI\-i\fR)\&.
 .PP
 \fB\-i, \-\-info\fR
 .RS 4
-Search by name\&. (by default if no target)
+Search by name (by default if no target)\&. Specify this option twice to search a package that provides the target\&.
 .RE
 .PP
-\fB\-g, \-\-groups\fR
+\fB\-\-qconflicts\fR
 .RS 4
-Filter to packages that are part of group\&.
+Query packages which conflicts with one of the targets\&.
+.RE
+.PP
+\fB\-\-qdepends\fR
+.RS 4
+Query packages which depends on one of the targets\&.
+.RE
+.PP
+\fB\-\-qprovides\fR
+.RS 4
+Query packages which provides one of the targets\&.
+.RE
+.PP
+\fB\-\-qreplaces\fR
+.RS 4
+Query packages which replaces one of the targets\&.
+.RE
+.PP
+\fB\-\-qrequires\fR
+.RS 4
+Query packages which requires one of the targets\&.
 .RE
 .PP
 \fB\-s, \-\-search\fR
@@ -149,12 +170,21 @@ Regex search for ALPM and SQL search for AUR\&.
 .RS 4
 Return search results sorted by names (\fIn\fR), by votes (\fIw\fR), by installed date (\fI1\fR) or by theorical size (\fI2\fR)\&.
 .RE
+.SH "AUR SEARCH"
+.PP
+\fB\-\-aur\-orphan\fR
+.RS 4
+Fetch package\(cqs page on aur to get the maintainer with
+\fI%m\fR
+in
+formatted string\&.
+.RE
 .SH "LOCAL DB SEARCH"
 .PP
 \fB\-m, \-\-foreign\fR
 .RS 4
 Filter result to packages that were not found in the sync database(s)\&. With
-\fI\-QA\fR
+\fI\-A\fR
 search if foreign packages exist in AUR\&.
 .RE
 .PP
@@ -173,14 +203,11 @@ Restrict output to packages installed as dependencie\&.
 Restrict output to packages that are no more required\&.
 .RE
 .PP
-\fB\-\-query\-type <action>\fR
+\fB\-u, \-\-upgrades\fR
 .RS 4
-Query packages which <action> one of targets, where <action> can be
-\fIdepends\fR,
-\fIprovides\fR,
-\fIreplaces\fR
-or
-\fIconflicts\fR\&.
+Restrict output to packages that have available updates\&. With
+\fI\-A\fR
+search if foreign packages have updates on AUR\&.
 .RE
 .SH "SYNC DB SEARCH"
 .PP
@@ -197,16 +224,27 @@ Format can contain:
 .\}
 .nf
 %a: architecture
-%b: backups file
+%B: backups file
+%C: conflicts with
 %d: description
-%c: conflicts
+%D: denpends on
+%f: filename
+%F: package\*(Aqs files
+%I: install script
 %i: AUR ID
 %l: local version
+%m: maintainer or packager
 %n: name
-%o: only for AUR, out of date
+%N: required by (Needed by)
+%O: optionnal deps
+%o: out of date (1 for true)
+%P: provides
+%R: replaces
 %r: repository, \*(Aqlocal\*(Aq for local packages
 %s: sync repository, respect \*(Aqpacman\&.conf\*(Aq order\&.
 %t: target submitted with command
+%u: file/tarball url
+%U: software url
 %v: version, depends on DB
 %V: package version in sync db
 %w: AUR votes
@@ -234,12 +272,22 @@ Format can contain:
 .if n \{\
 .RE
 .\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\e\e, \ee (for \e033), \en, \er and \et are also possible format options\&.
+.fi
+.if n \{\
+.RE
+.\}
 .PP
 \fB\-\-csep <sep>\fR
 .RS 4
 For format like
-\fI%g\fR,
-\fI%c\fR
+\fI%B\fR,
+\fI%C\fR
 \&..., define separator\&. Default to space\&.
 .RE
 .SH "ENVIRONMENT VARIABLES"
@@ -278,6 +326,9 @@ Number of votes\&. (default: 1;33;7)
 
 \fBdsc=\fR
 Description\&. (default: 0)
+
+\fBorphan=\fR
+Package version when there is no maintainer
 
 \fBother=\fR
 Respository not explicitly defined\&. (default: 1;35)
