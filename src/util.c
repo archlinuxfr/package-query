@@ -34,6 +34,7 @@
 
 #define _(x) gettext(x)
 #define FORMAT_LOCAL_PKG "lF134"
+#define INDENT 4
 
 static alpm_list_t *results=NULL;
 
@@ -499,66 +500,52 @@ char *strreplace(const char *str, const char *needle, const char *replace)
 
 static int getcols(void)
 {
-	if (!isatty (1)) {
-		/* We will default to 80 columns if we're not a tty
-		 * this seems a fairly standard file width.
-		 */
-		return 80;
-	} else {
 #ifdef TIOCGSIZE
-		struct ttysize win;
-		if(ioctl(1, TIOCGSIZE, &win) == 0) {
-			return win.ts_cols;
-		}
+	struct ttysize win;
+	if(ioctl(1, TIOCGSIZE, &win) == 0) {
+		return win.ts_cols;
+	}
 #elif defined(TIOCGWINSZ)
-		struct winsize win;
-		if(ioctl(1, TIOCGWINSZ, &win) == 0) {
-			return win.ws_col;
-		}
+	struct winsize win;
+	if(ioctl(1, TIOCGWINSZ, &win) == 0) {
+		return win.ws_col;
+	}
 #endif
-		/* If we can't figure anything out, we'll just assume 80 columns */
-		/* TODO any problems caused by this assumption? */
-		return 80;
-	}
-	/* Original envvar way - prone to display issues
-	const char *cenv = getenv("COLUMNS");
-	if(cenv != NULL) {
-		return atoi(cenv);
-	}
-	return -1;
-	*/
+	return 0;
 }
 
 static void indent (const char *str)
 {
-	char *s=NULL;
-	char *c=NULL, *c1=NULL;
-	int cur_col=4, cols;
+	const char *c=NULL, *c1=NULL;
+	int cur_col=INDENT, cols;
 	if (!str)
 		return;
-	s=strdup (str);
-	c=s;
 	cols=getcols();
-	fprintf (stdout, "%-*s", 4, "");
+	if (!cols)
+	{
+		fprintf (stdout, "%*s%s\n", INDENT, "", str);
+		return;
+	}
+	c=str;
+	fprintf (stdout, "%*s", INDENT, "");
 	while ((c1=strchr (c, ' ')) != NULL)
 	{
-		c1[0]='\0';
-		cur_col+=strlen (c)+1;
+		int len = (c1-c);
+		cur_col+=len+1;
 		if (cur_col >= cols)
 		{
-			fprintf (stdout, "\n%-*s%s ", 4, "", c);
-			cur_col=4+strlen(c)+1;
+			fprintf (stdout, "\n%*s%.*s ", INDENT, "", len, c);
+			cur_col=INDENT+len+1;
 		}
 		else
-			fprintf (stdout, "%s ", c);
+			fprintf (stdout, "%.*s ", len, c);
 		c=&c1[1];
 	}
 	cur_col+=strlen (c);
-	if (cur_col >= cols && c!=s)
-		fprintf (stdout, "\n%-*s%s\n", 4, "", c);
+	if (cur_col >= cols && c!=str)
+		fprintf (stdout, "\n%*s%s\n", INDENT, "", c);
 	else
 		fprintf (stdout, "%s\n", c);
-	FREE (s);
 }
 
 void color_print_package (void * p, printpkgfn f)
