@@ -297,7 +297,7 @@ int search_pkg_by_type (pmdb_t *db, alpm_list_t **targets, int query_type)
 			char *str;
 			str = (char *) ((g) ? g(alpm_list_getdata(j)) : alpm_list_getdata(j));
 			target_t *t1 = target_parse (str);
-			if (free_fn_ret & 1) FREE (str);
+			if (free_fn_ret & 2) FREE (str);
 			for(t = *targets; t; t = alpm_list_next(t))
 			{
 				target_t *t2 = target_parse (alpm_list_getdata(t));
@@ -317,7 +317,7 @@ int search_pkg_by_type (pmdb_t *db, alpm_list_t **targets, int query_type)
 			*targets = target_arg_clear (ta, *targets);
 			target_free (t1);
 		}
-		if (free_fn_ret & 2) alpm_list_free (pkg_info_list);
+		if (free_fn_ret & 1) alpm_list_free (pkg_info_list);
 	}
 	*targets = target_arg_close (ta, *targets);
 	return ret;
