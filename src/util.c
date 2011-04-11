@@ -597,7 +597,7 @@ void color_print_package (void * p, printpkgfn f)
 	 *   C_VER otherwise
 	 */
 	lver = alpm_local_pkg_get_str (info, 'l');
-	info = f(p, 'v');
+	info = f(p, (config.aur_upgrades) ? 'V' : 'v');
 	ver = STRDUP (info);
 	info = (aur && config.aur_orphan) ? f(p, 'm') : NULL;
 	if (config.aur_foreign)
@@ -647,7 +647,15 @@ void color_print_package (void * p, printpkgfn f)
 				    (double) get_size_pkg (p) / (1024.0 * 1024));
 		}
 	}
-	
+
+	if (config.aur_upgrades)
+	{
+		fprintf (stdout, "%s\n", string_cstr (cstr));
+		string_free (cstr);
+		FREE (ver);
+		return;
+	}
+
 	/* show groups */
 	info = f(p, 'g');
 	if (info)

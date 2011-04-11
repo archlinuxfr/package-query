@@ -85,6 +85,7 @@ typedef struct _aq_config
 	unsigned short aur_fetch;
 	unsigned short aur_foreign;
 	unsigned short aur_orphan;
+	unsigned short aur_upgrades;
 	unsigned short colors;
 	unsigned short custom_out;
 	unsigned short db_local;

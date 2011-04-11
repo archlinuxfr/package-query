@@ -86,6 +86,7 @@ void init_config (const char *myname)
 	config.aur_fetch = 0;
 	config.aur_foreign = 0;
 	config.aur_orphan = 0;
+	config.aur_upgrades = 0;
 	config.colors = 1; 
 	config.custom_out = 0; 
 	config.db_local = 0;
@@ -518,6 +519,7 @@ int main (int argc, char **argv)
 		else if (config.filter == F_UPGRADES)
 		{
 			/* -AQu */
+			config.aur_upgrades = 1;
 			ret += alpm_search_local (config.filter, NULL, NULL);
 			alpm_search_local (F_FOREIGN, "%n>%v", &targets);
 			ret += aur_info (&targets);
