@@ -177,7 +177,6 @@ void usage (unsigned short _error)
 
 int deal_db (pmdb_t *db)
 {
-	int ret;
 	switch (config.op)
 	{
 		case OP_LIST_REPO:
@@ -185,10 +184,7 @@ int deal_db (pmdb_t *db)
 			return list_db (db, targets);
 		case OP_INFO:
 		case OP_INFO_P:
-			ret = search_pkg_by_name (db, &targets);
-			if (!ret && config.op == OP_INFO_P)
-				ret = search_pkg_by_type (db, &targets, OP_Q_PROVIDES);
-			return ret;
+			return search_pkg_by_name (db, &targets);
 		case OP_SEARCH: return search_pkg (db, targets);
 		case OP_LIST_GROUP:
 			return list_grp (db, targets);
@@ -491,8 +487,18 @@ int main (int argc, char **argv)
 		{
 			/*printf ("%d, aur %d, local %d, sync %d\n", i, config.aur, config.db_local, config.db_sync);*/
 			if (config.db_sync == i)
+			{
 				for(t = alpm_option_get_syncdbs(); t; t = alpm_list_next(t))
 					ret += deal_db (alpm_list_getdata (t));
+				if (!ret && config.op == OP_INFO_P)
+				{
+					config.op = OP_QUERY;
+					config.query = OP_Q_PROVIDES;
+					for(t = alpm_option_get_syncdbs(); t; t = alpm_list_next(t))
+						ret += deal_db (alpm_list_getdata (t));
+					config.op = OP_INFO_P;
+				}
+			}
 			else if (config.db_local == i)
 				ret += deal_db (alpm_option_get_localdb());
 			else if (config.aur == i)
