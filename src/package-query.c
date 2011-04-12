@@ -299,7 +299,7 @@ int main (int argc, char **argv)
 			case 'i':
 				if (config.op)
 				{
-					config.op |= OP_INFO_P;
+					if (config.op == OP_INFO) config.op = OP_INFO_P;
 					break;
 				}
 				config.op = OP_INFO;
