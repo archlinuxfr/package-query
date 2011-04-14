@@ -607,7 +607,7 @@ void color_print_package (void * p, printpkgfn f)
 		{
 			/* package found in AUR */
 			const char *lver_color = NULL;
-			if (config.aur_foreign && !info)
+			if (config.aur_orphan && !info)
 				lver_color=color(C_ORPHAN);
 			else
 			{
