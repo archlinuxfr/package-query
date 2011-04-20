@@ -32,6 +32,11 @@
 #include "util.h"
 
 /*
+ * User agent
+ */
+#define PQ_USERAGENT "package-query/" PACKAGE_VERSION
+
+/*
  * AUR url
  */
 #define AUR_RPC          "/rpc.php"
@@ -438,6 +443,7 @@ static int aur_request (alpm_list_t **targets, int type)
 		return 0;
 	}
 	curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
+	curl_easy_setopt (curl, CURLOPT_USERAGENT, PQ_USERAGENT);
 	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
 	if (config.insecure)
 		curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
