@@ -36,7 +36,7 @@
  */
 #define AUR_RPC          "/rpc.php"
 #define AUR_RPC_SEARCH   "?type=search&arg="
-#define AUR_RPC_INFO     "?type=info"
+#define AUR_RPC_INFO     "?type=multiinfo"
 #define AUR_RPC_INFO_ARG "&arg[]="
 #define AUR_URL_ID       "/packages.php?setlang=en&ID="
 
