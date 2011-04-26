@@ -324,7 +324,7 @@ static int json_end_map (void *ctx)
 }
 
 static int json_key (void * ctx, const unsigned char * stringVal,
-                            unsigned int stringLen)
+                            size_t stringLen)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 	stringLen = (stringLen>=AUR_ID_LEN) ? AUR_ID_LEN-1 : stringLen;
@@ -334,7 +334,7 @@ static int json_key (void * ctx, const unsigned char * stringVal,
 }
 
 static int json_value (void * ctx, const unsigned char * stringVal,
-                           unsigned int stringLen)
+                           size_t stringLen)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 	// package info in level 2
@@ -416,10 +416,11 @@ static alpm_list_t *aur_json_parse (const char *s)
 	jsonpkg_t pkg_json = { NULL, NULL, "", 0};
 	yajl_handle hand;
 	yajl_status stat;
-	yajl_parser_config cfg = { 1, 1 };
-	hand = yajl_alloc(&callbacks, &cfg,  NULL, (void *) &pkg_json);
+	hand = yajl_alloc(&callbacks, NULL, (void *) &pkg_json);
 	stat = yajl_parse(hand, (const unsigned char *) s, strlen (s));
-	if (stat != yajl_status_ok && stat != yajl_status_insufficient_data)
+	if (stat == yajl_status_ok)
+		stat = yajl_complete_parse(hand);
+	if (stat != yajl_status_ok)
 	{
 		unsigned char * str = yajl_get_error(hand, 1, 
 		    (const unsigned char *) s, strlen (s));
