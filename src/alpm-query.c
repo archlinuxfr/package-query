@@ -495,7 +495,10 @@ off_t alpm_pkg_get_realsize (pmpkg_t *pkg)
 	files = alpm_pkg_get_files (pkg);
 	if (files)
 	{
-		chdir (config.rootdir);
+		if (config.rootdir)
+			chdir (config.rootdir);
+		else
+			chdir (ROOTDIR);
 		len = alpm_list_count (files);
 		CALLOC (inodes, len, sizeof (ino_t));
 		j=0;
