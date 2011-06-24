@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT([package-query], [0.8], [tuxce.net@gmail.com])
+AC_INIT([package-query], [0.8.1], [tuxce.net@gmail.com])
 AM_INIT_AUTOMAKE([-Wall])
 AC_CONFIG_SRCDIR([src/package-query.c])
 AC_CONFIG_HEADER([config.h])
