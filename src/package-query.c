@@ -83,7 +83,6 @@ void init_config (const char *myname)
 	config.myname = strdup(basename(_myname));
 	FREE (_myname);
 	config.aur = 0;
-	config.aur_fetch = 0;
 	config.aur_foreign = 0;
 	config.aur_orphan = 0;
 	config.aur_upgrades = 0;

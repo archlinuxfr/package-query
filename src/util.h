@@ -82,7 +82,6 @@ typedef struct _aq_config
 {
 	char *myname;
 	unsigned short aur;
-	unsigned short aur_fetch;
 	unsigned short aur_foreign;
 	unsigned short aur_orphan;
 	unsigned short aur_upgrades;

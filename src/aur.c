@@ -41,13 +41,6 @@
 #define AUR_URL_ID	"/packages.php?setlang=en&ID="
 
 /*
- * AUR PAGE
- */
-#define AUR_M_START "<span class='f3'>Maintainer: "
-#define AUR_M_END   "</span>"
-#define AUR_M_NONE  "None"
-
-/*
  * AUR repo name
  */
 #define AUR_REPO "aur"
@@ -55,6 +48,7 @@
 /*
  * AUR package information
  */
+#define AUR_MAINTAINER  "Maintainer"
 #define AUR_ID          "ID"
 #define AUR_NAME        "Name"
 #define AUR_VER         "Version"
@@ -275,18 +269,6 @@ const char * aur_pkg_get_maintainer (const aurpkg_t * pkg)
 	return NULL;
 }
 
-static void aur_fetch_type ()
-{
-	char *c;
-	config.aur_fetch = AUR_FETCH_SIMPLE;
-	if ( config.aur_orphan ||
-	     ((c=strstr (config.format_out, "%m")) &&
-	     (c==config.format_out || *(c-1) != '%'))
-	   )
-		config.aur_fetch = AUR_FETCH_LONG;
-}
-
-
 static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
 {
 	string_t *s = (string_t *) userdata;
@@ -340,6 +322,11 @@ static int json_value (void * ctx, const unsigned char * stringVal,
 	if (pkg_json->level<2) return 1;
 	char *s = strndup ((const char *)stringVal, stringLen);
 	int free_s = 1;
+	if (strcmp (pkg_json->current_key, AUR_MAINTAINER)==0)
+	{
+		pkg_json->pkg->maintainer = s;
+		free_s = 0;
+	}
 	if (strcmp (pkg_json->current_key, AUR_ID)==0)
 	{
 		pkg_json->pkg->id = atoi (s);
@@ -433,39 +420,6 @@ static alpm_list_t *aur_json_parse (const char *s)
 	return pkg_json.pkgs;
 }
 
-static void aur_fetch_page (CURL *curl, aurpkg_t *pkg)
-{
-	if (config.aur_fetch != AUR_FETCH_LONG) return;
-	char url[PATH_MAX];
-	CURLcode curl_code;
-	string_t *res;
-	char *c1, *c2;
-	sprintf (url, "%s%s%d", config.aur_url, AUR_URL_ID, aur_pkg_get_id (pkg));
-	res = string_new();
-
-	curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
-	curl_easy_setopt (curl, CURLOPT_URL, (const char *) url);
-	if ((curl_code = curl_easy_perform (curl)) != CURLE_OK)
-	{
-		fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
-		string_free (res);
-		return;
-	}
-	c1 = strstr (string_cstr (res), AUR_M_START);
-	if (c1)
-	{
-		c1+= strlen (AUR_M_START);
-		c2 = strstr (c1, AUR_M_END);
-		if (c2)
-		{
-			if (strncmp (c1, AUR_M_NONE, c2-c1)!=0)
-				pkg->maintainer = strndup (c1, c2-c1);
-		}
-	}
-	string_free (res);
-}
-
-
 static int aur_fetch (CURL *curl, request_t *req)
 {
 	char url[PATH_MAX];
@@ -521,10 +475,7 @@ static int aur_parse (CURL *curl, request_t *req)
 			if (target_check_version (req->t_info, aur_pkg_get_version (pkg)))
 			{
 				if (target_arg_add (ta, req->target, (void *) aur_pkg_get_name (pkg)))
-				{
-					aur_fetch_page (curl, pkg);
 					print_package (req->target, alpm_list_getdata (p), aur_get_str);
-				}
 				found++;
 			}
 		}
@@ -546,7 +497,6 @@ static int aur_parse (CURL *curl, request_t *req)
 			if (match)
 			{
 				found++;
-				aur_fetch_page (curl, alpm_list_getdata (p));
 				print_or_add_result (alpm_list_getdata (p), R_AUR_PKG);
 			}
 		}
@@ -607,7 +557,6 @@ static int aur_request (alpm_list_t **targets, int type)
 	ta = target_arg_init ((ta_dup_fn) strdup,
 	                      (alpm_list_fn_cmp) strcmp,
 	                      (alpm_list_fn_free) free);
-	aur_fetch_type ();
 	curl_global_init(CURL_GLOBAL_SSL);
 
 	for(t = *targets; t; t = alpm_list_next(t)) 

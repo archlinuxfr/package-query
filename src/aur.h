@@ -21,12 +21,6 @@
 #include <alpm_list.h>
 
 /*
- * AUR FETCH
- */
-#define AUR_FETCH_SIMPLE 0
-#define AUR_FETCH_LONG   1
-
-/*
  * AUR package
  */
 typedef struct _aurpkg_t
