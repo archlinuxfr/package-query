@@ -187,6 +187,7 @@ target_t *target_parse (const char *str)
 	target_t *ret=NULL;
 	char *c, *s=(char *)str;
 	MALLOC (ret, sizeof (target_t));
+	ret->orig = strdup (str);
 	if ((c = strchr (s, '/')) != NULL)
 	{
 		/* target include db ("db/pkg*") */
@@ -233,15 +234,15 @@ target_t *target_parse (const char *str)
 	return ret;
 }
 
-target_t* target_free (target_t *t)
+void target_free (target_t *t)
 {
 	if (t == NULL)
-		return NULL;
+		return;
+	FREE (t->orig);
 	FREE (t->db);
 	FREE (t->name);
 	FREE (t->ver);
 	FREE (t);
-	return NULL;
 }
 	
 int target_check_version (target_t *t, const char *ver)
@@ -271,6 +272,11 @@ int target_compatible (target_t *t1, target_t *t2)
 	return 0;
 }
 
+int target_name_cmp (target_t *t1, const char *name)
+{
+	return strcmp (t1->name, name);
+}
+
 string_t *string_new ()
 {
 	string_t *str = NULL;
@@ -280,6 +286,16 @@ string_t *string_new ()
 	str->used = 0;
 	return str;
 }
+
+void string_reset (string_t *str)
+{
+	if (str == NULL)
+		return;
+	str->used = 0;
+	if (str->s)
+		str->s[0] = '\0';
+}
+
 
 void string_free (string_t *dest)
 {
@@ -564,19 +580,15 @@ void color_print_package (void * p, printpkgfn f)
 		    color (C_NB), ++number, color (C_NO));
 
 	/* repo/name */
-	if (config.get_res && config.aur_foreign)
-	{
-		dprintf (FD_RES, "local/");
-	}
-	else if (!config.aur_foreign)
-	{
+	if (config.aur_foreign)
+		info = f(p, 'r');
+	else
 		info = f(p, 's');
-		if (info)
-		{
-			if (config.get_res) dprintf (FD_RES, "%s/", info);
-			cstr = string_fcat (cstr, "%s%s/%s",
-			    color_repo (info), info, color(C_NO));
-		}
+	if (info)
+	{
+		if (config.get_res) dprintf (FD_RES, "%s/", info);
+		cstr = string_fcat (cstr, "%s%s/%s",
+		    color_repo (info), info, color(C_NO));
 	}
 	info=f(p, 'n');
 	if (config.get_res) dprintf (FD_RES, "%s\n", info);
@@ -603,9 +615,8 @@ void color_print_package (void * p, printpkgfn f)
 	if (config.aur_foreign)
 	{
 		/* Compare foreign package with AUR */
-		if (ver)
+		if (aur)
 		{
-			/* package found in AUR */
 			const char *lver_color = NULL;
 			if (config.aur_orphan && !info)
 				lver_color=color(C_ORPHAN);
@@ -620,13 +631,11 @@ void color_print_package (void * p, printpkgfn f)
 			    lver, color (C_NO));
 			if (alpm_pkg_vercmp (ver, lver)>0)
 				cstr = string_fcat (cstr, " ( aur: %s )", ver);
-			fprintf (stdout, "%saur/%s%s\n", color_repo ("aur"), color (C_NO),
-			    string_cstr (cstr));
+			fprintf (stdout, "%s\n", string_cstr (cstr));
 			FREE (ver);
 		}
 		else
-			fprintf (stdout, "%slocal/%s%s %s%s%s\n", color_repo ("local"),
-			    color (C_NO), string_cstr (cstr),
+			fprintf (stdout, "%s %s%s%s\n", string_cstr (cstr),
 				color(C_VER), lver, color(C_NO));
 		string_free (cstr);
 		return;

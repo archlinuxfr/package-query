@@ -518,8 +518,10 @@ int main (int argc, char **argv)
 		{
 			/* -AQm */
 			config.aur_foreign = 1;
+			config.just_one = 1;
 			alpm_search_local (F_FOREIGN, "%n", &targets);
 			ret += aur_info (&targets);
+			ret += search_pkg_by_name (alpm_option_get_localdb(), &targets);
 		}
 		else if (config.filter == F_UPGRADES)
 		{

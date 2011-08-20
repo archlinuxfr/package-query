@@ -118,6 +118,7 @@ aq_config config;
  */
 typedef struct _target_t
 {
+	char *orig;
 	char *db;
 	char *name;
 	pmdepmod_t mod;
@@ -129,9 +130,10 @@ typedef struct _target_t
  */
 target_t *target_parse (const char *str);
 
-target_t *target_free (target_t *t);
+void target_free (target_t *t);
 int target_check_version (target_t *t, const char *ver);
 int target_compatible (target_t *t1, target_t *t2);
+int target_name_cmp (target_t *t1, const char *name);
 
 /*
  * Target passed as argument
@@ -167,6 +169,7 @@ typedef struct _string_t
 } string_t;
 
 string_t *string_new ();
+void string_reset (string_t *str);
 void string_free (string_t *dest);
 char *string_free2 (string_t *dest);
 string_t *string_ncat (string_t *dest, const char *src, size_t n);
