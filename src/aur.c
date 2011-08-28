@@ -375,7 +375,7 @@ static alpm_list_t *aur_json_parse (const char *s)
 	{
 		unsigned char * str = yajl_get_error(hand, 1, 
 		    (const unsigned char *) s, strlen (s));
-		fprintf(stderr, (const char *) str);
+		fprintf(stderr, "%s\n", (const char *) str);
 		yajl_free_error(hand, str);
 		alpm_list_free_inner (pkg_json.pkgs, (alpm_list_fn_free) aur_pkg_free);
 		alpm_list_free (pkg_json.pkgs);

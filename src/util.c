@@ -24,7 +24,6 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <libintl.h>
 
 
 #include "util.h"
@@ -32,7 +31,6 @@
 #include "aur.h"
 #include "color.h"
 
-#define _(x) gettext(x)
 #define FORMAT_LOCAL_PKG "lF134"
 #define INDENT 4
 
@@ -513,6 +511,21 @@ char *strreplace(const char *str, const char *needle, const char *replace)
 
 	return newstr;
 }
+
+/** Parse the basename of a program from a path.
+* @param path path to parse basename from
+*
+* @return everything following the final '/'
+*/
+const char *mbasename(const char *path)
+{
+	const char *last = strrchr(path, '/');
+	if(last) {
+		return(last + 1);
+	}
+	return(path);
+}
+
 
 static int getcols(void)
 {

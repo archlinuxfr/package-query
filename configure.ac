@@ -4,6 +4,7 @@
 AC_PREREQ(2.60)
 AC_INIT([package-query], [0.8.1], [tuxce.net@gmail.com])
 AM_INIT_AUTOMAKE([-Wall])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/package-query.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -20,7 +21,10 @@ AC_CHECK_LIB([alpm], [alpm_version], ,
 AC_CHECK_LIB([yajl], [yajl_free], ,
 	AC_MSG_ERROR([yajl is needed to compile package-query]))
 
-PKG_CHECK_MODULES(LIBCURL, libcurl)
+LIBCURL_CHECK_CONFIG([yes], [7.19.4])
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION(0.13.1)
+
 
 usegitver=no
 gitver=""

@@ -31,7 +31,6 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <locale.h>
-#include <libintl.h>
 #include <signal.h>
 
 #include "util.h"
@@ -59,9 +58,8 @@ void cleanup (int ret)
 	if (cleaned) return;
 	cleaned=1;
 	if (alpm_initialized && alpm_release()==-1)
-		fprintf (stderr, alpm_strerrorlast());
+		fprintf (stderr, "%s\n", alpm_strerrorlast());
 	FREELIST(targets);
-	FREE (config.myname);
 	FREE (config.aur_url);
 	FREE (config.configfile);
 	FREE (config.dbpath);
@@ -79,9 +77,7 @@ void handler (int signum)
 
 void init_config (const char *myname)
 {
-	char *_myname=strdup (myname);
-	config.myname = strdup(basename(_myname));
-	FREE (_myname);
+	config.myname = mbasename(myname);
 	config.aur = 0;
 	config.aur_foreign = 0;
 	config.aur_orphan = 0;
@@ -430,10 +426,13 @@ int main (int argc, char **argv)
 	}
 	if (!config.custom_out)
 	{
+
+#if defined(HAVE_GETTEXT) && defined(ENABLE_NLS)
 		/* TODO: specific package-query locale ? */
 		setlocale (LC_ALL, "");
 		bindtextdomain ("yaourt", LOCALEDIR);
 		textdomain ("yaourt");
+#endif
 	}
 	if ((need & N_DB) && !(given & N_DB))
 	{

@@ -1,3 +1,6 @@
-#!/bin/sh
+#!/bin/sh -x
 
-autoreconf
+aclocal -I m4 --install
+autoheader
+automake --foreign
+autoconf

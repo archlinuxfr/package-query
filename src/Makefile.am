@@ -2,8 +2,8 @@
 conffile  = ${sysconfdir}/pacman.conf
 dbpath    = ${localstatedir}/lib/pacman/
 
-AM_CFLAGS = $(LIBCURL_CFLAGS) -D_GNU_SOURCE
-AM_LDFLAGS = $(LIBCURL_LIBS)
+AM_CFLAGS = -D_GNU_SOURCE
+AM_LDFLAGS = $(LIBCURL) $(LIBINTL)
 
 DEFS = -DLOCALEDIR=\"@localedir@\" \
        -DCONFFILE=\"$(conffile)\" \

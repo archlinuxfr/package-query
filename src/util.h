@@ -21,8 +21,15 @@
 #include <limits.h>
 #include <alpm.h>
 #include <alpm_list.h>
-#include "aur.h"
 
+#if defined(HAVE_GETTEXT) && defined(ENABLE_NLS)
+#include <libintl.h>
+#define _(x) gettext(x)
+#else
+#define _(x) x
+#endif
+
+#include "aur.h"
 
 #define STRDUP(s) (s) ? strdup (s) : NULL
 #define CALLOC(p, l, s) do { \
@@ -80,7 +87,7 @@
  */
 typedef struct _aq_config 
 {
-	char *myname;
+	const char *myname;
 	unsigned short aur;
 	unsigned short aur_foreign;
 	unsigned short aur_orphan;
@@ -198,7 +205,9 @@ void print_package (const char * target, void * pkg, printpkgfn f);
 void print_or_add_result (void *pkg, unsigned short type);
 void show_results ();
 
-
+/* Utils */
+/* mbasename is from pacman's code */
+const char *mbasename(const char *path);
 
 #endif
 
