@@ -468,6 +468,15 @@ char * ltostr (long i)
 	return is;
 }
 
+
+char * ttostr (time_t t)
+{
+	char *ts;
+	CALLOC (ts, 11, sizeof (char));
+	strftime(ts, 11, "%s", localtime(&t));
+	return ts;
+}
+
 /* Helper function for strreplace */
 static void _strnadd(char **str, const char *append, unsigned int count)
 {

@@ -30,12 +30,13 @@ typedef struct _aurpkg_t
 	char *version;
 	unsigned int category;
 	char *desc;
-	unsigned int location;
 	char *url;
 	char *urlpath;
 	char *license;
 	unsigned int votes;
 	unsigned short outofdate;
+	time_t firstsubmit;
+	time_t lastmod;
 	char *maintainer;
 } aurpkg_t;
 
@@ -54,6 +55,8 @@ const char * aur_pkg_get_urlpath (const aurpkg_t * pkg);
 const char * aur_pkg_get_license (const aurpkg_t * pkg);
 unsigned int aur_pkg_get_votes (const aurpkg_t * pkg);
 unsigned short aur_pkg_get_outofdate (const aurpkg_t * pkg);
+time_t aur_pkg_get_firstsubmit (const aurpkg_t * pkg);
+time_t aur_pkg_get_lastmod (const aurpkg_t * pkg);
 const char * aur_pkg_get_maintainer (const aurpkg_t * pkg);
 
 /*

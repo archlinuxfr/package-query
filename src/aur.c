@@ -59,13 +59,15 @@
 #define AUR_VER         "Version"
 #define AUR_CAT         "CategoryID"
 #define AUR_DESC        "Description"
-#define AUR_LOC         "LocationID"
 #define AUR_URL         "URL"
-#define AUR_URLPATH     "URLPath"
 #define AUR_LICENSE     "License"
 #define AUR_VOTE        "NumVotes"
 #define AUR_OUT         "OutOfDate"
-#define AUR_LAST_ID     AUR_OUT
+#define AUR_FIRST       "FirstSubmitted"
+#define AUR_LAST        "LastModified"
+#define AUR_URLPATH     "URLPath"
+
+#define AUR_LAST_ID     AUR_URLPATH
 
 
 
@@ -106,12 +108,13 @@ aurpkg_t *aur_pkg_new ()
 	pkg->version = NULL;
 	pkg->category = 0;
 	pkg->desc = NULL;
-	pkg->location = 0;
 	pkg->url = NULL;
 	pkg->urlpath = NULL;
 	pkg->license = NULL;
 	pkg->votes = 0;
 	pkg->outofdate = 0;
+	pkg->firstsubmit = 0;
+	pkg->lastmod = 0;
 	pkg->maintainer = NULL;
 	return pkg;
 }
@@ -140,12 +143,13 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->version = STRDUP (pkg->version);
 	pkg_ret->category = pkg->category;
 	pkg_ret->desc = STRDUP (pkg->desc);
-	pkg_ret->location = pkg->location;
 	pkg_ret->url = STRDUP (pkg->url);
 	pkg_ret->urlpath = STRDUP (pkg->urlpath);
 	pkg_ret->license = STRDUP (pkg->license);
 	pkg_ret->votes = pkg->votes;
 	pkg_ret->outofdate = pkg->outofdate;
+	pkg_ret->firstsubmit = pkg->firstsubmit;
+	pkg_ret->lastmod = pkg->lastmod;
 	pkg_ret->maintainer = STRDUP (pkg->maintainer);
 	return pkg_ret;
 }
@@ -224,6 +228,20 @@ unsigned short aur_pkg_get_outofdate (const aurpkg_t * pkg)
 {
 	if (pkg!=NULL)
 		return pkg->outofdate;
+	return 0;
+}
+
+time_t aur_pkg_get_firstsubmit (const aurpkg_t * pkg)
+{
+	if (pkg!=NULL)
+		return pkg->firstsubmit;
+	return 0;
+}
+
+time_t aur_pkg_get_lastmod (const aurpkg_t * pkg)
+{
+	if (pkg!=NULL)
+		return pkg->lastmod;
 	return 0;
 }
 
@@ -315,10 +333,6 @@ static int json_value (void * ctx, const unsigned char * stringVal,
 		pkg_json->pkg->desc = s;
 		free_s = 0;
 	}
-	else if (strcmp (pkg_json->current_key, AUR_LOC)==0)
-	{
-		pkg_json->pkg->location = atoi(s);
-	}
 	else if (strcmp (pkg_json->current_key, AUR_URL)==0)
 	{
 		pkg_json->pkg->url = s;
@@ -341,6 +355,14 @@ static int json_value (void * ctx, const unsigned char * stringVal,
 	else if (strcmp (pkg_json->current_key, AUR_OUT)==0)
 	{
 		pkg_json->pkg->outofdate = atoi(s);
+	}
+	else if (strcmp (pkg_json->current_key, AUR_FIRST)==0)
+	{
+		pkg_json->pkg->firstsubmit = atol(s);
+	}
+	else if (strcmp (pkg_json->current_key, AUR_LAST)==0)
+	{
+		pkg_json->pkg->lastmod = atol(s);
 	}
 	if (free_s)
 		free (s);
@@ -573,6 +595,10 @@ const char *aur_get_str (void *p, unsigned char c)
 			break;
 		case 'm': info = (char *) aur_pkg_get_maintainer (pkg); break;
 		case 'n': info = (char *) aur_pkg_get_name (pkg); break;
+		case 'L':
+			info = ttostr (aur_pkg_get_lastmod (pkg));
+			free_info=1;
+			break;
 		case 'o': 
 			info = itostr (aur_pkg_get_outofdate (pkg)); 
 			free_info = 1;
@@ -588,6 +614,10 @@ const char *aur_get_str (void *p, unsigned char c)
 			strcpy (info, config.aur_url);
 			strcat (info, aur_pkg_get_urlpath (pkg));
 			free_info = 1;
+			break;
+		case 'S':
+			info = ttostr (aur_pkg_get_firstsubmit (pkg));
+			free_info=1;
 			break;
 		case 'V':
 		case 'v': info = (char *) aur_pkg_get_version (pkg); break;

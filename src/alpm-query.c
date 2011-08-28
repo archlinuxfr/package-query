@@ -647,14 +647,8 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 			free_info = 1;
 			break;
 		case '1':
-			{
-				time_t idate;
-				idate = alpm_pkg_get_installdate(pkg);
-				if (!idate) break;
-				CALLOC (info, 50, sizeof (char));
-				strftime(info, 50, "%s", localtime(&idate));
-				free_info=1;
-			}
+			info = ttostr (alpm_pkg_get_installdate (pkg));
+			free_info=1;
 			break;
 		case '3':
 			info = ltostr (alpm_pkg_get_realsize (pkg));

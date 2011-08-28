@@ -193,6 +193,9 @@ char *concat_str_list (alpm_list_t *l);
 char * itostr (int i);
 char * ltostr (long i);
 
+/* time to string */
+char * ttostr (time_t t);
+
 /*
  * Package output
  */
