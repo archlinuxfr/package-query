@@ -410,6 +410,7 @@ static alpm_list_t *aur_json_parse (const char *s)
 static alpm_list_t *aur_fetch (CURL *curl, const char *url)
 {
 	CURLcode curl_code;
+	long http_code;
 	alpm_list_t *pkgs;
 	string_t *res = string_new();
 	curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
@@ -417,6 +418,13 @@ static alpm_list_t *aur_fetch (CURL *curl, const char *url)
 	if ((curl_code = curl_easy_perform (curl)) != CURLE_OK)
 	{
 		fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
+		string_free (res);
+		return 0;
+	}
+	curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
+	if (http_code != 200)
+	{
+		fprintf(stderr, "The URL %s returned error : %ld\n", url, http_code);
 		string_free (res);
 		return 0;
 	}
