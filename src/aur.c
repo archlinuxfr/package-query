@@ -543,16 +543,16 @@ static int aur_request (alpm_list_t **targets, int type)
 			{
 				aurpkg_t *pkg = alpm_list_getdata (p);
 				const char *pkgname = aur_pkg_get_name (pkg);
+				const char *pkgver = aur_pkg_get_version (pkg);
 				one_target = alpm_list_find (real_targets,
 				    pkgname, (alpm_list_fn_cmp) target_name_cmp);
-				if (one_target && target_check_version (one_target, pkgname))
+				if (one_target && target_check_version (one_target, pkgver))
 				{
 					aur_pkgs_found++;
 					/* one_target->orig is not duplicated,
 					 * 'ta' will use it until target_arg_close() call.
 					 */
-					if (target_arg_add (ta, one_target->orig,
-					    (void *) aur_pkg_get_name (pkg)))
+					if (target_arg_add (ta, one_target->orig, (void *) pkgname))
 						print_package (one_target->orig,
 						    alpm_list_getdata (p), aur_get_str);
 				}
