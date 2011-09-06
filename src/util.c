@@ -633,14 +633,14 @@ void color_print_package (void * p, printpkgfn f)
 	lver = alpm_local_pkg_get_str (info, 'l');
 	info = f(p, (config.aur_upgrades) ? 'V' : 'v');
 	ver = STRDUP (info);
-	info = (aur && config.aur_orphan) ? f(p, 'm') : NULL;
+	info = (aur) ? f(p, 'm') : NULL;
 	if (config.aur_foreign)
 	{
 		/* Compare foreign package with AUR */
 		if (aur)
 		{
 			const char *lver_color = NULL;
-			if (config.aur_orphan && !info)
+			if (!info)
 				lver_color=color(C_ORPHAN);
 			else
 			{
@@ -662,7 +662,7 @@ void color_print_package (void * p, printpkgfn f)
 		string_free (cstr);
 		return;
 	}
-	if (aur && config.aur_orphan && !info)
+	if (aur && !info)
 		cstr = string_fcat (cstr, "%s%s%s", color(C_ORPHAN), ver, color (C_NO));
 	else
 		cstr = string_fcat (cstr, "%s%s%s", color(C_VER), ver, color (C_NO));

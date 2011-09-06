@@ -90,7 +90,6 @@ typedef struct _aq_config
 	const char *myname;
 	unsigned short aur;
 	unsigned short aur_foreign;
-	unsigned short aur_orphan;
 	unsigned short aur_upgrades;
 	unsigned short colors;
 	unsigned short custom_out;
