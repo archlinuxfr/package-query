@@ -531,7 +531,7 @@ static int aur_request (alpm_list_t **targets, int type)
 				if (encoded_arg != NULL)
 				{
 					url = string_cat (url, AUR_RPC_INFO_ARG);
-					url = string_cat (url, one_target->name);
+					url = string_cat (url, encoded_arg);
 					curl_free (encoded_arg);
 					fetch_waiting=1;
 				}
