@@ -508,22 +508,26 @@ int main (int argc, char **argv)
 	}
 	else if (!config.aur && config.db_local)
 		ret += alpm_search_local (config.filter, NULL, NULL);
-	else if (config.aur && config.db_local && !(given & N_TARGET))
+	else if (config.aur && !(given & N_TARGET))
 	{
 		if (config.filter == F_FOREIGN)
 		{
-			/* -AQm */
+			/* -Am */
 			config.aur_foreign = 1;
 			config.just_one = 1;
 			alpm_search_local (F_FOREIGN, "%n", &targets);
 			ret += aur_info (&targets);
-			ret += search_pkg_by_name (alpm_option_get_localdb(), &targets);
+			if (config.db_local)
+				/* -AQm */
+				ret += search_pkg_by_name (alpm_option_get_localdb(), &targets);
 		}
 		else if (config.filter == F_UPGRADES)
 		{
-			/* -AQu */
+			/* -Au */
 			config.aur_upgrades = 1;
-			ret += alpm_search_local (config.filter, NULL, NULL);
+			if (config.db_local)
+				/* -AQu */
+				ret += alpm_search_local (config.filter, NULL, NULL);
 			alpm_search_local (F_FOREIGN, "%n>%v", &targets);
 			ret += aur_info (&targets);
 		}
