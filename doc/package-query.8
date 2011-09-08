@@ -2,12 +2,12 @@
 .\"     Title: package-query
 .\"    Author: [see the "Authors" section]
 .\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 2011-04-10
+.\"      Date: 2011-09-08
 .\"    Manual: Package-query Manual
-.\"    Source: Package-query 0.8
+.\"    Source: Package-query 0.9
 .\"  Language: English
 .\"
-.TH "PACKAGE\-QUERY" "8" "2011\-04\-10" "Package\-query 0\&.8" "Package\-query Manual"
+.TH "PACKAGE\-QUERY" "8" "2011\-09\-08" "Package\-query 0\&.9" "Package\-query Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -39,8 +39,7 @@ Package\-query query Alpm and AUR with the possibility to format output\&.
 .PP
 \fB\-A, \-\-aur\fR
 .RS 4
-Query AUR database\&. See
-AUR search\&.
+Query AUR database\&.
 .RE
 .PP
 \fB\-L, \-\-list\-repo\fR
@@ -71,7 +70,7 @@ Show help\&.
 \fB\-\-aur\-url <AUR url>\fR
 .RS 4
 Specify a custom AUR url (default to
-https://aur\&.archlinux\&.org)\&.
+http://aur\&.archlinux\&.org)\&.
 .RE
 .PP
 \fB\-b, \-\-dbpath <database path>\fR
@@ -170,15 +169,6 @@ Regex search for ALPM and SQL search for AUR\&.
 .RS 4
 Return search results sorted by names (\fIn\fR), by votes (\fIw\fR), by installed date (\fI1\fR) or by theorical size (\fI2\fR)\&.
 .RE
-.SH "AUR SEARCH"
-.PP
-\fB\-\-aur\-orphan\fR
-.RS 4
-Fetch package\(cqs page on aur to get the maintainer with
-\fI%m\fR
-in
-formatted string\&.
-.RE
 .SH "LOCAL DB SEARCH"
 .PP
 \fB\-m, \-\-foreign\fR
@@ -233,6 +223,7 @@ Format can contain:
 %I: install script
 %i: AUR ID
 %l: local version
+%L: last submission (AUR)
 %m: maintainer or packager
 %n: name
 %N: required by (Needed by)
@@ -242,6 +233,7 @@ Format can contain:
 %R: replaces
 %r: repository, \*(Aqlocal\*(Aq for local packages
 %s: sync repository, respect \*(Aqpacman\&.conf\*(Aq order\&.
+%S: first submission (AUR)
 %t: target submitted with command
 %u: file/tarball url
 %U: software url
@@ -283,7 +275,7 @@ Format can contain:
 .RE
 .\}
 .PP
-\fB\-\-csep <sep>\fR
+\fB\-\-delimiter <delim>\fR
 .RS 4
 For format like
 \fI%B\fR,
