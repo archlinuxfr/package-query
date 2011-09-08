@@ -32,65 +32,46 @@
 
 typedef const char *(*retcharfn) (void *);
 
-static int _alpm_option_set_root (const char *s)
-{
-	if (alpm_option_set_root (s)!=0)
-	{
-		fprintf (stderr, "problem setting rootdir '%s' (%s)\n",
-			s, alpm_strerrorlast());
-		return 0;
-	}
-	return 1;
-}
-static int _alpm_option_set_dbpath (const char *s)
-{
-	if (alpm_option_set_dbpath (s)!=0)
-	{
-		fprintf (stderr, "problem setting dbpath '%s' (%s)\n",
-			s, alpm_strerrorlast());
-		return 0;
-	}
-	return 1;
-}
-
-
-int init_alpm ()
-{
-	if (alpm_initialize()!=	0)
-	{
-		fprintf(stderr, "failed to initialize alpm library (%s)\n", 
-			alpm_strerrorlast());
-		return 0;
-	}
-	if (config.rootdir)
-	{
-		if (!_alpm_option_set_root (config.rootdir)) return 0;
-		if (!config.dbpath)
-		{
-			char path[PATH_MAX];
-			snprintf (path, PATH_MAX, "%s%s", alpm_option_get_root(), DBPATH+1);
-			config.dbpath = strdup (path);
-		}
-	}
-	else
-		if (!_alpm_option_set_root (ROOTDIR)) return 0;
-	if (config.dbpath)
-		return _alpm_option_set_dbpath (config.dbpath);
-	else
-		return _alpm_option_set_dbpath (DBPATH);
-	return 1;
-}
-
 /* from pacman */
 static void setarch(const char *arch)
 {
 	if (strcmp(arch, "auto") == 0) {
 		struct utsname un;
 		uname(&un);
-		alpm_option_set_arch(un.machine);
+		config.arch = STRDUP (un.machine);
 	} else {
-		alpm_option_set_arch(arch);
+		config.arch = STRDUP (arch);
 	}
+}
+
+int init_alpm ()
+{
+	enum _alpm_errno_t err;
+	alpm_handle_t *handle;
+	if (config.rootdir)
+	{
+		if (!config.dbpath)
+		{
+			char path[PATH_MAX];
+			snprintf (path, PATH_MAX, "%s/%s", config.rootdir, DBPATH+1);
+			config.dbpath = strdup (path);
+		}
+	}
+	else
+		config.rootdir = strdup (ROOTDIR);
+	if (!config.dbpath)
+		config.dbpath = strdup (DBPATH);
+	handle = alpm_initialize (config.rootdir, config.dbpath, &err);
+	if(!handle)
+	{
+		fprintf(stderr, "failed to initialize alpm library (%s)\n",
+		    alpm_strerror(err));
+		return 0;
+	}
+	if (!config.arch) setarch ("auto");
+	alpm_option_set_arch(handle, config.arch);
+	config.handle = handle;
+	return 1;
 }
 
 static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
@@ -99,8 +80,9 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 	char *ptr;
 	char *equal;
 	FILE *conf;
-	static pmdb_t *db=NULL;
+	static alpm_db_t *db=NULL;
 	static int in_option=0;
+	static int global_opt_parsed=0;
 	if ((conf = fopen (configfile, "r")) == NULL)
 	{
 		fprintf(stderr, "Unable to open file: %s\n", configfile);
@@ -118,18 +100,28 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 
 		if (line[0] == '[' && line[strlen(line)-1] == ']')
 		{
+			db=NULL;
 			line[strlen(line)-1] = '\0';
 			ptr = &(line[1]);
 			if (strcmp (ptr, "options") != 0)
 			{
 				in_option=0;
+				if (!global_opt_parsed)
+				{
+					if (!init_alpm())
+					{
+						fclose (conf);
+						return 0;
+					}
+					global_opt_parsed=1;
+				}
 				if (reg)
 				{
-					if ((db = alpm_db_register_sync(ptr)) == NULL)
+					if ((db = alpm_db_register_sync(config.handle, ptr, ALPM_SIG_USE_DEFAULT)) == NULL)
 					{
 						fprintf(stderr, 
 							"could not register '%s' database (%s)\n", ptr,
-							alpm_strerrorlast());
+							alpm_strerror(alpm_errno(config.handle)));
 						fclose (conf);
 						return 0;
 					}
@@ -137,7 +129,7 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 				else
 					*dbs = alpm_list_add (*dbs, strdup (ptr));
 			}
-			else
+			else if (!global_opt_parsed)
 				in_option=1;
 		}
 		else
@@ -160,7 +152,7 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 				else if (reg && strcmp (line, "Server") == 0 && db != NULL)
 				{
 					strtrim (ptr);
-					const char *arch = alpm_option_get_arch();
+					const char *arch = alpm_option_get_arch(config.handle);
 					char *server = strreplace (ptr, "$repo", alpm_db_get_name (db));
 					if (arch)
 					{
@@ -168,7 +160,7 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 						server = strreplace(temp, "$arch", arch);
 						free(temp);
 					}
-					alpm_db_setserver(db, server);
+					alpm_db_add_server(db, server);
 					FREE (server);
 				}
 				else if (reg && in_option)
@@ -182,11 +174,8 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 						strcmp (line, "DBPath") == 0)
 					{
 						strtrim (ptr);
-						if (!_alpm_option_set_dbpath (ptr))
-						{
-							fclose (conf);
-							return 0;
-						}					
+						FREE(config.dbpath);
+						config.dbpath=STRDUP(ptr);
 					}
 				}
 			}
@@ -214,13 +203,13 @@ int init_db_sync (const char *configfile)
 	return parse_configfile (NULL, config.configfile, 1);
 }
 
-static int filter (pmpkg_t *pkg, unsigned int _filter)
+static int filter (alpm_pkg_t *pkg, unsigned int _filter)
 {
 	if (_filter & F_FOREIGN)
 		return (get_sync_pkg (pkg) == NULL);
-	if ((_filter & F_EXPLICIT) == F_EXPLICIT && alpm_pkg_get_reason(pkg) != PM_PKG_REASON_EXPLICIT)
+	if ((_filter & F_EXPLICIT) == F_EXPLICIT && alpm_pkg_get_reason(pkg) != ALPM_PKG_REASON_EXPLICIT)
 		return 0;
-	if ((_filter & F_DEPS) == F_DEPS && alpm_pkg_get_reason(pkg) != PM_PKG_REASON_DEPEND)
+	if ((_filter & F_DEPS) == F_DEPS && alpm_pkg_get_reason(pkg) != ALPM_PKG_REASON_DEPEND)
 		return 0;
 	if (_filter & F_UNREQUIRED)
 	{
@@ -232,7 +221,7 @@ static int filter (pmpkg_t *pkg, unsigned int _filter)
 		}
 	}
 	if (_filter & F_UPGRADES)
-		if (!alpm_sync_newversion (pkg, alpm_option_get_syncdbs()))
+		if (!alpm_sync_newversion (pkg, alpm_option_get_syncdbs(config.handle)))
 			return 0;
 	if (_filter & F_GROUP)
 		if (!alpm_pkg_get_groups (pkg))
@@ -240,7 +229,7 @@ static int filter (pmpkg_t *pkg, unsigned int _filter)
 	return 1;
 }
 
-static int filter_state (pmpkg_t *pkg)
+static int filter_state (alpm_pkg_t *pkg)
 {
 	int ret=0;
 	if (filter (pkg, F_FOREIGN)) ret |= F_FOREIGN;
@@ -253,13 +242,13 @@ static int filter_state (pmpkg_t *pkg)
 }
 
 
-int search_pkg_by_type (pmdb_t *db, alpm_list_t **targets, int query_type)
+int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets, int query_type)
 {
 	int ret=0;
 	alpm_list_t *t;
 	alpm_list_t *i, *j;
 
-	alpm_list_t *(*f)(pmpkg_t *);
+	alpm_list_t *(*f)(alpm_pkg_t *);
 	retcharfn g;
 	int free_fn_ret=0;
 	/* free_fn_ret=1 to free f() return
@@ -290,7 +279,7 @@ int search_pkg_by_type (pmdb_t *db, alpm_list_t **targets, int query_type)
 
 	for(i = alpm_db_get_pkgcache(db); i && *targets; i = alpm_list_next(i))
 	{
-		pmpkg_t *pkg = alpm_list_getdata(i);
+		alpm_pkg_t *pkg = alpm_list_getdata(i);
 		alpm_list_t *pkg_info_list = f(pkg);
 		for(j = pkg_info_list; j && *targets; j = alpm_list_next(j))
 		{
@@ -323,11 +312,11 @@ int search_pkg_by_type (pmdb_t *db, alpm_list_t **targets, int query_type)
 	return ret;
 }
 
-int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets)
+int search_pkg_by_name (alpm_db_t *db, alpm_list_t **targets)
 {
 	int ret=0;
 	alpm_list_t *t;
-	pmpkg_t *pkg_found;
+	alpm_pkg_t *pkg_found;
 	const char *db_name = alpm_db_get_name (db);
 	target_arg_t *ta = target_arg_init (NULL, NULL, NULL);
 	for(t = *targets; t; t = alpm_list_next(t))
@@ -354,30 +343,30 @@ int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets)
 	return ret;
 }
 
-int list_grp (pmdb_t *db, alpm_list_t *targets)
+int list_grp (alpm_db_t *db, alpm_list_t *targets)
 {
 	int ret=0;
-	pmgrp_t *grp;
+	alpm_group_t *grp;
 	alpm_list_t *t;
 	if (targets)
 	{
 		for (t=targets; t; t = alpm_list_next (t))
 		{
 			const char *grp_name = alpm_list_getdata (t);
-			grp = alpm_db_readgrp (db, grp_name);
+			grp = alpm_db_readgroup (db, grp_name);
 			if (grp) 
 			{
 				alpm_list_t *i;
 				ret++;
-				for (i=alpm_grp_get_pkgs (grp); i; i=alpm_list_next (i))
-					print_package (alpm_grp_get_name (grp),
+				for (i=grp->packages; i; i=alpm_list_next (i))
+					print_package (grp->name,
 					    alpm_list_getdata(i), alpm_pkg_get_str);
 			}
 		}
 	}
 	else
 	{
-		for(t = alpm_db_get_grpcache(db); t; t = alpm_list_next(t)) 
+		for(t = alpm_db_get_groupcache(db); t; t = alpm_list_next(t))
 		{
 			ret++;
 			print_package ("", alpm_list_getdata(t), alpm_grp_get_str);
@@ -386,14 +375,14 @@ int list_grp (pmdb_t *db, alpm_list_t *targets)
 	return ret;
 }	
 
-int search_pkg (pmdb_t *db, alpm_list_t *targets)
+int search_pkg (alpm_db_t *db, alpm_list_t *targets)
 {
 	int ret=0;
 	alpm_list_t *t, *pkgs;
 	pkgs = alpm_db_search(db, targets);
 	for(t = pkgs; t; t = alpm_list_next(t))
 	{
-		pmpkg_t *info = alpm_list_getdata(t);
+		alpm_pkg_t *info = alpm_list_getdata(t);
 		if (!filter (info, config.filter)) continue;
 		ret++;
 		print_or_add_result ((void *) info, R_ALPM_PKG);
@@ -406,10 +395,10 @@ int alpm_search_local (unsigned short _filter, const char *format,
                        alpm_list_t **res)
 {
 	alpm_list_t *i;
-	pmpkg_t *pkg;
+	alpm_pkg_t *pkg;
 	int ret=0;
 
-	for(i = alpm_db_get_pkgcache(alpm_option_get_localdb());
+	for(i = alpm_db_get_pkgcache(alpm_option_get_localdb(config.handle));
 	    i; i = alpm_list_next(i))
 	{
 		pkg = alpm_list_getdata (i);
@@ -428,7 +417,7 @@ int alpm_search_local (unsigned short _filter, const char *format,
 }
 
 
-int list_db (pmdb_t *db, alpm_list_t *targets)
+int list_db (alpm_db_t *db, alpm_list_t *targets)
 {
 	int ret=0;
 	const char *db_name = alpm_db_get_name (db);
@@ -438,18 +427,18 @@ int list_db (pmdb_t *db, alpm_list_t *targets)
 		return 0;
 	for(i = alpm_db_get_pkgcache(db); i; i = alpm_list_next(i))
 	{
-		pmpkg_t *info = alpm_list_getdata(i);
+		alpm_pkg_t *info = alpm_list_getdata(i);
 		print_or_add_result ((void *) info, R_ALPM_PKG);
 		ret++;
 	}
 	return ret;
 }
 
-pmpkg_t *get_sync_pkg_by_name (const char *pkgname)
+alpm_pkg_t *get_sync_pkg_by_name (const char *pkgname)
 {
-	pmpkg_t *sync_pkg = NULL;
+	alpm_pkg_t *sync_pkg = NULL;
 	alpm_list_t *i;
-	for (i=alpm_option_get_syncdbs(); i; i = alpm_list_next (i))
+	for (i=alpm_option_get_syncdbs(config.handle); i; i = alpm_list_next (i))
 	{
 		sync_pkg = alpm_db_get_pkg (alpm_list_getdata(i), pkgname);
 		if (sync_pkg) break;
@@ -458,9 +447,9 @@ pmpkg_t *get_sync_pkg_by_name (const char *pkgname)
 }
 
 /* get_sync_pkg() returns the first pkg with same name in sync dbs */
-pmpkg_t *get_sync_pkg (pmpkg_t *pkg)
+alpm_pkg_t *get_sync_pkg (alpm_pkg_t *pkg)
 {
-	pmpkg_t *sync_pkg = NULL;
+	alpm_pkg_t *sync_pkg = NULL;
 	const char *dbname;
 	dbname = alpm_db_get_name (alpm_pkg_get_db (pkg));
 	if (dbname==NULL || strcmp ("local", dbname)==0)
@@ -470,9 +459,9 @@ pmpkg_t *get_sync_pkg (pmpkg_t *pkg)
 	return sync_pkg;
 }
 
-off_t get_size_pkg (pmpkg_t *pkg)
+off_t get_size_pkg (alpm_pkg_t *pkg)
 {
-	pmpkg_t *sync_pkg = get_sync_pkg (pkg);
+	alpm_pkg_t *sync_pkg = get_sync_pkg (pkg);
 	if (config.filter & F_UPGRADES)
 	{
 		if (sync_pkg) 
@@ -485,31 +474,28 @@ off_t get_size_pkg (pmpkg_t *pkg)
 	return 0;
 }
 
-off_t alpm_pkg_get_realsize (pmpkg_t *pkg)
+off_t alpm_pkg_get_realsize (alpm_pkg_t *pkg)
 {
-	alpm_list_t *f, *files;
-	int len, i, j;
+	alpm_file_t *f;
+	alpm_filelist_t *files;
+	int i, j, k;
 	ino_t *inodes=NULL;
 	struct stat buf;
 	off_t size=0;
 	files = alpm_pkg_get_files (pkg);
 	if (files)
 	{
-		if (config.rootdir)
-			chdir (config.rootdir);
-		else
-			chdir (ROOTDIR);
-		len = alpm_list_count (files);
-		CALLOC (inodes, len, sizeof (ino_t));
+		chdir (alpm_option_get_root(config.handle));
+		CALLOC (inodes, files->count, sizeof (ino_t));
 		j=0;
-		for (f = files; f; f = alpm_list_next (f))
+		for (k=0; k<files->count; k++)
 		{
+			f = files->files + k;
 			int found=0;
-			const char *filename=alpm_list_getdata (f);
-			if (lstat (filename, &buf) == -1 ||
+			if (lstat (f->name, &buf) == -1 ||
 				!(S_ISREG (buf.st_mode) || S_ISLNK(buf.st_mode)))
 				continue;
-			for (i=0; i<len && i<j && !found; i++)
+			for (i=0; i<files->count && i<j && !found; i++)
 				if (inodes[i] == buf.st_ino)
 				{
 					found=1;
@@ -526,7 +512,7 @@ off_t alpm_pkg_get_realsize (pmpkg_t *pkg)
 
 const char *alpm_pkg_get_str (void *p, unsigned char c)
 {
-	pmpkg_t *pkg = (pmpkg_t *) p;
+	alpm_pkg_t *pkg = (alpm_pkg_t *) p;
 	static char *info=NULL;
 	static int free_info=0;
 	if (free_info)
@@ -602,16 +588,20 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			break;
 		case 's': 
 			pkg = get_sync_pkg (pkg);
-			if (!pkg) pkg = (pmpkg_t *) p;
+			if (!pkg) pkg = (alpm_pkg_t *) p;
 		case 'r': info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg)); break;
 		case 'u': 
 			{
-			const char *dburl= alpm_db_get_url((alpm_pkg_get_db (pkg)));
-			if (!dburl) return NULL;
-			const char *pkgfilename = alpm_pkg_get_filename (pkg);
-			CALLOC (info, strlen (dburl) + strlen(pkgfilename) + 2, sizeof (char));
-			sprintf (info, "%s/%s", dburl, pkgfilename);
-			free_info = 1;
+				alpm_list_t *servers = alpm_db_get_servers(alpm_pkg_get_db(pkg));
+				if(servers)
+				{
+					const char *dburl = alpm_list_getdata(servers);
+					if (!dburl) return NULL;
+					const char *pkgfilename = alpm_pkg_get_filename (pkg);
+					CALLOC (info, strlen (dburl) + strlen(pkgfilename) + 2, sizeof (char));
+					sprintf (info, "%s/%s", dburl, pkgfilename);
+					free_info = 1;
+				}
 			}
 			break;
 		case 'U': info = (char *) alpm_pkg_get_url (pkg); break;
@@ -627,7 +617,7 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 
 const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 {
-	pmpkg_t *pkg = NULL;
+	alpm_pkg_t *pkg = NULL;
 	static char *info=NULL;
 	static int free_info=0;
 	if (free_info)
@@ -637,13 +627,13 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 	}
 	info = NULL;
 	if (!pkg_name) return NULL;
-	pkg = alpm_db_get_pkg(alpm_option_get_localdb(), pkg_name);
+	pkg = alpm_db_get_pkg(alpm_option_get_localdb(config.handle), pkg_name);
 	if (!pkg) return NULL;
 	switch (c)
 	{
 		case 'l': info = (char *) alpm_pkg_get_version (pkg); break;
 		case 'F':
-			info = concat_str_list (alpm_pkg_get_files (pkg));
+			info = concat_file_list (alpm_pkg_get_files (pkg));
 			free_info = 1;
 			break;
 		case '1':
@@ -664,7 +654,7 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 
 const char *alpm_grp_get_str (void *p, unsigned char c)
 {
-	pmgrp_t *grp = (pmgrp_t *) p;
+	alpm_group_t *grp = (alpm_group_t *) p;
 	static char *info=NULL;
 	static int free_info=0;
 	if (free_info)
@@ -675,7 +665,7 @@ const char *alpm_grp_get_str (void *p, unsigned char c)
 	info = NULL;
 	switch (c)
 	{
-		case 'n': info = (char *) alpm_grp_get_name (grp); break;
+		case 'n': info = (char *) grp->name; break;
 		default: return NULL; break;
 	}
 	return info;

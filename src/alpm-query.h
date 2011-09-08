@@ -52,18 +52,18 @@ int init_db_sync ();
  * Returns number of packages found
  * Those functions call print_package()
  */
-int search_pkg_by_type (pmdb_t *db, alpm_list_t **targets, int query_type);
-int search_pkg_by_name (pmdb_t *db, alpm_list_t **targets);
-int list_grp (pmdb_t *db, alpm_list_t *targets);
-int search_pkg (pmdb_t *db, alpm_list_t *targets);
-int list_db (pmdb_t *db, alpm_list_t *targets);
+int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets, int query_type);
+int search_pkg_by_name (alpm_db_t *db, alpm_list_t **targets);
+int list_grp (alpm_db_t *db, alpm_list_t *targets);
+int search_pkg (alpm_db_t *db, alpm_list_t *targets);
+int list_db (alpm_db_t *db, alpm_list_t *targets);
 int alpm_search_local (unsigned short filter, const char *format,
                        alpm_list_t **res);
 
 
-off_t get_size_pkg (pmpkg_t *pkg);
-pmpkg_t *get_sync_pkg_by_name (const char *pkgname);
-pmpkg_t *get_sync_pkg (pmpkg_t *pkg);
+off_t get_size_pkg (alpm_pkg_t *pkg);
+alpm_pkg_t *get_sync_pkg_by_name (const char *pkgname);
+alpm_pkg_t *get_sync_pkg (alpm_pkg_t *pkg);
 
 /*
  * alpm_pkg_get_str() get info for package

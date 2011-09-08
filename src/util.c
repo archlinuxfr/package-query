@@ -67,7 +67,7 @@ static const char *results_name (const results_t *r)
 	switch (r->type)
 	{
 		case R_ALPM_PKG:
-			return alpm_pkg_get_name ((pmpkg_t *) r->ele);
+			return alpm_pkg_get_name ((alpm_pkg_t *) r->ele);
 		case R_AUR_PKG:
 			return aur_pkg_get_name ((aurpkg_t *) r->ele);
 		default:
@@ -78,11 +78,11 @@ static const char *results_name (const results_t *r)
 static time_t results_installdate (const results_t *r)
 {
 	const char *r_name;
-	pmpkg_t *pkg = NULL;
+	alpm_pkg_t *pkg = NULL;
 	time_t idate=0;
 	if (r->type==R_AUR_PKG) return 0;
 	r_name = results_name (r);
-	pkg = alpm_db_get_pkg(alpm_option_get_localdb(), r_name);
+	pkg = alpm_db_get_pkg(alpm_option_get_localdb(config.handle), r_name);
 	if (pkg) idate = alpm_pkg_get_installdate(pkg);
 	return idate;
 }
@@ -197,32 +197,32 @@ target_t *target_parse (const char *str)
 
 	if ((c=strstr (s, "<=")) != NULL)
 	{
-		ret->mod=PM_DEP_MOD_LE;
+		ret->mod=ALPM_DEP_MOD_LE;
 		ret->ver=strdup (&(c[2]));
 	}
 	else if ((c=strstr (s, ">=")) != NULL)
 	{
-		ret->mod=PM_DEP_MOD_GE;
+		ret->mod=ALPM_DEP_MOD_GE;
 		ret->ver=strdup (&(c[2]));
 	}
 	else if ((c=strchr (s, '<')) != NULL)
 	{
-		ret->mod=PM_DEP_MOD_LT;
+		ret->mod=ALPM_DEP_MOD_LT;
 		ret->ver=strdup (&(c[1]));
 	}
 	else if ((c=strchr (s, '>')) != NULL)
 	{
-		ret->mod=PM_DEP_MOD_GT;
+		ret->mod=ALPM_DEP_MOD_GT;
 		ret->ver=strdup (&(c[1]));
 	}
 	else if ((c=strchr (s, '=')) != NULL)
 	{
-		ret->mod=PM_DEP_MOD_EQ;
+		ret->mod=ALPM_DEP_MOD_EQ;
 		ret->ver=strdup (&(c[1]));
 	}
 	else
 	{
-		ret->mod=PM_DEP_MOD_ANY;
+		ret->mod=ALPM_DEP_MOD_ANY;
 		ret->ver=NULL;
 	}
 	if (c)
@@ -246,25 +246,25 @@ void target_free (target_t *t)
 int target_check_version (target_t *t, const char *ver)
 {
 	int ret;
-	if (t->mod==PM_DEP_MOD_ANY) return 1;
+	if (t->mod==ALPM_DEP_MOD_ANY) return 1;
 	ret = alpm_pkg_vercmp (ver, t->ver);
 	switch (t->mod)
 	{
-		case PM_DEP_MOD_LE: return (ret<=0);
-		case PM_DEP_MOD_GE: return (ret>=0);
-		case PM_DEP_MOD_LT: return (ret<0);
-		case PM_DEP_MOD_GT: return (ret>0);
-		case PM_DEP_MOD_EQ: return (ret==0);
+		case ALPM_DEP_MOD_LE: return (ret<=0);
+		case ALPM_DEP_MOD_GE: return (ret>=0);
+		case ALPM_DEP_MOD_LT: return (ret<0);
+		case ALPM_DEP_MOD_GT: return (ret>0);
+		case ALPM_DEP_MOD_EQ: return (ret==0);
 		default: return 1;
 	}
 }
 
 int target_compatible (target_t *t1, target_t *t2)
 {
-	if (t2->mod != PM_DEP_MOD_EQ && t2->mod != PM_DEP_MOD_ANY)
+	if (t2->mod != ALPM_DEP_MOD_EQ && t2->mod != ALPM_DEP_MOD_ANY)
 		return 0;
 	if (strcmp (t1->name, t2->name) == 0 &&
-		(t1->mod == PM_DEP_MOD_ANY || t2->mod == PM_DEP_MOD_ANY ||
+		(t1->mod == ALPM_DEP_MOD_ANY || t2->mod == ALPM_DEP_MOD_ANY ||
 		target_check_version (t1, t2->ver)))
 			return 1;
 	return 0;
@@ -410,6 +410,42 @@ char *concat_str_list (alpm_list_t *l)
 			{
 				if (j++>0) strcat (ret, config.delimiter);
 				strcat (ret, alpm_list_getdata (i));
+			}
+		}
+		else
+		{
+			return NULL;
+		}
+	}
+	return ret;
+}
+
+char *concat_file_list (alpm_filelist_t *f)
+{
+	char *ret;
+	int len=0, i, j=0;
+	if (!f)
+	{
+		return NULL;
+	}
+	else
+	{
+		for(i=0; i<f->count; i++)
+		{
+			alpm_file_t *file = f->files + i;
+			/* data's len + space for separator */
+			len += strlen (file->name + strlen (config.delimiter));
+		}
+		if (len)
+		{
+			len++; /* '\0' at the end */
+			CALLOC (ret, len, sizeof (char));
+			strcpy (ret, "");
+			for(i=0; i<f->count; i++)
+			{
+				alpm_file_t *file = f->files + i;
+				if (j++>0) strcat (ret, config.delimiter);
+				strcat (ret, file->name);
 			}
 		}
 		else

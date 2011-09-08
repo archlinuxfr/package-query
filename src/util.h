@@ -88,6 +88,7 @@
 typedef struct _aq_config 
 {
 	const char *myname;
+	alpm_handle_t *handle;
 	unsigned short aur;
 	unsigned short aur_foreign;
 	unsigned short aur_upgrades;
@@ -108,6 +109,7 @@ typedef struct _aq_config
 	unsigned short query;
 	unsigned short show_size;
 	unsigned short updates;
+	char *arch;
 	char *aur_url;
 	char *configfile;
 	char delimiter[SEP_LEN];
@@ -127,7 +129,7 @@ typedef struct _target_t
 	char *orig;
 	char *db;
 	char *name;
-	pmdepmod_t mod;
+	alpm_depmod_t mod;
 	char *ver;
 } target_t;
 
@@ -187,6 +189,7 @@ char *strtrim(char *str);
 char *strreplace(const char *str, const char *needle, const char *replace);
 
 char *concat_str_list (alpm_list_t *l);
+char *concat_file_list (alpm_filelist_t *f);
 
 /* integer/long to string */
 char * itostr (int i);

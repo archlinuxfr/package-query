@@ -50,16 +50,16 @@ extern char *optarg;
 extern int optind;
 
 static alpm_list_t *targets=NULL;
-static int alpm_initialized=0;
 
 void cleanup (int ret)
 {
 	static int cleaned=0;
 	if (cleaned) return;
 	cleaned=1;
-	if (alpm_initialized && alpm_release()==-1)
-		fprintf (stderr, "%s\n", alpm_strerrorlast());
+	if (config.handle && alpm_release(config.handle) == -1)
+		fprintf(stderr, "error releasing alpm library\n");
 	FREELIST(targets);
+	FREE (config.arch);
 	FREE (config.aur_url);
 	FREE (config.configfile);
 	FREE (config.dbpath);
@@ -78,6 +78,7 @@ void handler (int signum)
 void init_config (const char *myname)
 {
 	config.myname = mbasename(myname);
+	config.handle = NULL;
 	config.aur = 0;
 	config.aur_foreign = 0;
 	config.aur_upgrades = 0;
@@ -97,6 +98,7 @@ void init_config (const char *myname)
 	config.quiet = 0;
 	config.query=ALL;
 	config.show_size = 0;
+	config.arch = NULL;
 	config.aur_url = strdup (AUR_BASE_URL);
 	config.configfile = strndup (CONFFILE, PATH_MAX);
 	strcpy (config.delimiter, " ");
@@ -170,7 +172,7 @@ void usage (unsigned short _error)
 }
 
 
-int deal_db (pmdb_t *db)
+int deal_db (alpm_db_t *db)
 {
 	switch (config.op)
 	{
@@ -457,15 +459,15 @@ int main (int argc, char **argv)
 	}
 	else if (!config.op && (given & N_DB)) /* Show info by default */
 		config.op = OP_INFO;
-	if ((alpm_initialized = init_alpm()) == 0) cleanup(1);
+	// init_db_sync initializes alpm after parsing [options]
 	if (!init_db_sync ()) cleanup(1);
 	if (config.is_file)
 	{
 		for(t = targets; t; t = alpm_list_next(t))
 		{
-			pmpkg_t *pkg=NULL;
+			alpm_pkg_t *pkg=NULL;
 			const char *filename = alpm_list_getdata(t);
-			if (alpm_pkg_load (filename, 0, &pkg)!=0 || pkg==NULL)
+			if (alpm_pkg_load (config.handle, filename, 0, ALPM_SIG_USE_DEFAULT, &pkg)!=0 || pkg==NULL)
 			{
 				fprintf(stderr, "unable to read %s.\n", filename);
 				continue;
@@ -483,19 +485,19 @@ int main (int argc, char **argv)
 			/*printf ("%d, aur %d, local %d, sync %d\n", i, config.aur, config.db_local, config.db_sync);*/
 			if (config.db_sync == i)
 			{
-				for(t = alpm_option_get_syncdbs(); t; t = alpm_list_next(t))
+				for(t = alpm_option_get_syncdbs(config.handle); t; t = alpm_list_next(t))
 					ret += deal_db (alpm_list_getdata (t));
 				if (!ret && config.op == OP_INFO_P)
 				{
 					config.op = OP_QUERY;
 					config.query = OP_Q_PROVIDES;
-					for(t = alpm_option_get_syncdbs(); t; t = alpm_list_next(t))
+					for(t = alpm_option_get_syncdbs(config.handle); t; t = alpm_list_next(t))
 						ret += deal_db (alpm_list_getdata (t));
 					config.op = OP_INFO_P;
 				}
 			}
 			else if (config.db_local == i)
-				ret += deal_db (alpm_option_get_localdb());
+				ret += deal_db (alpm_option_get_localdb(config.handle));
 			else if (config.aur == i)
 				switch (config.op)
 				{
@@ -519,7 +521,7 @@ int main (int argc, char **argv)
 			ret += aur_info (&targets);
 			if (config.db_local)
 				/* -AQm */
-				ret += search_pkg_by_name (alpm_option_get_localdb(), &targets);
+				ret += search_pkg_by_name (alpm_option_get_localdb(config.handle), &targets);
 		}
 		else if (config.filter == F_UPGRADES)
 		{
