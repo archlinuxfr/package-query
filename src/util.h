@@ -110,7 +110,7 @@ typedef struct _aq_config
 	unsigned short updates;
 	char *aur_url;
 	char *configfile;
-	char csep[SEP_LEN];
+	char delimiter[SEP_LEN];
 	char *dbpath;
 	char format_out[PATH_MAX];
 	char *rootdir;

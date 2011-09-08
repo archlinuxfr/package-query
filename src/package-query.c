@@ -99,7 +99,7 @@ void init_config (const char *myname)
 	config.show_size = 0;
 	config.aur_url = strdup (AUR_BASE_URL);
 	config.configfile = strndup (CONFFILE, PATH_MAX);
-	strcpy (config.csep, " ");
+	strcpy (config.delimiter, " ");
 	config.dbpath = NULL;
 	strcpy (config.format_out, "");
 	config.rootdir = NULL;
@@ -124,37 +124,37 @@ void usage (unsigned short _error)
 		fprintf(stderr, "More information: %s --help\n\n", config.myname);
 		exit (1);
 	}
-	fprintf(stderr, "\nwhere options include:");
-	fprintf(stderr, "\n\t-1 --just-one show the first answer only");
-	fprintf(stderr, "\n\t-A --aur query AUR database");
-	fprintf(stderr, "\n\t-b --dbpath <database path> : default %s", DBPATH);
-	fprintf(stderr, "\n\t-c --config <configuration file> : default %s", CONFFILE);
-	fprintf(stderr, "\n\t-x --escape escape \" on output");
-	fprintf(stderr, "\n\t-f --format <format>");
-	fprintf(stderr, "\n\t-i --info search by name");
-	fprintf(stderr, "\n\t-L --list-repo list configured repository");
-	fprintf(stderr, "\n\t-l --list list repository content");
-	fprintf(stderr, "\n\t-m --foreign search if foreign package exist in AUR (-AQm)");
-	fprintf(stderr, "\n\t-p --file query file package");
-	fprintf(stderr, "\n\t-q --quiet quiet");
-	fprintf(stderr, "\n\t-Q --query search in local database");
-	fprintf(stderr, "\n\t-r --root <root path> : default %s", ROOTDIR);
-	fprintf(stderr, "\n\t-s --search search");
-	fprintf(stderr, "\n\t-S --sync search in sync database");
-	fprintf(stderr, "\n\t--sort [n,w,1,2] sort search by name, votes, install date, size");
-	fprintf(stderr, "\n\t--query-type query type");
-	fprintf(stderr, "\n\t-u --upgrades list updates available");
-	fprintf(stderr, "\n\t-h --help show help");
-	fprintf(stderr, "\n\nquery type:");
-	fprintf(stderr, "\n\tdepends: depends on one of target");
-	fprintf(stderr, "\n\tconflicts: conflicts with one of target");
-	fprintf(stderr, "\n\tprovides: provides one of target");
-	fprintf(stderr, "\n\treplaces: replaces one of target");
-	fprintf(stderr, "\n\nformat:");
+	fprintf(stderr, "\nOptions:");
+	fprintf(stderr, "\n\t-1 --just-one        show the first answer only");
+	fprintf(stderr, "\n\t--delimiter          define list separator");
+	fprintf(stderr, "\n\t-f --format <format> ");
+	fprintf(stderr, "\n\t-h --help            show this help");
+	fprintf(stderr, "\n\t-q --quiet           quiet");
+	fprintf(stderr, "\n\t-x --escape          escape \" on output");
+	fprintf(stderr, "\n\t--sort [n,w,1,2]     sort by name, votes, install date, size");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "\n\t-A --aur             query AUR database");
+	fprintf(stderr, "\n\t-Q --query           search in local database");
+	fprintf(stderr, "\n\t-S --sync            search in sync databases");
+	fprintf(stderr, "\n\t-L --list-repo       list configured repository");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "\n\t-b --dbpath <path>   default: %s", DBPATH);
+	fprintf(stderr, "\n\t-c --config <file>   default: %s", CONFFILE);
+	fprintf(stderr, "\n\t-r --root <path>     default: %s", ROOTDIR);
+	fprintf(stderr, "\n\nModifiers:");
+	fprintf(stderr, "\n\t-i --info            search by name");
+	fprintf(stderr, "\n\t-l --list            list repository content");
+	fprintf(stderr, "\n\t-m --foreign         search for foreign packages");
+	fprintf(stderr, "\n\t-p --file            query a package file");
+	fprintf(stderr, "\n\t--qdepends           depends on one of target");
+	fprintf(stderr, "\n\t--qconflicts         conflicts with one of target");
+	fprintf(stderr, "\n\t--qprovides          provides one of target");
+	fprintf(stderr, "\n\t--qreplaces          replaces one of target");
+	fprintf(stderr, "\n\t-s --search          search");
+	fprintf(stderr, "\n\t-u --upgrades        list updates available");
+	fprintf(stderr, "\n\nFormats (man for more infos): ");
 	fprintf(stderr, "\n\ta: arch");
-	fprintf(stderr, "\n\tb: backups");
 	fprintf(stderr, "\n\td: description");
-	fprintf(stderr, "\n\tc: conflicts");
 	fprintf(stderr, "\n\ti: if AUR, show the ID");
 	fprintf(stderr, "\n\tl: local version");
 	fprintf(stderr, "\n\tn: name");
@@ -163,7 +163,8 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\ts: (sync) repo name");
 	fprintf(stderr, "\n\tt: target");
 	fprintf(stderr, "\n\tv: version, depends on search target");
-	fprintf(stderr, "\n\tw: votes from AUR");
+	fprintf(stderr, "\n\tV: (sync) version");
+	fprintf(stderr, "\n\tw: votes");
 	fprintf(stderr, "\n");
 	exit (0);
 }
@@ -230,6 +231,7 @@ int main (int argc, char **argv)
 		{"list-repo",  required_argument, 0, 'L'},
 		{"query-type", required_argument, 0, 1000},
 		{"csep",       required_argument, 0, 1001},
+		{"delimiter",  required_argument, 0, 1001},
 		{"sort",       required_argument, 0, 1002},
 		{"nocolor",    no_argument,       0, 1003},
 		{"number",     no_argument,       0, 1004},
@@ -363,9 +365,9 @@ int main (int argc, char **argv)
 				SETQUERY (OP_Q_REPLACES); break;
 			case 1013: /* --qrequires */
 				SETQUERY (OP_Q_REQUIRES); break;
-			case 1001: /* --csep */
-				strncpy (config.csep, optarg, SEP_LEN);
-				format_str (config.csep);
+			case 1001: /* --delimiter */
+				strncpy (config.delimiter, optarg, SEP_LEN);
+				format_str (config.delimiter);
 				break;
 			case 1002: /* --sort */
 				config.sort = optarg[0];

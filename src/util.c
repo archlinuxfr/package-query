@@ -399,7 +399,7 @@ char *concat_str_list (alpm_list_t *l)
 		for(i = l; i; i = alpm_list_next(i)) 
 		{
 			/* data's len + space for separator */
-			len += strlen (alpm_list_getdata (i)) + strlen (config.csep);
+			len += strlen (alpm_list_getdata (i)) + strlen (config.delimiter);
 		}
 		if (len)
 		{
@@ -408,7 +408,7 @@ char *concat_str_list (alpm_list_t *l)
 			strcpy (ret, "");
 			for(i = l; i; i = alpm_list_next(i)) 
 			{
-				if (j++>0) strcat (ret, config.csep);
+				if (j++>0) strcat (ret, config.delimiter);
 				strcat (ret, alpm_list_getdata (i));
 			}
 		}
