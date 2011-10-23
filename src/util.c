@@ -420,6 +420,17 @@ char *concat_str_list (alpm_list_t *l)
 	return ret;
 }
 
+char *concat_dep_list (alpm_list_t *deps)
+{
+	alpm_list_t *i, *deps_str = NULL;
+	char *ret;
+	for (i=deps; i; i = alpm_list_next (i))
+		deps_str = alpm_list_add (deps_str, alpm_dep_compute_string (alpm_list_getdata (i)));
+	ret = concat_str_list (deps_str);
+	FREELIST (deps_str);
+	return ret;
+}
+
 char *concat_file_list (alpm_filelist_t *f)
 {
 	char *ret;

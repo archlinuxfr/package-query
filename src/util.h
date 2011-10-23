@@ -189,6 +189,7 @@ char *strtrim(char *str);
 char *strreplace(const char *str, const char *needle, const char *replace);
 
 char *concat_str_list (alpm_list_t *l);
+char *concat_dep_list (alpm_list_t *deps);
 char *concat_file_list (alpm_filelist_t *f);
 
 /* integer/long to string */

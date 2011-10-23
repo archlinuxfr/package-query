@@ -257,19 +257,17 @@ int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets, int query_type)
 	 */
 	target_arg_t *ta=NULL;
 
-	g = NULL;
+	g = (retcharfn) alpm_dep_compute_string;
+	free_fn_ret = 2;
 	switch (query_type)
 	{
-		case OP_Q_DEPENDS:
-			f = alpm_pkg_get_depends;
-			g = (retcharfn) alpm_dep_compute_string;
-			free_fn_ret = 2;
-			break;
+		case OP_Q_DEPENDS:   f = alpm_pkg_get_depends; break;
 		case OP_Q_CONFLICTS: f = alpm_pkg_get_conflicts; break;
-		case OP_Q_PROVIDES: f = alpm_pkg_get_provides; break;
-		case OP_Q_REPLACES: f = alpm_pkg_get_replaces; break;
+		case OP_Q_PROVIDES:  f = alpm_pkg_get_provides; break;
+		case OP_Q_REPLACES:  f = alpm_pkg_get_replaces; break;
 		case OP_Q_REQUIRES:
 			f = alpm_pkg_compute_requiredby;
+			g = NULL;
 			free_fn_ret = 3;
 			break;
 		default: return 0;
@@ -541,19 +539,13 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			break;
 		case 'c':
 		case 'C':
-			info = concat_str_list (alpm_pkg_get_conflicts (pkg)); 
+			info = concat_dep_list (alpm_pkg_get_conflicts (pkg)); 
 			free_info = 1;
 			break;
 		case 'd': info = (char *) alpm_pkg_get_desc (pkg); break;
 		case 'D':
-			{
-				alpm_list_t *i, *deps=NULL;
-				for (i=alpm_pkg_get_depends (pkg); i; i = alpm_list_next (i))
-					deps = alpm_list_add (deps, alpm_dep_compute_string (alpm_list_getdata (i)));
-				info = concat_str_list (deps);
-				FREELIST (deps);
-				free_info = 1;
-			}
+			info = concat_dep_list (alpm_pkg_get_depends (pkg));
+			free_info = 1;
 			break;
 		case 'f': info = (char *) alpm_pkg_get_filename (pkg); break;
 		case 'I':
@@ -579,11 +571,11 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			free_info = 1;
 			break;
 		case 'P':
-			info = concat_str_list (alpm_pkg_get_provides (pkg));
+			info = concat_dep_list (alpm_pkg_get_provides (pkg));
 			free_info = 1;
 			break;
 		case 'R':
-			info = concat_str_list (alpm_pkg_get_replaces (pkg));
+			info = concat_dep_list (alpm_pkg_get_replaces (pkg));
 			free_info = 1;
 			break;
 		case 's': 
