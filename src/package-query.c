@@ -82,7 +82,7 @@ void init_config (const char *myname)
 	config.aur = 0;
 	config.aur_foreign = 0;
 	config.aur_upgrades = 0;
-	config.colors = 1; 
+	config.colors = isatty(1);
 	config.custom_out = 0; 
 	config.db_local = 0;
 	config.db_sync = 0;
@@ -246,6 +246,7 @@ int main (int argc, char **argv)
 		{"qprovides",  no_argument,       0, 1011},
 		{"qreplaces",  no_argument,       0, 1012},
 		{"qrequires",  no_argument,       0, 1013},
+		{"color",      no_argument,       0, 1014},
 		{"version",    no_argument,       0, 'v'},
 
 		{0, 0, 0, 0}
@@ -283,7 +284,6 @@ int main (int argc, char **argv)
 				break;
 			case 'f':
 				config.custom_out = 1;
-				config.colors=0;
 				strncpy (config.format_out, optarg, PATH_MAX);
 				format_str (config.format_out);
 				break;
@@ -394,6 +394,9 @@ int main (int argc, char **argv)
 			case 1008: /* --insecure */
 				config.insecure = 1;
 				break;
+			case 1014: /* --color */
+				config.colors=1;
+				break;
 			case 'u':
 				config.filter |= F_UPGRADES;
 				break;
@@ -416,16 +419,10 @@ int main (int argc, char **argv)
 		}
 		cleanup (0);
 	}
-	if (config.colors)
-	{
-		if (isatty (1))
-			color_init();
-		else 
-			config.colors = 0;
-	}
 	if (!config.custom_out)
 	{
-
+		if (config.colors)
+			color_init();
 #if defined(HAVE_GETTEXT) && defined(ENABLE_NLS)
 		/* TODO: specific package-query locale ? */
 		setlocale (LC_ALL, "");
