@@ -509,25 +509,25 @@ int main (int argc, char **argv)
 		ret += alpm_search_local (config.filter, NULL, NULL);
 	else if (config.aur && !(given & N_TARGET))
 	{
-		if (config.filter == F_FOREIGN)
+		if (config.filter & F_FOREIGN)
 		{
 			/* -Am */
 			config.aur_foreign = 1;
 			config.just_one = 1;
-			alpm_search_local (F_FOREIGN, "%n", &targets);
+			alpm_search_local (config.filter, "%n", &targets);
 			ret += aur_info (&targets);
 			if (config.db_local)
 				/* -AQm */
 				ret += search_pkg_by_name (alpm_option_get_localdb(config.handle), &targets);
 		}
-		else if (config.filter == F_UPGRADES)
+		else if (config.filter & F_UPGRADES)
 		{
 			/* -Au */
 			config.aur_upgrades = 1;
 			if (config.db_local)
 				/* -AQu */
 				ret += alpm_search_local (config.filter, NULL, NULL);
-			alpm_search_local (F_FOREIGN, "%n>%v", &targets);
+			alpm_search_local (F_FOREIGN | (config.filter & ~F_UPGRADES), "%n>%v", &targets);
 			ret += aur_info (&targets);
 		}
 	}
