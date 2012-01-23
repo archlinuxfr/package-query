@@ -534,7 +534,7 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 		case 'a': info = (char *) alpm_pkg_get_arch (pkg); break;
 		case 'b':
 		case 'B':
-			info = concat_str_list (alpm_pkg_get_backup (pkg)); 
+			info = concat_backup_list (alpm_pkg_get_backup (pkg));
 			free_info = 1;
 			break;
 		case 'c':

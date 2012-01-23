@@ -468,6 +468,24 @@ char *concat_file_list (alpm_filelist_t *f)
 }
 
 
+char *concat_backup_list (alpm_list_t *backups)
+{
+	alpm_list_t *i, *backups_str = NULL;
+	char *ret;
+	char *b_str;
+	alpm_backup_t *backup;
+	for (i=backups; i; i = alpm_list_next (i))
+	{
+		backup = alpm_list_getdata (i);
+		asprintf (&b_str, "%s\t%s", backup->name, backup->hash);
+		backups_str = alpm_list_add (backups_str, b_str);
+	}
+	ret = concat_str_list (backups_str);
+	FREELIST (backups_str);
+	return ret;
+}
+
+
 void format_str (char *s)
 {
 	char *c=s; int mod;
