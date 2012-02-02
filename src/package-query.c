@@ -414,7 +414,7 @@ int main (int argc, char **argv)
 		if (dbs)
 		{
 			for(t = dbs; t; t = alpm_list_next(t))
-				printf ("%s\n", (char *)alpm_list_getdata(t));
+				printf ("%s\n", (char *)t->data);
 			FREELIST (dbs);
 		}
 		cleanup (0);
@@ -463,7 +463,7 @@ int main (int argc, char **argv)
 		for(t = targets; t; t = alpm_list_next(t))
 		{
 			alpm_pkg_t *pkg=NULL;
-			const char *filename = alpm_list_getdata(t);
+			const char *filename = t->data;
 			if (alpm_pkg_load (config.handle, filename, 0, ALPM_SIG_USE_DEFAULT, &pkg)!=0 || pkg==NULL)
 			{
 				fprintf(stderr, "unable to read %s.\n", filename);
@@ -483,13 +483,13 @@ int main (int argc, char **argv)
 			if (config.db_sync == i)
 			{
 				for(t = alpm_option_get_syncdbs(config.handle); t; t = alpm_list_next(t))
-					ret += deal_db (alpm_list_getdata (t));
+					ret += deal_db (t->data);
 				if (!ret && config.op == OP_INFO_P)
 				{
 					config.op = OP_QUERY;
 					config.query = OP_Q_PROVIDES;
 					for(t = alpm_option_get_syncdbs(config.handle); t; t = alpm_list_next(t))
-						ret += deal_db (alpm_list_getdata (t));
+						ret += deal_db (t->data);
 					config.op = OP_INFO_P;
 				}
 			}

@@ -277,17 +277,17 @@ int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets, int query_type)
 
 	for(i = alpm_db_get_pkgcache(db); i && *targets; i = alpm_list_next(i))
 	{
-		alpm_pkg_t *pkg = alpm_list_getdata(i);
+		alpm_pkg_t *pkg = i->data;
 		alpm_list_t *pkg_info_list = f(pkg);
 		for(j = pkg_info_list; j && *targets; j = alpm_list_next(j))
 		{
 			char *str;
-			str = (char *) ((g) ? g(alpm_list_getdata(j)) : alpm_list_getdata(j));
+			str = (char *) ((g) ? g(j->data) : j->data);
 			target_t *t1 = target_parse (str);
 			if (free_fn_ret & 2) FREE (str);
 			for(t = *targets; t; t = alpm_list_next(t))
 			{
-				target_t *t2 = target_parse (alpm_list_getdata(t));
+				target_t *t2 = target_parse (t->data);
 				if (t2->db && strcmp (t2->db, alpm_db_get_name (db))!=0)
 				{
 					target_free (t2);
@@ -296,8 +296,8 @@ int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets, int query_type)
 				if (target_compatible (t1, t2) && filter (pkg, config.filter))
 				{
 					ret++;
-					if (target_arg_add (ta, alpm_list_getdata(t), pkg))
-						print_package (alpm_list_getdata(t), pkg, alpm_pkg_get_str);
+					if (target_arg_add (ta, t->data, pkg))
+						print_package (t->data, pkg, alpm_pkg_get_str);
 				}
 				target_free (t2);
 			}
@@ -319,7 +319,7 @@ int search_pkg_by_name (alpm_db_t *db, alpm_list_t **targets)
 	target_arg_t *ta = target_arg_init (NULL, NULL, NULL);
 	for(t = *targets; t; t = alpm_list_next(t))
 	{
-		const char *target=alpm_list_getdata(t);
+		const char *target=t->data;
 		target_t *t1 = target_parse (target);
 		if (t1->db && strcmp (t1->db, db_name)!=0)
 		{
@@ -350,7 +350,7 @@ int list_grp (alpm_db_t *db, alpm_list_t *targets)
 	{
 		for (t=targets; t; t = alpm_list_next (t))
 		{
-			const char *grp_name = alpm_list_getdata (t);
+			const char *grp_name = t->data;
 			grp = alpm_db_readgroup (db, grp_name);
 			if (grp) 
 			{
@@ -358,7 +358,7 @@ int list_grp (alpm_db_t *db, alpm_list_t *targets)
 				ret++;
 				for (i=grp->packages; i; i=alpm_list_next (i))
 					print_package (grp->name,
-					    alpm_list_getdata(i), alpm_pkg_get_str);
+					    i->data, alpm_pkg_get_str);
 			}
 		}
 	}
@@ -367,7 +367,7 @@ int list_grp (alpm_db_t *db, alpm_list_t *targets)
 		for(t = alpm_db_get_groupcache(db); t; t = alpm_list_next(t))
 		{
 			ret++;
-			print_package ("", alpm_list_getdata(t), alpm_grp_get_str);
+			print_package ("", t->data, alpm_grp_get_str);
 		}
 	}
 	return ret;
@@ -380,7 +380,7 @@ int search_pkg (alpm_db_t *db, alpm_list_t *targets)
 	pkgs = alpm_db_search(db, targets);
 	for(t = pkgs; t; t = alpm_list_next(t))
 	{
-		alpm_pkg_t *info = alpm_list_getdata(t);
+		alpm_pkg_t *info = t->data;
 		if (!filter (info, config.filter)) continue;
 		ret++;
 		print_or_add_result ((void *) info, R_ALPM_PKG);
@@ -399,7 +399,7 @@ int alpm_search_local (unsigned short _filter, const char *format,
 	for(i = alpm_db_get_pkgcache(alpm_option_get_localdb(config.handle));
 	    i; i = alpm_list_next(i))
 	{
-		pkg = alpm_list_getdata (i);
+		pkg = i->data;
 		if (filter (pkg, _filter))
 		{
 			if (res)
@@ -425,7 +425,7 @@ int list_db (alpm_db_t *db, alpm_list_t *targets)
 		return 0;
 	for(i = alpm_db_get_pkgcache(db); i; i = alpm_list_next(i))
 	{
-		alpm_pkg_t *info = alpm_list_getdata(i);
+		alpm_pkg_t *info = i->data;
 		print_or_add_result ((void *) info, R_ALPM_PKG);
 		ret++;
 	}
@@ -438,7 +438,7 @@ alpm_pkg_t *get_sync_pkg_by_name (const char *pkgname)
 	alpm_list_t *i;
 	for (i=alpm_option_get_syncdbs(config.handle); i; i = alpm_list_next (i))
 	{
-		sync_pkg = alpm_db_get_pkg (alpm_list_getdata(i), pkgname);
+		sync_pkg = alpm_db_get_pkg (i->data, pkgname);
 		if (sync_pkg) break;
 	}
 	return sync_pkg;
@@ -587,7 +587,7 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 				alpm_list_t *servers = alpm_db_get_servers(alpm_pkg_get_db(pkg));
 				if(servers)
 				{
-					const char *dburl = alpm_list_getdata(servers);
+					const char *dburl = servers->data;
 					if (!dburl) return NULL;
 					const char *pkgfilename = alpm_pkg_get_filename (pkg);
 					CALLOC (info, strlen (dburl) + strlen(pkgfilename) + 2, sizeof (char));

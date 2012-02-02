@@ -168,7 +168,7 @@ void show_results ()
 			results = alpm_list_msort (results, alpm_list_count (results), fn_cmp);
 		for(i = results; i; i = alpm_list_next(i))
 		{
-			results_t *r = alpm_list_getdata(i);
+			results_t *r = i->data;
 			if (r->type == R_ALPM_PKG)
 				print_package ("", r->ele, alpm_pkg_get_str);
 			else if (r->type == R_AUR_PKG)
@@ -399,7 +399,7 @@ char *concat_str_list (alpm_list_t *l)
 		for(i = l; i; i = alpm_list_next(i)) 
 		{
 			/* data's len + space for separator */
-			len += strlen (alpm_list_getdata (i)) + strlen (config.delimiter);
+			len += strlen (i->data) + strlen (config.delimiter);
 		}
 		if (len)
 		{
@@ -409,7 +409,7 @@ char *concat_str_list (alpm_list_t *l)
 			for(i = l; i; i = alpm_list_next(i)) 
 			{
 				if (j++>0) strcat (ret, config.delimiter);
-				strcat (ret, alpm_list_getdata (i));
+				strcat (ret, i->data);
 			}
 		}
 		else
@@ -425,7 +425,7 @@ char *concat_dep_list (alpm_list_t *deps)
 	alpm_list_t *i, *deps_str = NULL;
 	char *ret;
 	for (i=deps; i; i = alpm_list_next (i))
-		deps_str = alpm_list_add (deps_str, alpm_dep_compute_string (alpm_list_getdata (i)));
+		deps_str = alpm_list_add (deps_str, alpm_dep_compute_string (i->data));
 	ret = concat_str_list (deps_str);
 	FREELIST (deps_str);
 	return ret;
@@ -476,7 +476,7 @@ char *concat_backup_list (alpm_list_t *backups)
 	alpm_backup_t *backup;
 	for (i=backups; i; i = alpm_list_next (i))
 	{
-		backup = alpm_list_getdata (i);
+		backup = i->data;
 		asprintf (&b_str, "%s\t%s", backup->name, backup->hash);
 		backups_str = alpm_list_add (backups_str, b_str);
 	}
@@ -910,7 +910,7 @@ alpm_list_t *target_arg_clear (target_arg_t *t, alpm_list_t *targets)
 	{
 		for (i=t->args; i; i=alpm_list_next (i))
 		{
-			targets = alpm_list_remove_str (targets, alpm_list_getdata (i), &data);
+			targets = alpm_list_remove_str (targets, i->data, &data);
 			if (data) free (data);
 		}
 	}

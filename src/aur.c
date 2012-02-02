@@ -452,7 +452,7 @@ static int aur_request (alpm_list_t **targets, int type)
 	{
 		for(t = *targets; t; t = alpm_list_next(t))
 		{
-			one_target = target_parse (alpm_list_getdata(t));
+			one_target = target_parse (t->data);
 			if (one_target->db && strcmp (one_target->db, AUR_REPO)!=0)
 				target_free (one_target);
 			else
@@ -483,7 +483,7 @@ static int aur_request (alpm_list_t **targets, int type)
 		url = string_cat (url, config.aur_url);
 		url = string_cat (url, AUR_RPC);
 		url = string_cat (url, AUR_RPC_SEARCH);
-		encoded_arg = curl_easy_escape (curl, alpm_list_getdata (*targets), 0);
+		encoded_arg = curl_easy_escape (curl, *targets->data, 0);
 		if (encoded_arg != NULL)
 		{
 			url = string_cat (url, encoded_arg);
@@ -494,16 +494,16 @@ static int aur_request (alpm_list_t **targets, int type)
 				int match=1;
 				for (t=alpm_list_next (*targets); t; t=alpm_list_next (t))
 				{
-					if (strcasestr (aur_pkg_get_name (alpm_list_getdata (p)),
-					                alpm_list_getdata (t))==NULL &&
-					    strcasestr (aur_pkg_get_desc (alpm_list_getdata (p)),
-						            alpm_list_getdata (t))==NULL)
+					if (strcasestr (aur_pkg_get_name (p->data),
+					                t->data)==NULL &&
+					    strcasestr (aur_pkg_get_desc (p->data),
+						            t->data)==NULL)
 						match=0;
 				}
 				if (match)
 				{
 					aur_pkgs_found++;
-					print_or_add_result (alpm_list_getdata (p), R_AUR_PKG);
+					print_or_add_result (p->data, R_AUR_PKG);
 				}
 			}
 			alpm_list_free_inner (pkgs, (alpm_list_fn_free) aur_pkg_free);
@@ -526,7 +526,7 @@ static int aur_request (alpm_list_t **targets, int type)
 			url = string_cat (url, AUR_RPC_INFO);
 			for (; t && args_left--; t=alpm_list_next (t))
 			{
-				one_target = alpm_list_getdata (t);
+				one_target = t->data;
 				encoded_arg = curl_easy_escape (curl, one_target->name, 0);
 				if (encoded_arg != NULL)
 				{
@@ -541,7 +541,7 @@ static int aur_request (alpm_list_t **targets, int type)
 			pkgs = aur_fetch (curl, string_cstr (url));
 			for (p=pkgs; p; p=alpm_list_next (p))
 			{
-				aurpkg_t *pkg = alpm_list_getdata (p);
+				aurpkg_t *pkg = p->data;
 				const char *pkgname = aur_pkg_get_name (pkg);
 				const char *pkgver = aur_pkg_get_version (pkg);
 				one_target = alpm_list_find (real_targets,
@@ -554,7 +554,7 @@ static int aur_request (alpm_list_t **targets, int type)
 					 */
 					if (target_arg_add (ta, one_target->orig, (void *) pkgname))
 						print_package (one_target->orig,
-						    alpm_list_getdata (p), aur_get_str);
+						    p->data, aur_get_str);
 				}
 			}
 			alpm_list_free_inner (pkgs, (alpm_list_fn_free) aur_pkg_free);
