@@ -483,7 +483,7 @@ static int aur_request (alpm_list_t **targets, int type)
 		url = string_cat (url, config.aur_url);
 		url = string_cat (url, AUR_RPC);
 		url = string_cat (url, AUR_RPC_SEARCH);
-		encoded_arg = curl_easy_escape (curl, *targets->data, 0);
+		encoded_arg = curl_easy_escape (curl, (*targets)->data, 0);
 		if (encoded_arg != NULL)
 		{
 			url = string_cat (url, encoded_arg);
