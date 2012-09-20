@@ -445,7 +445,7 @@ char *concat_file_list (alpm_filelist_t *f)
 		{
 			alpm_file_t *file = f->files + i;
 			/* data's len + space for separator */
-			len += strlen (file->name + strlen (config.delimiter));
+			len += strlen (file->name) + strlen (config.delimiter);
 		}
 		if (len)
 		{
