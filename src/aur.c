@@ -297,7 +297,38 @@ static int json_key (void * ctx, const unsigned char * stringVal,
     return 1;
 }
 
-static int json_value (void * ctx, const unsigned char * stringVal,
+static int json_integer (void * ctx, long long val)
+{
+	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
+	// package info in level 2
+	if (strcmp (pkg_json->current_key, AUR_ID)==0)
+	{
+		pkg_json->pkg->id = (int) val;
+	}
+	else if (strcmp (pkg_json->current_key, AUR_CAT)==0)
+	{
+		pkg_json->pkg->category = (int) val;
+	}
+	else if (strcmp (pkg_json->current_key, AUR_VOTE)==0)
+	{
+		pkg_json->pkg->votes = (int) val;
+	}
+	else if (strcmp (pkg_json->current_key, AUR_OUT)==0)
+	{
+		pkg_json->pkg->outofdate = (int) val;
+	}
+	else if (strcmp (pkg_json->current_key, AUR_FIRST)==0)
+	{
+		pkg_json->pkg->firstsubmit = (time_t) val;
+	}
+	else if (strcmp (pkg_json->current_key, AUR_LAST)==0)
+	{
+		pkg_json->pkg->lastmod = (time_t) val;
+	}
+    return 1;
+}
+
+static int json_string (void * ctx, const unsigned char * stringVal,
                            size_t stringLen)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
@@ -373,10 +404,10 @@ static int json_value (void * ctx, const unsigned char * stringVal,
 static yajl_callbacks callbacks = {
     NULL,
     NULL,
+    json_integer,
     NULL,
     NULL,
-    NULL,
-    json_value,
+    json_string,
     json_start_map,
     json_key,
     json_end_map,
