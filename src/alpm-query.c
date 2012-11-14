@@ -117,7 +117,7 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 				}
 				if (reg)
 				{
-					if ((db = alpm_db_register_sync(config.handle, ptr, ALPM_SIG_USE_DEFAULT)) == NULL)
+					if ((db = alpm_register_syncdb(config.handle, ptr, ALPM_SIG_USE_DEFAULT)) == NULL)
 					{
 						fprintf(stderr, 
 							"could not register '%s' database (%s)\n", ptr,
@@ -221,7 +221,7 @@ static int filter (alpm_pkg_t *pkg, unsigned int _filter)
 		}
 	}
 	if (_filter & F_UPGRADES)
-		if (!alpm_sync_newversion (pkg, alpm_option_get_syncdbs(config.handle)))
+		if (!alpm_sync_newversion (pkg, alpm_get_syncdbs(config.handle)))
 			return 0;
 	if (_filter & F_GROUP)
 		if (!alpm_pkg_get_groups (pkg))
@@ -351,7 +351,7 @@ int list_grp (alpm_db_t *db, alpm_list_t *targets)
 		for (t=targets; t; t = alpm_list_next (t))
 		{
 			const char *grp_name = t->data;
-			grp = alpm_db_readgroup (db, grp_name);
+			grp = alpm_db_get_group (db, grp_name);
 			if (grp) 
 			{
 				alpm_list_t *i;
@@ -396,7 +396,7 @@ int alpm_search_local (unsigned short _filter, const char *format,
 	alpm_pkg_t *pkg;
 	int ret=0;
 
-	for(i = alpm_db_get_pkgcache(alpm_option_get_localdb(config.handle));
+	for(i = alpm_db_get_pkgcache(alpm_get_localdb(config.handle));
 	    i; i = alpm_list_next(i))
 	{
 		pkg = i->data;
@@ -436,7 +436,7 @@ alpm_pkg_t *get_sync_pkg_by_name (const char *pkgname)
 {
 	alpm_pkg_t *sync_pkg = NULL;
 	alpm_list_t *i;
-	for (i=alpm_option_get_syncdbs(config.handle); i; i = alpm_list_next (i))
+	for (i=alpm_get_syncdbs(config.handle); i; i = alpm_list_next (i))
 	{
 		sync_pkg = alpm_db_get_pkg (i->data, pkgname);
 		if (sync_pkg) break;
@@ -619,7 +619,7 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 	}
 	info = NULL;
 	if (!pkg_name) return NULL;
-	pkg = alpm_db_get_pkg(alpm_option_get_localdb(config.handle), pkg_name);
+	pkg = alpm_db_get_pkg(alpm_get_localdb(config.handle), pkg_name);
 	if (!pkg) return NULL;
 	switch (c)
 	{

@@ -82,7 +82,7 @@ static time_t results_installdate (const results_t *r)
 	time_t idate=0;
 	if (r->type==R_AUR_PKG) return 0;
 	r_name = results_name (r);
-	pkg = alpm_db_get_pkg(alpm_option_get_localdb(config.handle), r_name);
+	pkg = alpm_db_get_pkg(alpm_get_localdb(config.handle), r_name);
 	if (pkg) idate = alpm_pkg_get_installdate(pkg);
 	return idate;
 }

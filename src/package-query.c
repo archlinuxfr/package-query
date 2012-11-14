@@ -482,19 +482,19 @@ int main (int argc, char **argv)
 			/*printf ("%d, aur %d, local %d, sync %d\n", i, config.aur, config.db_local, config.db_sync);*/
 			if (config.db_sync == i)
 			{
-				for(t = alpm_option_get_syncdbs(config.handle); t; t = alpm_list_next(t))
+				for(t = alpm_get_syncdbs(config.handle); t; t = alpm_list_next(t))
 					ret += deal_db (t->data);
 				if (!ret && config.op == OP_INFO_P)
 				{
 					config.op = OP_QUERY;
 					config.query = OP_Q_PROVIDES;
-					for(t = alpm_option_get_syncdbs(config.handle); t; t = alpm_list_next(t))
+					for(t = alpm_get_syncdbs(config.handle); t; t = alpm_list_next(t))
 						ret += deal_db (t->data);
 					config.op = OP_INFO_P;
 				}
 			}
 			else if (config.db_local == i)
-				ret += deal_db (alpm_option_get_localdb(config.handle));
+				ret += deal_db (alpm_get_localdb(config.handle));
 			else if (config.aur == i)
 				switch (config.op)
 				{
@@ -518,7 +518,7 @@ int main (int argc, char **argv)
 			ret += aur_info (&targets);
 			if (config.db_local)
 				/* -AQm */
-				ret += search_pkg_by_name (alpm_option_get_localdb(config.handle), &targets);
+				ret += search_pkg_by_name (alpm_get_localdb(config.handle), &targets);
 		}
 		else if (config.filter & F_UPGRADES)
 		{
