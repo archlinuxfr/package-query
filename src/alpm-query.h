@@ -31,6 +31,7 @@
 #define F_UNREQUIRED 8
 #define F_UPGRADES 16
 #define F_GROUP 32
+#define F_NATIVE 64
 
 
 /*

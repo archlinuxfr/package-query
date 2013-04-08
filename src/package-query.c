@@ -147,6 +147,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-i --info            search by name");
 	fprintf(stderr, "\n\t-l --list            list repository content");
 	fprintf(stderr, "\n\t-m --foreign         search for foreign packages");
+	fprintf(stderr, "\n\t-n --native          search for native packages");
 	fprintf(stderr, "\n\t-p --file            query a package file");
 	fprintf(stderr, "\n\t--qdepends           depends on one of target");
 	fprintf(stderr, "\n\t--qconflicts         conflicts with one of target");
@@ -219,6 +220,7 @@ int main (int argc, char **argv)
 		{"info",       no_argument,       0, 'i'},
 		{"list",       no_argument,       0, 'l'},
 		{"foreign",    no_argument,       0, 'm'},
+		{"native",     no_argument,       0, 'n'},
 		{"file",       no_argument,       0, 'p'},
 		{"quiet",      no_argument,       0, 'q'},
 		{"root",       required_argument, 0, 'r'},
@@ -253,7 +255,7 @@ int main (int argc, char **argv)
 	};
 
 	
-	while ((opt = getopt_long (argc, argv, "1Ac:b:def:ghiLlmpQqr:Sstuvx", opts, &opt_index)) != -1) 
+	while ((opt = getopt_long (argc, argv, "1Ac:b:def:ghiLlmnpQqr:Sstuvx", opts, &opt_index)) != -1)
 	{
 		switch (opt) 
 		{
@@ -313,6 +315,9 @@ int main (int argc, char **argv)
 				break;
 			case 'm':
 				config.filter |= F_FOREIGN;
+				break;
+			case 'n':
+				config.filter |= F_NATIVE;
 				break;
 			case 'p':
 				config.is_file = 1;

@@ -207,6 +207,8 @@ static int filter (alpm_pkg_t *pkg, unsigned int _filter)
 {
 	if ((_filter & F_FOREIGN) && get_sync_pkg (pkg) != NULL)
 		return 0;
+	if ((_filter & F_NATIVE) && get_sync_pkg (pkg) == NULL)
+		return 0;
 	if ((_filter & F_EXPLICIT) && alpm_pkg_get_reason(pkg) != ALPM_PKG_REASON_EXPLICIT)
 		return 0;
 	if ((_filter & F_DEPS) && alpm_pkg_get_reason(pkg) != ALPM_PKG_REASON_DEPEND)
