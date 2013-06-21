@@ -179,11 +179,6 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 					}
 				}
 			}
-			else if (in_option)
-			{
-				if (strcmp (line, "ShowSize") == 0)
-					config.show_size=1;
-			}
 		}
 	}
 	fclose (conf);
