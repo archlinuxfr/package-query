@@ -153,7 +153,9 @@ void print_or_add_result (void *pkg, unsigned short type)
 		
 void show_results ()
 {
+	alpm_list_t *i_first;
 	alpm_list_t *i;
+	alpm_list_nav fn_nav=NULL;;
 	alpm_list_fn_cmp fn_cmp=NULL;
 	if (results!=NULL)
 	{
@@ -166,7 +168,14 @@ void show_results ()
 		}
 		if (fn_cmp)
 			results = alpm_list_msort (results, alpm_list_count (results), fn_cmp);
-		for(i = results; i; i = alpm_list_next(i))
+		if (config.rsort) {
+			fn_nav = (alpm_list_nav) alpm_list_previous;
+			i_first = alpm_list_last (results);
+		} else {
+			fn_nav = (alpm_list_nav) alpm_list_next;
+			i_first = results;
+		}
+		for(i = i_first; i; i = fn_nav(i))
 		{
 			results_t *r = i->data;
 			if (r->type == R_ALPM_PKG)
