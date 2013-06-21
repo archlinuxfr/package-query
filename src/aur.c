@@ -274,7 +274,7 @@ static int json_end_map (void *ctx)
 	{
 		switch (config.sort)
 		{
-			case 'w':
+			case S_VOTE:
 				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs, 
 			        pkg_json->pkg, (alpm_list_fn_cmp) aur_pkg_votes_cmp);
 				break;

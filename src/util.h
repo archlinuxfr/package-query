@@ -82,6 +82,13 @@
 /* Results FD */
 #define FD_RES 3
 
+/* Sort options */
+#define S_NAME 'n'
+#define S_VOTE 'w'
+#define S_IDATE '1'
+#define S_ISIZE '2'
+
+
 /*
  * General config
  */

@@ -161,10 +161,10 @@ void show_results ()
 	{
 		switch (config.sort)
 		{
-			case 'n': fn_cmp = (alpm_list_fn_cmp) results_cmp; break;
-			case 'w': fn_cmp = (alpm_list_fn_cmp) results_votes_cmp; break;
-			case '1': fn_cmp = (alpm_list_fn_cmp) results_installdate_cmp; break;
-			case '2': fn_cmp = (alpm_list_fn_cmp) results_isize_cmp; break;
+			case S_NAME: fn_cmp = (alpm_list_fn_cmp) results_cmp; break;
+			case S_VOTE: fn_cmp = (alpm_list_fn_cmp) results_votes_cmp; break;
+			case S_IDATE: fn_cmp = (alpm_list_fn_cmp) results_installdate_cmp; break;
+			case S_ISIZE: fn_cmp = (alpm_list_fn_cmp) results_isize_cmp; break;
 		}
 		if (fn_cmp)
 			results = alpm_list_msort (results, alpm_list_count (results), fn_cmp);

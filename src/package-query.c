@@ -134,7 +134,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-h --help            show this help");
 	fprintf(stderr, "\n\t-q --quiet           quiet");
 	fprintf(stderr, "\n\t-x --escape          escape \" on output");
-	fprintf(stderr, "\n\t--sort,--rsort [n,w,1,2]     (reverse)sort by name, votes, install date, size");
+	fprintf(stderr, "\n\t--sort,--rsort [name,date,vote,size]");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "\n\t-A --aur             query AUR database");
 	fprintf(stderr, "\n\t-Q --query           search in local database");
@@ -381,7 +381,17 @@ int main (int argc, char **argv)
 			case 1015: /* --rsort */
 				config.rsort = 1;
 			case 1002: /* --sort */
-				config.sort = optarg[0];
+				if (strlen (optarg) > 1) {
+					if (strcmp (optarg, "name")==0)
+						config.sort = S_NAME;
+					else if (strcmp (optarg, "vote")==0)
+						config.sort = S_VOTE;
+					else if (strcmp (optarg, "date")==0)
+						config.sort = S_IDATE;
+					else if (strcmp (optarg, "size")==0)
+						config.sort = S_ISIZE;
+				} else
+					config.sort = optarg[0];
 				break;
 			case 1003: /* --nocolor */
 				config.colors=0;
