@@ -654,6 +654,7 @@ const char *aur_get_str (void *p, unsigned char c)
 			strcat (info, aur_pkg_get_urlpath (pkg));
 			free_info = 1;
 			break;
+		case 'U': info = (char *) aur_pkg_get_url (pkg); break;
 		case 'S':
 			info = ttostr (aur_pkg_get_firstsubmit (pkg));
 			free_info=1;
