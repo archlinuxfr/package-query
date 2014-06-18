@@ -56,6 +56,8 @@
 #define AUR_MAINTAINER  "Maintainer"
 #define AUR_ID          "ID"
 #define AUR_NAME        "Name"
+#define AUR_PKGBASE_ID  "PackageBaseID"
+#define AUR_PKGBASE     "PackageBase"
 #define AUR_VER         "Version"
 #define AUR_CAT         "CategoryID"
 #define AUR_DESC        "Description"
@@ -179,6 +181,20 @@ const char * aur_pkg_get_name (const aurpkg_t * pkg)
 {
 	if (pkg!=NULL)
 		return pkg->name;
+	return NULL;
+}
+
+unsigned int aur_pkg_get_pkgbase_id (const aurpkg_t * pkg)
+{
+	if (pkg!=NULL)
+		return pkg->pkgbase_id;
+	return 0;
+}
+
+const char * aur_pkg_get_pkgbase (const aurpkg_t * pkg)
+{
+	if (pkg!=NULL)
+		return pkg->pkgbase;
 	return NULL;
 }
 
@@ -348,6 +364,15 @@ static int json_string (void * ctx, const unsigned char * stringVal,
 	else if (strcmp (pkg_json->current_key, AUR_NAME)==0)
 	{
 		pkg_json->pkg->name = s;
+		free_s = 0;
+	}
+	else if (strcmp (pkg_json->current_key, AUR_PKGBASE_ID)==0)
+	{
+		pkg_json->pkg->pkgbase_id = atoi (s);
+	}
+	else if (strcmp (pkg_json->current_key, AUR_PKGBASE)==0)
+	{
+		pkg_json->pkg->pkgbase = s;
 		free_s = 0;
 	}
 	else if (strcmp (pkg_json->current_key, AUR_VER)==0)
@@ -579,6 +604,10 @@ static int aur_request (alpm_list_t **targets, int type)
 				    pkgname, (alpm_list_fn_cmp) target_name_cmp);
 				if (one_target && target_check_version (one_target, pkgver))
 				{
+					if (config.pkgbase && strcmp (aur_pkg_get_name (p->data), aur_pkg_get_pkgbase (p->data)) != 0)
+					{
+						continue;
+					}
 					aur_pkgs_found++;
 					/* one_target->orig is not duplicated,
 					 * 'ta' will use it until target_arg_close() call.

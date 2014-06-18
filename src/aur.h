@@ -27,6 +27,8 @@ typedef struct _aurpkg_t
 {
 	unsigned int id;
 	char *name;
+	unsigned int pkgbase_id;
+	char *pkgbase;
 	char *version;
 	unsigned int category;
 	char *desc;
@@ -48,6 +50,8 @@ int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2);
 
 unsigned int aur_pkg_get_id (const aurpkg_t * pkg);
 const char * aur_pkg_get_name (const aurpkg_t * pkg);
+unsigned int aur_pkg_get_pkgbase_id (const aurpkg_t * pkg);
+const char * aur_pkg_get_pkgbase (const aurpkg_t * pkg);
 const char * aur_pkg_get_version (const aurpkg_t * pkg);
 const char * aur_pkg_get_desc (const aurpkg_t * pkg);
 const char * aur_pkg_get_url (const aurpkg_t * pkg);

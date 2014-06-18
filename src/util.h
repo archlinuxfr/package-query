@@ -112,6 +112,7 @@ typedef struct _aq_config
 	unsigned short numbering;
 	unsigned short list;
 	unsigned short op;
+	unsigned short pkgbase;
 	unsigned short quiet;
 	unsigned short query;
 	unsigned short show_size;
