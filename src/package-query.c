@@ -352,7 +352,14 @@ int main (int argc, char **argv)
 				given |= N_DB;
 				break;
 			case 't':
-				config.filter |= F_UNREQUIRED;
+				if (config.filter & F_UNREQUIRED)
+				{
+					config.filter |= F_UNREQUIRED_2;
+				}
+				else
+				{
+					config.filter |= F_UNREQUIRED;
+				}
 				break;
 			case 1000: /* --query-type */
 				if (config.op) break;

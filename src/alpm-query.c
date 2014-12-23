@@ -216,6 +216,15 @@ static int filter (alpm_pkg_t *pkg, unsigned int _filter)
 			FREELIST(requiredby);
 			return 0;
 		}
+		if (!(_filter & F_UNREQUIRED_2))
+		{
+			alpm_list_t *requiredby = alpm_pkg_compute_optionalfor(pkg);
+			if (requiredby)
+			{
+				FREELIST(requiredby);
+				return 0;
+			}
+		}
 	}
 	if (_filter & F_UPGRADES)
 		if (!alpm_sync_newversion (pkg, alpm_get_syncdbs(config.handle)))
