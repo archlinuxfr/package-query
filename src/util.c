@@ -737,11 +737,14 @@ void color_print_package (void * p, printpkgfn f)
 		return;
 	}
 	if (aur && !info)
-		cstr = string_fcat (cstr, "%s%s%s", color(C_ORPHAN), lver, color (C_NO));
+		cstr = string_fcat (cstr, "%s%s%s", color(C_ORPHAN), ver, color (C_NO));
 	else
-		cstr = string_fcat (cstr, "%s%s%s", color(C_VER), lver, color (C_NO));
-	if (config.filter & F_UPGRADES)
-		cstr = string_fcat (cstr, " -> %s%s%s", color(C_VER), ver, color (C_NO));
+		if (config.filter & F_UPGRADES) {
+			cstr = string_fcat (cstr, "%s%s%s", color(C_VER), lver, color (C_NO));
+			cstr = string_fcat (cstr, " -> %s%s%s", color(C_VER), ver, color (C_NO));
+		}
+		else
+			cstr = string_fcat (cstr, "%s%s%s", color(C_VER), ver, color (C_NO));
 
 	/* show size */
 	if (config.show_size)
