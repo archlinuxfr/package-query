@@ -737,14 +737,13 @@ void color_print_package (void * p, printpkgfn f)
 		return;
 	}
 	if (aur && !info)
-		cstr = string_fcat (cstr, "%s%s%s", color(C_ORPHAN), ver, color (C_NO));
+		cstr = string_fcat (cstr, "%s", color(C_ORPHAN));
 	else
-		if (config.filter & F_UPGRADES) {
-			cstr = string_fcat (cstr, "%s%s%s", color(C_VER), lver, color (C_NO));
-			cstr = string_fcat (cstr, " -> %s%s%s", color(C_VER), ver, color (C_NO));
-		}
-		else
-			cstr = string_fcat (cstr, "%s%s%s", color(C_VER), ver, color (C_NO));
+		cstr = string_fcat (cstr, "%s", color(C_VER));
+	if (config.filter & F_UPGRADES)
+		cstr = string_fcat (cstr, "%s%s -> %s%s%s", lver, color (C_NO), color(C_VER), ver, color (C_NO));
+	else
+		cstr = string_fcat (cstr, "%s%s", ver, color (C_NO));
 
 	/* show size */
 	if (config.show_size)
@@ -758,7 +757,7 @@ void color_print_package (void * p, printpkgfn f)
 		}
 	}
 
-	if (config.aur_upgrades)
+	if (config.aur_upgrades || config.filter & F_UPGRADES)
 	{
 		fprintf (stdout, "%s\n", string_cstr (cstr));
 		string_free (cstr);
