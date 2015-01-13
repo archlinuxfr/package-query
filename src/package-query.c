@@ -525,8 +525,16 @@ int main (int argc, char **argv)
 					config.op = OP_INFO_P;
 				}
 			}
-			else if (config.db_local == i)
+			else if (config.db_local == i) {
 				ret += deal_db (alpm_get_localdb(config.handle));
+				if (!ret && config.op == OP_INFO_P)
+				{
+					config.op = OP_QUERY;
+					config.query = OP_Q_PROVIDES;
+					ret += deal_db (alpm_get_localdb(config.handle));
+					config.op = OP_INFO_P;
+				}
+			}
 			else if (config.aur == i)
 				switch (config.op)
 				{
