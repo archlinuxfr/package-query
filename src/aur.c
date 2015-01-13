@@ -71,7 +71,10 @@
 
 #define AUR_LAST_ID     AUR_URLPATH
 
-
+/* AUR JSON error */
+#define AUR_TYPE_ERROR   "error"
+#define AUR_JSON_TYPE_KEY   "type"
+#define AUR_JSON_RESULTS_KEY "results"
 
 /*
  * AUR REQUEST
@@ -96,6 +99,8 @@ typedef struct _jsonpkg_t
 	alpm_list_t *pkgs;
 	aurpkg_t *pkg;
 	char current_key[AUR_ID_LEN];
+	int error;
+	char *error_msg;
 	int level;
 } jsonpkg_t;
 
@@ -317,6 +322,7 @@ static int json_integer (void * ctx, long long val)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 	// package info in level 2
+	if (pkg_json->level<2) return 1;
 	if (strcmp (pkg_json->current_key, AUR_ID)==0)
 	{
 		pkg_json->pkg->id = (int) val;
@@ -349,7 +355,21 @@ static int json_string (void * ctx, const unsigned char * stringVal,
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 	// package info in level 2
-	if (pkg_json->level<2) return 1;
+	if (pkg_json->level<2)
+	{
+		if (strcmp (pkg_json->current_key, AUR_JSON_TYPE_KEY)==0)
+		{
+			if (strncmp ((const char *)stringVal, AUR_TYPE_ERROR, stringLen)==0)
+			{
+				pkg_json->error = 1;
+			}
+		}
+		if (pkg_json->error && strcmp (pkg_json->current_key, AUR_JSON_RESULTS_KEY)==0)
+		{
+			pkg_json->error_msg = strndup ((const char *)stringVal, stringLen);
+		}
+		return 1;
+	}
 	char *s = strndup ((const char *)stringVal, stringLen);
 	int free_s = 1;
 	if (strcmp (pkg_json->current_key, AUR_MAINTAINER)==0)
@@ -442,7 +462,7 @@ static yajl_callbacks callbacks = {
 
 static alpm_list_t *aur_json_parse (const char *s)
 {
-	jsonpkg_t pkg_json = { NULL, NULL, "", 0};
+	jsonpkg_t pkg_json = { NULL, NULL, "", 0, NULL, 0};
 	yajl_handle hand;
 	yajl_status stat;
 	hand = yajl_alloc(&callbacks, NULL, (void *) &pkg_json);
@@ -458,8 +478,13 @@ static alpm_list_t *aur_json_parse (const char *s)
 		alpm_list_free_inner (pkg_json.pkgs, (alpm_list_fn_free) aur_pkg_free);
 		alpm_list_free (pkg_json.pkgs);
 		pkg_json.pkgs = NULL;
-	}	
+	}
 	yajl_free(hand);
+	if (pkg_json.error)
+	{
+		fprintf(stderr, "AUR error : %s\n", pkg_json.error_msg);
+		FREE (pkg_json.error_msg);
+	}
 	return pkg_json.pkgs;
 }
 
