@@ -283,15 +283,26 @@ static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *user
 static int json_start_map (void *ctx) 
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
-	if (++(pkg_json->level)>1)
+
+	if (pkg_json == NULL)
+		return 1;
+
+	pkg_json->level += 1;
+	if (pkg_json->level > 1)
 		pkg_json->pkg = aur_pkg_new();
+
 	return 1;
 }
 
 static int json_end_map (void *ctx)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
-	if (--(pkg_json->level)==1)
+
+	if (pkg_json == NULL)
+		return 1;
+
+	pkg_json->level -= 1;
+	if (pkg_json->level == 1 && pkg_json->pkg != NULL)
 	{
 		switch (config.sort)
 		{
