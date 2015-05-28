@@ -283,16 +283,39 @@ static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *user
 static int json_start_map (void *ctx) 
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
-	if (++(pkg_json->level)>1)
+
+	if (pkg_json == NULL)
+		return 1;
+
+	pkg_json->level += 1;
+	if (pkg_json->level > 1)
 		pkg_json->pkg = aur_pkg_new();
+
 	return 1;
 }
 
 static int json_end_map (void *ctx)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
-	if (--(pkg_json->level)==1)
+
+	if (pkg_json == NULL)
+		return 1;
+
+	pkg_json->level -= 1;
+	if (pkg_json->level == 1 && pkg_json->pkg != NULL)
 	{
+		// If the urlpath isn't given by the API, build it based on the name. This fixes
+		// a compatibility issue between AUR v3 and v4 APIs.
+		if (aur_pkg_get_urlpath(pkg_json->pkg) == NULL)
+		{
+			const char *name = aur_pkg_get_name(pkg_json->pkg);
+			if (name != NULL) {
+				size_t size = strnlen(name, 200) + 34;
+				pkg_json->pkg->urlpath = malloc(sizeof(char) * size);
+				snprintf(pkg_json->pkg->urlpath, size, "/cgit/%s.git/snapshot/master.tar.gz", name);
+			}
+		}
+
 		switch (config.sort)
 		{
 			case S_VOTE:
