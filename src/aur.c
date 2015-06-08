@@ -310,9 +310,9 @@ static int json_end_map (void *ctx)
 		{
 			const char *name = aur_pkg_get_name(pkg_json->pkg);
 			if (name != NULL) {
-				size_t size = strnlen(name, 200) + 34;
+				size_t size = strnlen(name, 200) + 31;
 				pkg_json->pkg->urlpath = malloc(sizeof(char) * size);
-				snprintf(pkg_json->pkg->urlpath, size, "/cgit/%s.git/snapshot/master.tar.gz", name);
+				snprintf(pkg_json->pkg->urlpath, size, "/cgit/aur.git/snapshot/%s.tar.gz", name);
 			}
 		}
 
