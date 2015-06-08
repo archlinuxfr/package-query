@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.69)
-AC_INIT([package-query], [1.6], [https://github.com/archlinuxfr/package-query])
+AC_INIT([package-query], [1.6.1], [https://github.com/archlinuxfr/package-query])
 AM_INIT_AUTOMAKE([-Wall])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/package-query.c])
