@@ -705,7 +705,7 @@ void color_print_package (void * p, printpkgfn f)
 	 *   C_VER otherwise
 	 */
 	lver = alpm_local_pkg_get_str (info, 'l');
-	info = f(p, 'V');
+	info = f(p, (config.aur_upgrades) ? 'V' : 'v');
 	ver = STRDUP (info);
 	info = (aur) ? f(p, 'm') : NULL;
 	if (config.aur_foreign)
