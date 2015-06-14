@@ -727,8 +727,13 @@ const char *aur_get_str (void *p, unsigned char c)
 				strlen (aur_pkg_get_urlpath (pkg)) +
 				2 /* '/' separate url and filename */
 				));
-			strcpy (info, config.aur_url);
-			strcat (info, aur_pkg_get_urlpath (pkg));
+			// Small hack to fix AUR4 URLPath
+			if (strstr (aur_pkg_get_urlpath(pkg), "https://") == NULL) {
+				strcpy (info, config.aur_url);
+				strcat (info, aur_pkg_get_urlpath (pkg));
+			}
+			else
+				strcpy (info, aur_pkg_get_urlpath (pkg));
 			free_info = 1;
 			break;
 		case 'U': info = (char *) aur_pkg_get_url (pkg); break;
