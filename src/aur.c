@@ -137,6 +137,7 @@ void aur_pkg_free (aurpkg_t *pkg)
 	FREE (pkg->urlpath);
 	FREE (pkg->license);
 	FREE (pkg->maintainer);
+	FREE (pkg->pkgbase);
 	FREE (pkg);
 }
 
