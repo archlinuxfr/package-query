@@ -135,6 +135,7 @@ void aur_pkg_free (aurpkg_t *pkg)
 	FREE (pkg->desc);
 	FREE (pkg->url);
 	FREE (pkg->urlpath);
+	FREE (pkg->gitpath);
 	FREE (pkg->license);
 	FREE (pkg->maintainer);
 	FREE (pkg->pkgbase);
@@ -232,6 +233,13 @@ const char * aur_pkg_get_urlpath (const aurpkg_t * pkg)
 	return NULL;
 }
 
+const char * aur_pkg_get_gitpath (const aurpkg_t * pkg)
+{
+	if (pkg!=NULL)
+		return pkg->gitpath;
+	return NULL;
+}
+
 const char * aur_pkg_get_license (const aurpkg_t * pkg)
 {
 	if (pkg!=NULL)
@@ -305,15 +313,22 @@ static int json_end_map (void *ctx)
 	pkg_json->level -= 1;
 	if (pkg_json->level == 1 && pkg_json->pkg != NULL)
 	{
-		// If the urlpath isn't given by the API, build it based on the name. This fixes
-		// a compatibility issue between AUR v3 and v4 APIs.
-		if (aur_pkg_get_urlpath(pkg_json->pkg) == NULL)
-		{
-			const char *name = aur_pkg_get_name(pkg_json->pkg);
-			if (name != NULL) {
+		const char *name = aur_pkg_get_name(pkg_json->pkg);
+		if (name != NULL) {
+			// If the urlpath isn't given by the API, build it based on the name. This fixes
+			// a compatibility issue between AUR v3 and v4 APIs.
+			if (aur_pkg_get_urlpath(pkg_json->pkg) == NULL)
+			{
 				size_t size = strnlen(name, 200) + 31;
 				pkg_json->pkg->urlpath = malloc(sizeof(char) * size);
 				snprintf(pkg_json->pkg->urlpath, size, "/cgit/aur.git/snapshot/%s.tar.gz", name);
+			}
+
+			if (aur_pkg_get_gitpath(pkg_json->pkg) == NULL)
+			{
+				size_t size = strnlen(name, 200) + 6;
+				pkg_json->pkg->gitpath = malloc(sizeof(char) * size);
+				snprintf(pkg_json->pkg->gitpath, size, "/%s.git", name);
 			}
 		}
 
@@ -706,6 +721,15 @@ const char *aur_get_str (void *p, unsigned char c)
 	switch (c)
 	{
 		case 'd': info = (char *) aur_pkg_get_desc (pkg); break;
+		case 'g':
+			info = (char *) malloc (sizeof (char) * 
+				(strlen (config.aur_ssh_login) + 
+				strlen(aur_pkg_get_gitpath (pkg)) + 2));
+			strcpy(info, config.aur_ssh_login);
+			strcat(info, ":");
+			strcat(info, aur_pkg_get_gitpath (pkg));
+			free_info = 1;
+			break;
 		case 'i': 
 			info = itostr (aur_pkg_get_id (pkg)); 
 			free_info = 1;
