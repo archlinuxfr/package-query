@@ -305,18 +305,6 @@ static int json_end_map (void *ctx)
 	pkg_json->level -= 1;
 	if (pkg_json->level == 1 && pkg_json->pkg != NULL)
 	{
-		// If the urlpath isn't given by the API, build it based on the name. This fixes
-		// a compatibility issue between AUR v3 and v4 APIs.
-		if (aur_pkg_get_urlpath(pkg_json->pkg) == NULL)
-		{
-			const char *name = aur_pkg_get_name(pkg_json->pkg);
-			if (name != NULL) {
-				size_t size = strnlen(name, 200) + 31;
-				pkg_json->pkg->urlpath = malloc(sizeof(char) * size);
-				snprintf(pkg_json->pkg->urlpath, size, "/cgit/aur.git/snapshot/%s.tar.gz", name);
-			}
-		}
-
 		switch (config.sort)
 		{
 			case S_VOTE:
@@ -729,15 +717,10 @@ const char *aur_get_str (void *p, unsigned char c)
 				strlen (aur_pkg_get_urlpath (pkg)) +
 				2 /* '/' separate url and filename */
 				));
-			// Small hack to fix AUR4 URLPath
-			if (strstr (aur_pkg_get_urlpath(pkg), "https://") == NULL) {
 				strcpy (info, config.aur_url);
 				strcat (info, aur_pkg_get_urlpath (pkg));
-			}
-			else
-				strcpy (info, aur_pkg_get_urlpath (pkg));
-			free_info = 1;
-			break;
+				free_info = 1;
+				break;
 		case 'U': info = (char *) aur_pkg_get_url (pkg); break;
 		case 'S':
 			info = ttostr (aur_pkg_get_firstsubmit (pkg));
