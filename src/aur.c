@@ -695,6 +695,18 @@ const char *aur_get_str (void *p, unsigned char c)
 	switch (c)
 	{
 		case 'd': info = (char *) aur_pkg_get_desc (pkg); break;
+		case 'g':
+			info = (char *) malloc (sizeof (char) *
+				(strlen (config.aur_url) +
+				strlen (aur_pkg_get_name (pkg)) +
+				6 /* '/%s.git + \0 */
+			));
+			strcpy (info, config.aur_url);
+			strcat (info, "/");
+			strcat (info, aur_pkg_get_name (pkg));
+			strcat (info, ".git");
+			free_info = 1;
+			break;
 		case 'i': 
 			info = itostr (aur_pkg_get_id (pkg)); 
 			free_info = 1;
@@ -716,11 +728,11 @@ const char *aur_get_str (void *p, unsigned char c)
 				(strlen (config.aur_url) + 
 				strlen (aur_pkg_get_urlpath (pkg)) +
 				2 /* '/' separate url and filename */
-				));
-				strcpy (info, config.aur_url);
-				strcat (info, aur_pkg_get_urlpath (pkg));
-				free_info = 1;
-				break;
+			));
+			strcpy (info, config.aur_url);
+			strcat (info, aur_pkg_get_urlpath (pkg));
+			free_info = 1;
+			break;
 		case 'U': info = (char *) aur_pkg_get_url (pkg); break;
 		case 'S':
 			info = ttostr (aur_pkg_get_firstsubmit (pkg));
