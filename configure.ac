@@ -52,6 +52,13 @@ AC_ARG_WITH(aur-url,
 	[AUR_BASE_URL=$withval], [AUR_BASE_URL=https://aur.archlinux.org])
 
 AC_SUBST(AUR_BASE_URL)
+
+AC_ARG_WITH(aur-ssh-login,
+	AS_HELP_STRING([--with-aur-ssh-login=username@hostname], [default to aur@aur.archlinux.org]),
+	[AUR_SSH_LOGIN=$withval], [AUR_SSH_LOGIN=aur@aur.archlinux.org])
+
+AC_SUBST(AUR_SSH_LOGIN)
+
 AC_CONFIG_FILES([src/Makefile
 doc/Makefile
 Makefile
@@ -78,6 +85,7 @@ ${PACKAGE_NAME}:
   Variable information:
     root working directory : ${ROOTDIR}
     aur base url           : ${AUR_BASE_URL}
+    aur ssh login          : ${AUR_SSH_LOGIN}
 "
 
 

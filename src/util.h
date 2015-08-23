@@ -119,6 +119,7 @@ typedef struct _aq_config
 	unsigned short updates;
 	char *arch;
 	char *aur_url;
+	char *aur_ssh_login;
 	char *configfile;
 	char delimiter[SEP_LEN];
 	char *dbpath;

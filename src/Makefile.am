@@ -10,6 +10,7 @@ DEFS = -DLOCALEDIR=\"@localedir@\" \
        -DROOTDIR=\"$(ROOTDIR)\" \
        -DDBPATH=\"$(dbpath)\" \
        -DAUR_BASE_URL=\"$(AUR_BASE_URL)\" \
+       -DAUR_SSH_LOGIN=\"$(AUR_SSH_LOGIN)\" \
 	   @DEFS@
 if USE_GIT_VERSION
 DEFS += -DGIT_VERSION=\"$(GIT_VERSION)\"

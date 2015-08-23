@@ -61,6 +61,7 @@ void cleanup (int ret)
 	FREELIST(targets);
 	FREE (config.arch);
 	FREE (config.aur_url);
+	FREE (config.aur_ssh_login);
 	FREE (config.configfile);
 	FREE (config.dbpath);
 	FREE (config.rootdir);
@@ -101,6 +102,7 @@ void init_config (const char *myname)
 	config.show_size = 0;
 	config.arch = NULL;
 	config.aur_url = strdup (AUR_BASE_URL);
+	config.aur_ssh_login = strdup (AUR_SSH_LOGIN);
 	config.configfile = strndup (CONFFILE, PATH_MAX);
 	strcpy (config.delimiter, " ");
 	config.dbpath = NULL;
@@ -254,6 +256,7 @@ int main (int argc, char **argv)
 		{"color",      no_argument,       0, 1014},
 		{"rsort",      required_argument, 0, 1015},
 		{"pkgbase",    no_argument,       0, 1016},
+		{"aur-ssh-login",	required_argument, 0, 1017},
 		{"version",    no_argument,       0, 'v'},
 
 		{0, 0, 0, 0}
@@ -428,6 +431,10 @@ int main (int argc, char **argv)
 				break;
 			case 1016: /* --pkgbase */
 				config.pkgbase = 1;
+				break;
+			case 1017: /* --aur-ssh-login */
+				FREE (config.aur_ssh_login);
+				config.aur_ssh_login = strdup (optarg);
 				break;
 			case 'u':
 				config.filter |= F_UPGRADES;
