@@ -573,7 +573,7 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			}
 			break;
 		case 'O':
-			info = concat_str_list (alpm_pkg_get_optdepends (pkg));
+			info = concat_dep_list (alpm_pkg_get_optdepends (pkg));
 			free_info = 1;
 			break;
 		case 'P':
