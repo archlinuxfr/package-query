@@ -695,7 +695,7 @@ const char *aur_get_str (void *p, unsigned char c)
 	switch (c)
 	{
 		case 'd': info = (char *) aur_pkg_get_desc (pkg); break;
-		case 'g':
+		case 'G':
 			info = (char *) malloc (sizeof (char) *
 				(strlen (config.aur_url) +
 				strlen (aur_pkg_get_name (pkg)) +
