@@ -349,6 +349,7 @@ string_t *string_fcat (string_t *dest, const char *format, ...)
 	va_list args;
 	va_start(args, format);
 	vasprintf(&s, format, args);
+	va_end(args);
 	if (!s)
 	{
 		perror ("vasprintf");
