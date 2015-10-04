@@ -77,41 +77,14 @@ void handler (int signum)
 
 void init_config (const char *myname)
 {
+	memset(&config, 0, sizeof(aq_config));
 	config.myname = mbasename(myname);
-	config.handle = NULL;
-	config.aur = 0;
-	config.aur_foreign = 0;
-	config.aur_upgrades = 0;
 	config.colors = isatty(1);
-	config.custom_out = 0; 
-	config.db_local = 0;
-	config.db_sync = 0;
-	config.escape = 0;
-	config.filter = 0;
-	config.get_res = 0;
-	config.insecure = 0;
-	config.is_file = 0;
-	config.just_one = 0;
-	config.list = 0;
-	config.numbering = 0;
-	config.op = 0;
-	config.pkgbase = 0;
-	config.quiet = 0;
-	config.query=ALL;
-	config.show_size = 0;
-	config.arch = NULL;
+	config.query = ALL;
 	config.aur_url = strdup (AUR_BASE_URL);
 	config.configfile = strndup (CONFFILE, PATH_MAX);
 	strcpy (config.delimiter, " ");
-	config.dbpath = NULL;
-	strcpy (config.format_out, "");
-	config.rootdir = NULL;
-	config.sort = 0;
-	config.rsort = 0;
 }
-
-
-
 
 void version ()
 {
