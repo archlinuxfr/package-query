@@ -938,4 +938,16 @@ alpm_list_t *target_arg_close (target_arg_t *t, alpm_list_t *targets)
 	return targets;
 }
 
+int does_name_contain_targets (alpm_list_t *targets, const char *name)
+{
+	alpm_list_t *t;
+	for(t = targets; t; t = alpm_list_next(t)) {
+		const char *target = (const char *)(t->data);
+		if (strcasestr(name, target) == NULL) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 /* vim: set ts=4 sw=4 noet: */
