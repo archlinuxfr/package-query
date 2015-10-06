@@ -698,12 +698,12 @@ const char *aur_get_str (void *p, unsigned char c)
 		case 'G':
 			info = (char *) malloc (sizeof (char) *
 				(strlen (config.aur_url) +
-				strlen (aur_pkg_get_name (pkg)) +
+				strlen (aur_pkg_get_pkgbase (pkg)) +
 				6 /* '/%s.git + \0 */
 			));
 			strcpy (info, config.aur_url);
 			strcat (info, "/");
-			strcat (info, aur_pkg_get_name (pkg));
+			strcat (info, aur_pkg_get_pkgbase (pkg));
 			strcat (info, ".git");
 			free_info = 1;
 			break;
