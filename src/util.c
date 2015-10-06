@@ -54,16 +54,19 @@ static results_t *results_new (void *ele, unsigned short type)
 	r->type = type;
 	return r;
 }
-	
+
 static results_t *results_free (results_t *r)
 {
-	if (r->type == R_AUR_PKG) aur_pkg_free (r->ele);
-	free (r);
+	if (r) {
+		if (r->type == R_AUR_PKG) aur_pkg_free (r->ele);
+		free (r);
+	}
 	return NULL;
 }
-	
+
 static const char *results_name (const results_t *r)
 {
+	if (!r) return NULL;
 	switch (r->type)
 	{
 		case R_ALPM_PKG:
@@ -77,25 +80,25 @@ static const char *results_name (const results_t *r)
 
 static time_t results_installdate (const results_t *r)
 {
+	if (!r || r->type == R_AUR_PKG) return 0;
 	const char *r_name;
 	alpm_pkg_t *pkg = NULL;
-	time_t idate=0;
-	if (r->type==R_AUR_PKG) return 0;
+	time_t idate = 0;
 	r_name = results_name (r);
 	pkg = alpm_db_get_pkg(alpm_get_localdb(config.handle), r_name);
 	if (pkg) idate = alpm_pkg_get_installdate(pkg);
 	return idate;
 }
-			
 
 static off_t results_isize (const results_t *r)
 {
-	if (r->type==R_AUR_PKG) return 0;
+	if (!r || r->type == R_AUR_PKG) return 0;
 	return alpm_pkg_get_isize(r->ele);
 }
-		
+
 static int results_votes (const results_t *r)
 {
+	if (!r) return 0;
 	switch (r->type)
 	{
 		case R_AUR_PKG:
@@ -104,8 +107,7 @@ static int results_votes (const results_t *r)
 			return 0;
 	}
 }
-			
-			
+
 static int results_cmp (const results_t *r1, const results_t *r2)
 {
 	return strcmp (results_name (r1), results_name (r2));
@@ -113,25 +115,17 @@ static int results_cmp (const results_t *r1, const results_t *r2)
 
 static int results_installdate_cmp (const results_t *r1, const results_t *r2)
 {
-	if (results_installdate (r1)>results_installdate (r2))
-		return 1;
-	else if (results_installdate (r1)>results_installdate (r2))
-		return -1;
-	else
-		return 0;
+	if (results_installdate (r1) > results_installdate (r2)) return 1;
+	if (results_installdate (r2) > results_installdate (r1)) return -1;
+	return 0;
 }
-
 
 static int results_isize_cmp (const results_t *r1, const results_t *r2)
 {
-	if (results_isize (r1)>results_isize (r2))
-		return 1;
-	else if (results_isize (r1)>results_isize (r2))
-		return -1;
-	else
-		return 0;
+	if (results_isize (r1) > results_isize (r2)) return 1;
+	if (results_isize (r2) > results_isize (r1)) return -1;
+	return 0;
 }
-
 
 static int results_votes_cmp (const results_t *r1, const results_t *r2)
 {
@@ -140,59 +134,57 @@ static int results_votes_cmp (const results_t *r1, const results_t *r2)
 
 void print_or_add_result (void *pkg, unsigned short type)
 {
-	if (config.sort==0)
+	if (config.sort == 0)
 	{
 		print_package ("", pkg, (type == R_ALPM_PKG) ? alpm_pkg_get_str : aur_get_str);
 		return;
 	}
-	else
-	{
-		results = alpm_list_add (results, results_new (pkg, type));
-	}
+
+	results = alpm_list_add (results, results_new (pkg, type));
 }
-		
+
 void show_results ()
 {
 	alpm_list_t *i_first;
 	alpm_list_t *i;
-	alpm_list_nav fn_nav=NULL;;
-	alpm_list_fn_cmp fn_cmp=NULL;
-	if (results!=NULL)
+	alpm_list_nav fn_nav = NULL;
+	alpm_list_fn_cmp fn_cmp = NULL;
+
+	if (results == NULL) return;
+
+	switch (config.sort)
 	{
-		switch (config.sort)
-		{
-			case S_NAME: fn_cmp = (alpm_list_fn_cmp) results_cmp; break;
-			case S_VOTE: fn_cmp = (alpm_list_fn_cmp) results_votes_cmp; break;
-			case S_IDATE: fn_cmp = (alpm_list_fn_cmp) results_installdate_cmp; break;
-			case S_ISIZE: fn_cmp = (alpm_list_fn_cmp) results_isize_cmp; break;
-		}
-		if (fn_cmp)
-			results = alpm_list_msort (results, alpm_list_count (results), fn_cmp);
-		if (config.rsort) {
-			fn_nav = (alpm_list_nav) alpm_list_previous;
-			i_first = alpm_list_last (results);
-		} else {
-			fn_nav = (alpm_list_nav) alpm_list_next;
-			i_first = results;
-		}
-		for(i = i_first; i; i = fn_nav(i))
-		{
-			results_t *r = i->data;
-			if (r->type == R_ALPM_PKG)
-				print_package ("", r->ele, alpm_pkg_get_str);
-			else if (r->type == R_AUR_PKG)
-				print_package ("", r->ele, aur_get_str);
-		}
-		alpm_list_free_inner (results, (alpm_list_fn_free) results_free);
-		alpm_list_free (results);
-		results = NULL;
+		case S_NAME: fn_cmp = (alpm_list_fn_cmp) results_cmp; break;
+		case S_VOTE: fn_cmp = (alpm_list_fn_cmp) results_votes_cmp; break;
+		case S_IDATE: fn_cmp = (alpm_list_fn_cmp) results_installdate_cmp; break;
+		case S_ISIZE: fn_cmp = (alpm_list_fn_cmp) results_isize_cmp; break;
 	}
+	if (fn_cmp)
+		results = alpm_list_msort (results, alpm_list_count (results), fn_cmp);
+	if (config.rsort) {
+		fn_nav = (alpm_list_nav) alpm_list_previous;
+		i_first = alpm_list_last (results);
+	} else {
+		fn_nav = (alpm_list_nav) alpm_list_next;
+		i_first = results;
+	}
+	for(i = i_first; i; i = fn_nav(i))
+	{
+		results_t *r = i->data;
+		if (r && r->type == R_ALPM_PKG)
+			print_package ("", r->ele, alpm_pkg_get_str);
+		else if (r && r->type == R_AUR_PKG)
+			print_package ("", r->ele, aur_get_str);
+	}
+	alpm_list_free_inner (results, (alpm_list_fn_free) results_free);
+	alpm_list_free (results);
+	results = NULL;
 }
 
 target_t *target_parse (const char *str)
 {
-	target_t *ret=NULL;
-	char *c, *s=(char *)str;
+	target_t *ret = NULL;
+	char *c, *s = (char *)str;
 	MALLOC (ret, sizeof (target_t));
 	ret->orig = strdup (str);
 	if ((c = strchr (s, '/')) != NULL)
@@ -251,19 +243,19 @@ void target_free (target_t *t)
 	FREE (t->ver);
 	FREE (t);
 }
-	
+
 int target_check_version (target_t *t, const char *ver)
 {
 	int ret;
-	if (t->mod==ALPM_DEP_MOD_ANY) return 1;
+	if (t->mod == ALPM_DEP_MOD_ANY) return 1;
 	ret = alpm_pkg_vercmp (ver, t->ver);
 	switch (t->mod)
 	{
-		case ALPM_DEP_MOD_LE: return (ret<=0);
-		case ALPM_DEP_MOD_GE: return (ret>=0);
-		case ALPM_DEP_MOD_LT: return (ret<0);
-		case ALPM_DEP_MOD_GT: return (ret>0);
-		case ALPM_DEP_MOD_EQ: return (ret==0);
+		case ALPM_DEP_MOD_LE: return (ret <= 0);
+		case ALPM_DEP_MOD_GE: return (ret >= 0);
+		case ALPM_DEP_MOD_LT: return (ret < 0);
+		case ALPM_DEP_MOD_GT: return (ret > 0);
+		case ALPM_DEP_MOD_EQ: return (ret == 0);
 		default: return 1;
 	}
 }
@@ -288,9 +280,6 @@ string_t *string_new ()
 {
 	string_t *str = NULL;
 	MALLOC (str, sizeof (string_t));
-	str->s = NULL;
-	str->size = 0;
-	str->used = 0;
 	return str;
 }
 
@@ -302,7 +291,6 @@ void string_reset (string_t *str)
 	if (str->s)
 		str->s[0] = '\0';
 }
-
 
 void string_free (string_t *dest)
 {
@@ -324,13 +312,13 @@ char *string_free2 (string_t *dest)
 
 string_t *string_ncat (string_t *dest, const char *src, size_t n)
 {
-	if (!src || !n) return dest;
-	if (dest->size <= dest->used+n)
+	if (!dest || !src || !n) return dest;
+	if (dest->size <= dest->used + n)
 	{
 		dest->size += ((n/PATH_MAX) + 1) * PATH_MAX;
 		/* dest->size += dest->used + n + 1; */
 		REALLOC (dest->s, dest->size * sizeof (char));
-		if (dest->used == 0) dest->s[0]='\0';
+		if (dest->used == 0) dest->s[0] = '\0';
 	}
 	dest->used += n;
 	strncat (dest->s, src, n);
@@ -339,6 +327,7 @@ string_t *string_ncat (string_t *dest, const char *src, size_t n)
 
 string_t *string_cat (string_t *dest, const char *src)
 {
+	if (!src) return dest;
 	return string_ncat (dest, src, strlen (src));
 }
 
@@ -355,7 +344,7 @@ string_t *string_fcat (string_t *dest, const char *format, ...)
 		perror ("vasprintf");
 		exit (1);
 	}
-	dest =  string_cat (dest, s);
+	dest = string_cat (dest, s);
 	free (s);
 	return dest;
 }
@@ -369,25 +358,25 @@ char *strtrim(char *str)
 {
 	char *pch = str;
 
-	if(str == NULL || *str == '\0') {
+	if (str == NULL || *str == '\0') {
 		/* string is empty, so we're done. */
 		return(str);
 	}
 
-	while(isspace(*pch)) {
+	while (isspace(*pch)) {
 		pch++;
 	}
-	if(pch != str) {
+	if (pch != str) {
 		memmove(str, pch, (strlen(pch) + 1));
 	}
 
 	/* check if there wasn't anything but whitespace in the string. */
-	if(*str == '\0') {
+	if (*str == '\0') {
 		return(str);
 	}
 
 	pch = (str + (strlen(str) - 1));
-	while(isspace(*pch)) {
+	while (isspace(*pch)) {
 		pch--;
 	}
 	*++pch = '\0';
@@ -406,9 +395,11 @@ char *concat_str_list (alpm_list_t *l)
 		return NULL;
 	}
 
-	for(i = l; i; i = alpm_list_next(i)) {
-		/* data's len + space for separator */
-		len += strlen (i->data) + strlen (config.delimiter);
+	for (i = l; i; i = alpm_list_next(i)) {
+		if (i->data) {
+			/* data's len + space for separator */
+			len += strlen (i->data) + strlen (config.delimiter);
+		}
 	}
 
 	if (!len) {
@@ -429,7 +420,7 @@ char *concat_dep_list (alpm_list_t *deps)
 {
 	alpm_list_t *i, *deps_str = NULL;
 	char *ret;
-	for (i=deps; i; i = alpm_list_next (i))
+	for (i = deps; i; i = alpm_list_next (i))
 		deps_str = alpm_list_add (deps_str, alpm_dep_compute_string (i->data));
 	ret = concat_str_list (deps_str);
 	FREELIST (deps_str);
@@ -471,28 +462,28 @@ char *concat_file_list (alpm_filelist_t *f)
 	return ret;
 }
 
-
 char *concat_backup_list (alpm_list_t *backups)
 {
 	alpm_list_t *i, *backups_str = NULL;
 	char *ret;
 	char *b_str;
-	alpm_backup_t *backup;
-	for (i=backups; i; i = alpm_list_next (i))
+	for (i = backups; i; i = alpm_list_next (i))
 	{
-		backup = i->data;
-		asprintf (&b_str, "%s\t%s", backup->name, backup->hash);
-		backups_str = alpm_list_add (backups_str, b_str);
+		alpm_backup_t *backup = i->data;
+		if (backup) {
+			asprintf (&b_str, "%s\t%s", backup->name, backup->hash);
+			backups_str = alpm_list_add (backups_str, b_str);
+		}
 	}
 	ret = concat_str_list (backups_str);
 	FREELIST (backups_str);
 	return ret;
 }
 
-
 void format_str (char *s)
 {
-	char *c=s; int mod;
+	char *c = s;
+	int mod;
 	while ((c=strchr (c, '\\')))
 	{
 		mod = 1;
@@ -539,7 +530,6 @@ char * ltostr (long i)
 	asprintf (&is, "%ld", i);
 	return is;
 }
-
 
 char * ttostr (time_t t)
 {
@@ -607,7 +597,6 @@ const char *mbasename(const char *path)
 	}
 	return(path);
 }
-
 
 static int getcols(void)
 {
