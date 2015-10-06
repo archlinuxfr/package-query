@@ -362,7 +362,7 @@ string_t *string_fcat (string_t *dest, const char *format, ...)
 
 const char *string_cstr (string_t *str)
 {
-	return (const char *) ((str->s) ? str->s : "");
+	return (const char *) (str ? (str->s ? str->s : "") : "");
 }
 
 char *strtrim(char *str)
@@ -398,35 +398,30 @@ char *strtrim(char *str)
 char *concat_str_list (alpm_list_t *l)
 {
 	char *ret;
-	int len=0, j=0;
+	size_t len = 0;
+	int j = 0;
 	alpm_list_t *i;
-	if (!l)
-	{
+
+	if (!l) {
 		return NULL;
 	}
-	else
-	{
-		for(i = l; i; i = alpm_list_next(i)) 
-		{
-			/* data's len + space for separator */
-			len += strlen (i->data) + strlen (config.delimiter);
-		}
-		if (len)
-		{
-			len++; /* '\0' at the end */
-			CALLOC (ret, len, sizeof (char));
-			strcpy (ret, "");
-			for(i = l; i; i = alpm_list_next(i)) 
-			{
-				if (j++>0) strcat (ret, config.delimiter);
-				strcat (ret, i->data);
-			}
-		}
-		else
-		{
-			return NULL;
-		}
+
+	for(i = l; i; i = alpm_list_next(i)) {
+		/* data's len + space for separator */
+		len += strlen (i->data) + strlen (config.delimiter);
 	}
+
+	if (!len) {
+		return NULL;
+	}
+
+	len++; /* '\0' at the end */
+	CALLOC (ret, len, sizeof (char));
+	for(i = l; i; i = alpm_list_next(i)) {
+		if (j++ > 0) strcat (ret, config.delimiter);
+		strcat (ret, i->data);
+	}
+
 	return ret;
 }
 
@@ -444,36 +439,35 @@ char *concat_dep_list (alpm_list_t *deps)
 char *concat_file_list (alpm_filelist_t *f)
 {
 	char *ret;
-	int len=0, i, j=0;
-	if (!f)
-	{
+	size_t len = 0;
+	int i, j = 0;
+
+	if (!f) {
 		return NULL;
 	}
-	else
-	{
-		for(i=0; i<f->count; i++)
-		{
-			alpm_file_t *file = f->files + i;
+
+	for(i = 0; i < f->count; i++) {
+		alpm_file_t *file = f->files + i;
+		if (file) {
 			/* data's len + space for separator */
 			len += strlen (file->name) + strlen (config.delimiter);
 		}
-		if (len)
-		{
-			len++; /* '\0' at the end */
-			CALLOC (ret, len, sizeof (char));
-			strcpy (ret, "");
-			for(i=0; i<f->count; i++)
-			{
-				alpm_file_t *file = f->files + i;
-				if (j++>0) strcat (ret, config.delimiter);
-				strcat (ret, file->name);
-			}
-		}
-		else
-		{
-			return NULL;
+	}
+
+	if (!len) {
+		return NULL;
+	}
+
+	len++; /* '\0' at the end */
+	CALLOC (ret, len, sizeof (char));
+	for(i = 0; i < f->count; i++) {
+		alpm_file_t *file = f->files + i;
+		if (file) {
+			if (j++ > 0) strcat (ret, config.delimiter); /* seems that the condition doesn't make sense... */
+			strcat (ret, file->name);
 		}
 	}
+
 	return ret;
 }
 
@@ -519,11 +513,14 @@ void format_str (char *s)
 
 static void print_escape (const char *str)
 {
-	const char *c=str;
-	while (*c!='\0')
-	{
-		if (*c == '"')
+	const char *c = str;
+	if (!c) {
+		return;
+	}
+	while (*c != '\0') {
+		if (*c == '"') {
 			putchar ('\\');
+		}
 		putchar (*c);
 		c++;
 	}
@@ -553,12 +550,16 @@ char * ttostr (time_t t)
 }
 
 /* Helper function for strreplace */
-static void _strnadd(char **str, const char *append, unsigned int count)
+static void _strnadd(char **str, const char *append, size_t count)
 {
-	if(*str) {
-		*str = realloc(*str, strlen(*str) + count + 1);
+	if (!str) {
+		return;
+	}
+
+	if (*str) {
+		REALLOC(*str, strlen(*str) + count + 1);
 	} else {
-		*str = calloc(sizeof(char), count + 1);
+		CALLOC(*str, sizeof(char), count + 1);
 	}
 
 	strncat(*str, append, count);
@@ -568,23 +569,20 @@ static void _strnadd(char **str, const char *append, unsigned int count)
  * a new string (must be free'd) */
 char *strreplace(const char *str, const char *needle, const char *replace)
 {
-	const char *p, *q;
-	p = q = str;
-
+	const char *p = str, *q = str;
 	char *newstr = NULL;
-	unsigned int needlesz = strlen(needle),
-							 replacesz = strlen(replace);
+	const size_t needlesz = strlen(needle), replacesz = strlen(replace);
 
 	while (1) {
 		q = strstr(p, needle);
-		if(!q) { /* not found */
-			if(*p) {
+		if (!q) { /* not found */
+			if (*p) {
 				/* add the rest of 'p' */
 				_strnadd(&newstr, p, strlen(p));
 			}
 			break;
 		} else { /* found match */
-			if(q > p){
+			if (q > p) {
 				/* add chars between this occurance and last occurance, if any */
 				_strnadd(&newstr, p, q - p);
 			}
