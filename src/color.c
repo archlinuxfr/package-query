@@ -36,7 +36,7 @@ typedef struct _colors_t
 	char *color;
 } colors_t;
 
-static alpm_list_t *colors=NULL;
+static alpm_list_t *colors = NULL;
 
 static void colors_free (colors_t *c)
 {
@@ -47,15 +47,30 @@ static void colors_free (colors_t *c)
 
 static int colors_cmp (void *c1, void *c2)
 {
+	if (!c1 || !c2)
+		return 0;
+
+	const char *c1id = ((colors_t *)c1)->id;
+	const char *c2id = ((colors_t *)c2)->id;
+	if (!c1id || !c2id)
+		return 0;
+
 	return strcmp (((colors_t *)c1)->id, ((colors_t *)c2)->id);
 }
 
 static int colors_cmp_id (void *c1, void *id)
 {
-	return strcmp (((colors_t *)c1)->id, (char *)id);
+	if (!c1)
+		return -1;
+
+	const char *c1id = ((colors_t *)c1)->id;
+	if (!c1id)
+		return -1;
+
+	return strcmp (c1id, (char *)id);
 }
 
-static void colors_set_color (const char* id, const char *color)
+static void colors_set_color (const char *id, const char *color)
 {
 	colors_t *c;
 	c = alpm_list_find (colors, id, (alpm_list_fn_cmp) colors_cmp_id);
@@ -72,34 +87,38 @@ static void colors_set_color (const char* id, const char *color)
 	CALLOC (c->color, (strlen (color) + 4), sizeof (char)); /* + "\033[m" */
 	sprintf (c->color, "\033[%sm", color);
 }
-	
 
 static void parse_var (const char *s)
 {
-	char *src, *t;
-	char *sid, *sval;
-	src = strdup (s); t = src;
-	sid=t; sval=NULL;
-	while (*t!='\0')
+	if (!s)
+		return;
+
+	char *src = strdup (s);
+	char *t = src;
+	char *sid = t;
+	char *sval = NULL;
+	while (*t != '\0')
 	{
-		if (!sval && sid!=t && *t == '=')
+		if (!sval && sid != t && *t == '=')
 		{
-			*t='\0';
-			sval=t+sizeof(char);
+			*t = '\0';
+			sval = t + sizeof(char);
 		}
-		else if (sval && sval!=t && *t == ':')
+		else if (sval && sval != t && *t == ':')
 		{
-			*t='\0';
+			*t = '\0';
 			colors_set_color (sid, sval);
-			sid=t+sizeof(char);sval=NULL;
+			sid = t + sizeof(char);
+			sval = NULL;
 		}
 		else if ((!sval && !COL_ID(*t)) || (sval && !COL_VAL(*t)))
 		{
-			sid=t+sizeof(char);sval=NULL;
+			sid = t + sizeof(char);
+			sval = NULL;
 		}
 		t++;
 	}
-	if (sval && sval!=t)
+	if (sval && sval != t)
 	{
 		colors_set_color (sid, sval);
 	}
@@ -108,43 +127,39 @@ static void parse_var (const char *s)
 
 void color_init (void)
 {
-	char *p;
 	parse_var (DEFAULT_COLORS);
-	p = getenv (COLOR_ENV_VAR);
-	if (p) parse_var (p);
+	parse_var (getenv (COLOR_ENV_VAR));
 }
 
 void color_cleanup(void)
 {
-	if (colors!=NULL)
-	{
-		alpm_list_free_inner (colors, (alpm_list_fn_free) colors_free);
-		alpm_list_free (colors);
-	}
+	if (!colors)
+		return;
+
+	alpm_list_free_inner (colors, (alpm_list_fn_free) colors_free);
+	alpm_list_free (colors);
 }
 
-
-const char * color (const char *col)
+const char *color (const char *col)
 {
-	colors_t *c;
 	if (config.colors)
 	{
-		c = alpm_list_find (colors, col, (alpm_list_fn_cmp) colors_cmp_id);
+		colors_t *c = alpm_list_find (colors, col, (alpm_list_fn_cmp) colors_cmp_id);
 		if (c)
 		{
-			return  c->color;
+			return c->color;
 		}
 	}
 	return "";
 }
 
-const char * color_repo (const char *repo)
+const char *color_repo (const char *repo)
 {
 	const char *res = color (repo);
 	if (*res != '\0')
 		return res;
-	else
-		return color (C_OTHER);
+
+	return color (C_OTHER);
 }
 
 /* vim: set ts=4 sw=4 noet: */
