@@ -117,6 +117,7 @@ typedef struct _aq_config
 	unsigned short query;
 	unsigned short show_size;
 	unsigned short updates;
+	unsigned short name_only;
 	char *arch;
 	char *aur_url;
 	char *configfile;
@@ -225,6 +226,9 @@ void show_results ();
 /* Utils */
 /* mbasename is from pacman's code */
 const char *mbasename(const char *path);
+
+/* Returns 1 if package name contains all targets; 0 otherwise */
+int does_name_contain_targets (alpm_list_t *targets, const char *name);
 
 #endif
 

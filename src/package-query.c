@@ -120,7 +120,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-r --root <path>     default: %s", ROOTDIR);
 	fprintf(stderr, "\n\nModifiers:");
 	fprintf(stderr, "\n\t-i --info            search by name");
-	fprintf(stderr, "\n\t\t--pkgbase          limit info to pkgbase (AUR only)");
+	fprintf(stderr, "\n\t--pkgbase            limit info to pkgbase (AUR only)");
 	fprintf(stderr, "\n\t-l --list            list repository content");
 	fprintf(stderr, "\n\t-m --foreign         search for foreign packages");
 	fprintf(stderr, "\n\t-n --native          search for native packages");
@@ -130,6 +130,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t--qprovides          provides one of target");
 	fprintf(stderr, "\n\t--qreplaces          replaces one of target");
 	fprintf(stderr, "\n\t-s --search          search");
+	fprintf(stderr, "\n\t--nameonly           search in package names only");
 	fprintf(stderr, "\n\t-u --upgrades        list updates available");
 	fprintf(stderr, "\n\nFormats (man for more infos): ");
 	fprintf(stderr, "\n\ta: arch");
@@ -227,6 +228,7 @@ int main (int argc, char **argv)
 		{"color",      no_argument,       0, 1014},
 		{"rsort",      required_argument, 0, 1015},
 		{"pkgbase",    no_argument,       0, 1016},
+		{"nameonly",   no_argument,       0, 1017},
 		{"version",    no_argument,       0, 'v'},
 
 		{0, 0, 0, 0}
@@ -401,6 +403,9 @@ int main (int argc, char **argv)
 				break;
 			case 1016: /* --pkgbase */
 				config.pkgbase = 1;
+				break;
+			case 1017: /* --nameonly */
+				config.name_only = 1;
 				break;
 			case 'u':
 				config.filter |= F_UPGRADES;
