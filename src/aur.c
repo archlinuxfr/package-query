@@ -585,14 +585,17 @@ static int aur_request (alpm_list_t **targets, int type)
 			for (p=pkgs; p; p=alpm_list_next (p))
 			{
 				int match=1;
-				for (t=alpm_list_next (*targets); t; t=alpm_list_next (t))
-				{
-					if (strcasestr (aur_pkg_get_name (p->data),
-									t->data)==NULL &&
-						(aur_pkg_get_desc (p->data)==NULL ||
-						strcasestr (aur_pkg_get_desc (p->data),
-									t->data)==NULL))
-						match=0;
+				if (config.name_only) {
+					if (!does_name_contain_targets(*targets, aur_pkg_get_name (p->data)))
+						match = 0;
+				} else {
+					for (t=alpm_list_next (*targets); t; t=alpm_list_next (t))
+					{
+						if (strcasestr (aur_pkg_get_name (p->data), t->data)==NULL &&
+								(aur_pkg_get_desc (p->data)==NULL ||
+								strcasestr (aur_pkg_get_desc (p->data), t->data)==NULL))
+							match=0;
+					}
 				}
 				if (match)
 				{
