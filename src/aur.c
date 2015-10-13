@@ -601,7 +601,7 @@ static int aur_request (alpm_list_t **targets, int type)
 			{
 				int match=1;
 				if (config.name_only) {
-					if (!does_name_contain_targets(*targets, aur_pkg_get_name (p->data)))
+					if (!does_name_contain_targets (*targets, aur_pkg_get_name (p->data), 0))
 						match = 0;
 				} else {
 					for (t=alpm_list_next (*targets); t; t=alpm_list_next (t))
