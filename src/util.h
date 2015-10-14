@@ -228,7 +228,8 @@ void show_results ();
 const char *mbasename(const char *path);
 
 /* Returns 1 if package name contains all targets; 0 otherwise */
-int does_name_contain_targets (alpm_list_t *targets, const char *name);
+/* use_regex: 0 for AUR search, 1 for pacman search */
+int does_name_contain_targets (alpm_list_t *targets, const char *name, int use_regex);
 
 #endif
 

@@ -89,7 +89,7 @@ void init_config (const char *myname)
 void version ()
 {
 	printf ("%s %s\n", config.myname, PACKAGE_VERSION);
-	exit (0);
+	cleanup (0);
 }
 
 void usage (unsigned short _error)
@@ -99,7 +99,7 @@ void usage (unsigned short _error)
 	if (_error)
 	{
 		fprintf(stderr, "More information: %s --help\n\n", config.myname);
-		exit (1);
+		cleanup (1);
 	}
 	fprintf(stderr, "\nOptions:");
 	fprintf(stderr, "\n\t-1 --just-one        show the first answer only");
@@ -146,7 +146,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\tV: (sync) version");
 	fprintf(stderr, "\n\tw: votes");
 	fprintf(stderr, "\n");
-	exit (0);
+	cleanup (0);
 }
 
 
@@ -443,7 +443,7 @@ int main (int argc, char **argv)
 	if ((need & N_DB) && !(given & N_DB))
 	{
 		fprintf(stderr, "search or information must have database target (-{Q,S,A}).\n");
-		exit(1);
+		cleanup (1);
 	}
 	for (i = optind; i < argc; i++)
 	{

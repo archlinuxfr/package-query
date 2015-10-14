@@ -24,7 +24,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-
+#include <regex.h>
 
 #include "util.h"
 #include "alpm-query.h"
@@ -925,12 +925,28 @@ alpm_list_t *target_arg_close (target_arg_t *t, alpm_list_t *targets)
 	return targets;
 }
 
-int does_name_contain_targets (alpm_list_t *targets, const char *name)
+int does_name_contain_targets (alpm_list_t *targets, const char *name, int use_regex)
 {
+	if (!targets || !name)
+		return 0;
+
 	alpm_list_t *t;
 	for(t = targets; t; t = alpm_list_next(t)) {
 		const char *target = (const char *)(t->data);
-		if (strcasestr(name, target) == NULL) {
+		if (!target)
+			continue;
+
+		if (use_regex) {
+			regex_t reg;
+			if (regcomp(&reg, target, REG_EXTENDED | REG_NOSUB | REG_ICASE | REG_NEWLINE) != 0) {
+				return 0;
+			}
+			if (regexec(&reg, name, 0, 0, 0) != 0 && strstr(name, target) == NULL) {
+				regfree(&reg);
+				return 0;
+			}
+			regfree(&reg);
+		} else if (strcasestr(name, target) == NULL) {
 			return 0;
 		}
 	}
