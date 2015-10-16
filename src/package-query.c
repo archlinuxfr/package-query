@@ -109,6 +109,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-q --quiet           quiet");
 	fprintf(stderr, "\n\t-x --escape          escape \" on output");
 	fprintf(stderr, "\n\t--sort,--rsort [name,date,vote,size]");
+	fprintf(stderr, "\n\t--show-size          show package size");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "\n\t-A --aur             query AUR database");
 	fprintf(stderr, "\n\t-Q --query           search in local database");
@@ -118,7 +119,6 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-b --dbpath <path>   default: %s", DBPATH);
 	fprintf(stderr, "\n\t-c --config <file>   default: %s", CONFFILE);
 	fprintf(stderr, "\n\t-r --root <path>     default: %s", ROOTDIR);
-	fprintf(stderr, "\n\t--show-size          show package size");
 	fprintf(stderr, "\n\nModifiers:");
 	fprintf(stderr, "\n\t-i --info            search by name");
 	fprintf(stderr, "\n\t--pkgbase            limit info to pkgbase (AUR only)");
