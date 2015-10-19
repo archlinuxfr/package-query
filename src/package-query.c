@@ -109,6 +109,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-q --quiet           quiet");
 	fprintf(stderr, "\n\t-x --escape          escape \" on output");
 	fprintf(stderr, "\n\t--sort,--rsort [name,date,vote,size]");
+	fprintf(stderr, "\n\t--show-size          show package size");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "\n\t-A --aur             query AUR database");
 	fprintf(stderr, "\n\t-Q --query           search in local database");

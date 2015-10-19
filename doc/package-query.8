@@ -123,6 +123,11 @@ Perform insecure ssl connection (if compiled with curl support)\&.
 .RS 4
 Output without colors\&.
 .RE
+.PP
+\fB\-\-show\-size\fR
+.RS 4
+Show package size\&.
+.RE
 .SH "COMMON SEARCH OPTIONS"
 .PP
 \fB\-1, \-\-just\-one\fR
@@ -163,6 +168,11 @@ Query packages which requires one of the targets\&.
 \fB\-s, \-\-search\fR
 .RS 4
 Regex search for ALPM and SQL search for AUR\&.
+.RE
+.PP
+\fB\--nameonly\fR
+.RS 4
+Search within package names only (regex support for ALPM, strict check for AUR)\&.
 .RE
 .PP
 \fB\-\-sort [n,w,1,2]\fR
