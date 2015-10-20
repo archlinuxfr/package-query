@@ -25,13 +25,13 @@
 /*
  * Filter
  */
-#define F_FOREIGN 1
-#define F_EXPLICIT 2
-#define F_DEPS	4
-#define F_UNREQUIRED 8
-#define F_UPGRADES 16
-#define F_GROUP 32
-#define F_NATIVE 64
+#define F_FOREIGN      1
+#define F_EXPLICIT     2
+#define F_DEPS         4
+#define F_UNREQUIRED   8
+#define F_UPGRADES     16
+#define F_GROUP        32
+#define F_NATIVE       64
 #define F_UNREQUIRED_2 128
 
 
