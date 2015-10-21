@@ -342,7 +342,7 @@ static int json_key (void * ctx, const unsigned char * stringVal, size_t stringL
 	stringLen = (stringLen >= AUR_ID_LEN) ? AUR_ID_LEN - 1 : stringLen;
 	for (i = 0; i <= AUR_LAST_ID; ++i)
 	{
-		if (strncmp(aur_key_types_names[i], stringVal, stringLen) == 0)
+		if (strncmp(aur_key_types_names[i], (const char *)stringVal, stringLen) == 0)
 		{
 			pkg_json->current_key = i;
 			break;
@@ -381,7 +381,7 @@ static int json_integer (void * ctx, long long val)
 	{
 		pkg_json->pkg->firstsubmit = (time_t) val;
 	}
-	else if (pkg_json->current_key = AUR_LAST)
+	else if (pkg_json->current_key == AUR_LAST)
 	{
 		pkg_json->pkg->lastmod = (time_t) val;
 	}
