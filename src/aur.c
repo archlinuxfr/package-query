@@ -342,7 +342,8 @@ static int json_key (void * ctx, const unsigned char * stringVal, size_t stringL
 	stringLen = (stringLen >= AUR_ID_LEN) ? AUR_ID_LEN - 1 : stringLen;
 	for (i = 0; i <= AUR_LAST_ID; ++i)
 	{
-		if (strncmp(aur_key_types_names[i], stringVal, stringLen) == 0)
+		if (strlen(aur_key_types_names[i]) == stringLen &&
+				strncmp(aur_key_types_names[i], (const char*)stringVal, stringLen) == 0)
 		{
 			pkg_json->current_key = i;
 			break;
@@ -381,7 +382,7 @@ static int json_integer (void * ctx, long long val)
 	{
 		pkg_json->pkg->firstsubmit = (time_t) val;
 	}
-	else if (pkg_json->current_key = AUR_LAST)
+	else if (pkg_json->current_key == AUR_LAST)
 	{
 		pkg_json->pkg->lastmod = (time_t) val;
 	}
@@ -743,16 +744,18 @@ const char *aur_get_str (void *p, unsigned char c)
 	{
 		case 'd': info = (char *) aur_pkg_get_desc (pkg); break;
 		case 'G':
-			info = (char *) malloc (sizeof (char) *
-				(strlen (config.aur_url) +
-				strlen (aur_pkg_get_pkgbase (pkg)) +
-				6 /* '/%s.git + \0 */
-			));
-			strcpy (info, config.aur_url);
-			strcat (info, "/");
-			strcat (info, aur_pkg_get_pkgbase (pkg));
-			strcat (info, ".git");
-			free_info = 1;
+			if (config.aur_url && aur_pkg_get_pkgbase (pkg)) {
+				info = (char *) malloc (sizeof (char) *
+					(strlen (config.aur_url) +
+					strlen (aur_pkg_get_pkgbase (pkg)) +
+					6 /* '/%s.git + \0 */
+				));
+				strcpy (info, config.aur_url);
+				strcat (info, "/");
+				strcat (info, aur_pkg_get_pkgbase (pkg));
+				strcat (info, ".git");
+				free_info = 1;
+			}
 			break;
 		case 'i': 
 			info = itostr (aur_pkg_get_id (pkg)); 
@@ -771,14 +774,16 @@ const char *aur_get_str (void *p, unsigned char c)
 		case 's':
 		case 'r': info = strdup (AUR_REPO); free_info=1; break;
 		case 'u': 
-			info = (char *) malloc (sizeof (char) * 
-				(strlen (config.aur_url) + 
-				strlen (aur_pkg_get_urlpath (pkg)) +
-				2 /* '/' separate url and filename */
-			));
-			strcpy (info, config.aur_url);
-			strcat (info, aur_pkg_get_urlpath (pkg));
-			free_info = 1;
+			if (config.aur_url && aur_pkg_get_urlpath (pkg)) {
+				info = (char *) malloc (sizeof (char) *
+					(strlen (config.aur_url) +
+					strlen (aur_pkg_get_urlpath (pkg)) +
+					2 /* '/' separate url and filename */
+				));
+				strcpy (info, config.aur_url);
+				strcat (info, aur_pkg_get_urlpath (pkg));
+				free_info = 1;
+			}
 			break;
 		case 'U': info = (char *) aur_pkg_get_url (pkg); break;
 		case 'S':
