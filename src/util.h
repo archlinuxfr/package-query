@@ -149,9 +149,9 @@ typedef struct _target_t
 target_t *target_parse (const char *str);
 
 void target_free (target_t *t);
-int target_check_version (target_t *t, const char *ver);
-int target_compatible (target_t *t1, target_t *t2);
-int target_name_cmp (target_t *t1, const char *name);
+int target_check_version (const target_t *t, const char *ver);
+int target_compatible (const target_t *t1, const target_t *t2);
+int target_name_cmp (const target_t *t1, const char *name);
 
 /*
  * Target passed as argument
@@ -171,7 +171,7 @@ target_arg_t *target_arg_init (ta_dup_fn dup_fn,
                                alpm_list_fn_cmp cmp_fn,
                                alpm_list_fn_free free_fn);
 int target_arg_add (target_arg_t *t, const char *s, void *item);
-target_t *target_arg_free (target_arg_t *t);
+void target_arg_free (target_arg_t *t);
 alpm_list_t *target_arg_clear (target_arg_t *t, alpm_list_t *targets);
 alpm_list_t *target_arg_close (target_arg_t *t, alpm_list_t *targets);
 
@@ -193,7 +193,7 @@ char *string_free2 (string_t *dest);
 string_t *string_ncat (string_t *dest, const char *src, size_t n);
 string_t *string_cat (string_t *dest, const char *src);
 string_t *string_fcat (string_t *dest, const char *format, ...);
-const char *string_cstr (string_t *str);
+const char *string_cstr (const string_t *str);
 /* strtrim, strreplace are from pacman's code */
 char *strtrim(char *str);
 char *strreplace(const char *str, const char *needle, const char *replace);
