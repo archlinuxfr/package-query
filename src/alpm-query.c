@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
+#include <glob.h>
 
 #include "util.h"
 #include "alpm-query.h"
@@ -142,11 +143,27 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 				if (strcmp (line, "Include") == 0)
 				{
 					strtrim (ptr);
-					if (!parse_configfile (dbs, ptr, reg))
-					{
-						fclose (conf);
-						return 0;
+					/* Taken from pacman - logging removed */
+					glob_t globbuf;
+					size_t gindex;
+					/* Ignore include failures... assume non-critical */
+					const int globret = glob(ptr, GLOB_NOCHECK, NULL, &globbuf);
+					switch (globret) {
+						case GLOB_NOSPACE:
+						case GLOB_ABORTED:
+						case GLOB_NOMATCH:
+							break;
+						default:
+							for (gindex = 0; gindex < globbuf.gl_pathc; gindex++) {
+								if (!parse_configfile(dbs, globbuf.gl_pathv[gindex], reg)) {
+									globfree(&globbuf);
+									fclose (conf);
+									return 0;
+								}
+							}
+							break;
 					}
+					globfree(&globbuf);
 				}
 				else if (reg && strcmp (line, "Server") == 0 && db != NULL)
 				{
