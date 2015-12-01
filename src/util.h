@@ -198,10 +198,10 @@ const char *string_cstr (const string_t *str);
 char *strtrim(char *str);
 char *strreplace(const char *str, const char *needle, const char *replace);
 
-char *concat_str_list (alpm_list_t *l);
-char *concat_dep_list (alpm_list_t *deps);
-char *concat_file_list (alpm_filelist_t *f);
-char *concat_backup_list (alpm_list_t *backups);
+char *concat_str_list (const alpm_list_t *l);
+char *concat_dep_list (const alpm_list_t *deps);
+char *concat_file_list (const alpm_filelist_t *f);
+char *concat_backup_list (const alpm_list_t *backups);
 
 /* integer/long to string */
 char * itostr (int i);
@@ -229,7 +229,7 @@ const char *mbasename(const char *path);
 
 /* Returns 1 if package name contains all targets; 0 otherwise */
 /* use_regex: 0 for AUR search, 1 for pacman search */
-int does_name_contain_targets (alpm_list_t *targets, const char *name, int use_regex);
+int does_name_contain_targets (const alpm_list_t *targets, const char *name, int use_regex);
 
 #endif
 

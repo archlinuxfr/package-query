@@ -148,7 +148,6 @@ void print_or_add_result (void *pkg, unsigned short type)
 void show_results ()
 {
 	alpm_list_t *i_first;
-	alpm_list_t *i;
 	alpm_list_nav fn_nav = NULL;
 	alpm_list_fn_cmp fn_cmp = NULL;
 
@@ -172,7 +171,7 @@ void show_results ()
 		fn_nav = (alpm_list_nav) alpm_list_next;
 		i_first = results;
 	}
-	for (i = i_first; i; i = fn_nav(i)) {
+	for (alpm_list_t *i = i_first; i; i = fn_nav(i)) {
 		const results_t *r = i->data;
 		if (r && r->type == R_ALPM_PKG) {
 			print_package ("", r->ele, alpm_pkg_get_str);
@@ -239,7 +238,7 @@ int target_check_version (const target_t *t, const char *ver)
 	if (!t || !ver || t->mod == ALPM_DEP_MOD_ANY) {
 		return 1;
 	}
-	int ret = alpm_pkg_vercmp (ver, t->ver);
+	const int ret = alpm_pkg_vercmp (ver, t->ver);
 	switch (t->mod)
 	{
 		case ALPM_DEP_MOD_LE: return (ret <= 0);
@@ -346,8 +345,7 @@ string_t *string_fcat (string_t *dest, const char *format, ...)
 	va_start(args, format);
 	vasprintf(&s, format, args);
 	va_end(args);
-	if (!s)
-	{
+	if (!s) {
 		perror ("vasprintf");
 		exit (1);
 	}
@@ -367,7 +365,7 @@ char *strtrim(char *str)
 
 	if (str == NULL || *str == '\0') {
 		/* string is empty, so we're done. */
-		return(str);
+		return str;
 	}
 
 	while (isspace(*pch)) {
@@ -379,33 +377,33 @@ char *strtrim(char *str)
 
 	/* check if there wasn't anything but whitespace in the string. */
 	if (*str == '\0') {
-		return(str);
+		return str;
 	}
 
-	pch = (str + (strlen(str) - 1));
+	pch = str + (strlen(str) - 1);
 	while (isspace(*pch)) {
 		pch--;
 	}
 	*++pch = '\0';
 
-	return(str);
+	return str;
 }
 
-char *concat_str_list (alpm_list_t *l)
+char *concat_str_list (const alpm_list_t *l)
 {
-	char *ret;
+	char *ret = NULL;
 	size_t len = 0;
+	const size_t sep_len = strlen (config.delimiter);
 	int j = 0;
-	alpm_list_t *i;
 
 	if (!l) {
 		return NULL;
 	}
 
-	for (i = l; i; i = alpm_list_next(i)) {
+	for (const alpm_list_t *i = l; i; i = alpm_list_next(i)) {
 		if (i->data) {
 			/* data's len + space for separator */
-			len += strlen (i->data) + strlen (config.delimiter);
+			len += strlen (i->data) + sep_len;
 		}
 	}
 
@@ -415,18 +413,20 @@ char *concat_str_list (alpm_list_t *l)
 
 	len++; /* '\0' at the end */
 	CALLOC (ret, len, sizeof (char));
-	for(i = l; i; i = alpm_list_next(i)) {
-		if (j++ > 0) strcat (ret, config.delimiter);
-		strcat (ret, i->data);
+	for (const alpm_list_t *i = l; i; i = alpm_list_next (i)) {
+		if (i->data) {
+			if (j++ > 0) strcat (ret, config.delimiter);
+			strcat (ret, i->data);
+		}
 	}
 
 	return ret;
 }
 
-char *concat_dep_list (alpm_list_t *deps)
+char *concat_dep_list (const alpm_list_t *deps)
 {
-	alpm_list_t *i, *deps_str = NULL;
-	for (i = deps; i; i = alpm_list_next (i)) {
+	alpm_list_t *deps_str = NULL;
+	for (const alpm_list_t *i = deps; i; i = alpm_list_next (i)) {
 		deps_str = alpm_list_add (deps_str, alpm_dep_compute_string (i->data));
 	}
 	char *ret = concat_str_list (deps_str);
@@ -434,21 +434,22 @@ char *concat_dep_list (alpm_list_t *deps)
 	return ret;
 }
 
-char *concat_file_list (alpm_filelist_t *f)
+char *concat_file_list (const alpm_filelist_t *f)
 {
 	char *ret = NULL;
 	size_t len = 0;
-	int i, j = 0;
+	const size_t sep_len = strlen (config.delimiter);
+	int j = 0;
 
 	if (!f) {
 		return NULL;
 	}
 
-	for(i = 0; i < f->count; i++) {
-		alpm_file_t *file = f->files + i;
+	for (size_t i = 0; i < f->count; i++) {
+		const alpm_file_t *file = f->files + i;
 		if (file && file->name) {
-			/* data's len + space for separator */
-			len += strlen (file->name) + strlen (config.delimiter);
+			/* filename len + space for separator */
+			len += strlen (file->name) + sep_len;
 		}
 	}
 
@@ -458,10 +459,10 @@ char *concat_file_list (alpm_filelist_t *f)
 
 	len++; /* '\0' at the end */
 	CALLOC (ret, len, sizeof (char));
-	for(i = 0; i < f->count; i++) {
-		alpm_file_t *file = f->files + i;
+	for (size_t i = 0; i < f->count; i++) {
+		const alpm_file_t *file = f->files + i;
 		if (file && file->name) {
-			if (j++ > 0) strcat (ret, config.delimiter); /* seems that the condition doesn't make sense... */
+			if (j++ > 0) strcat (ret, config.delimiter);
 			strcat (ret, file->name);
 		}
 	}
@@ -469,11 +470,11 @@ char *concat_file_list (alpm_filelist_t *f)
 	return ret;
 }
 
-char *concat_backup_list (alpm_list_t *backups)
+char *concat_backup_list (const alpm_list_t *backups)
 {
-	alpm_list_t *i, *backups_str = NULL;
-	for (i = backups; i; i = alpm_list_next (i)) {
-		alpm_backup_t *backup = i->data;
+	alpm_list_t *backups_str = NULL;
+	for (const alpm_list_t *i = backups; i; i = alpm_list_next (i)) {
+		const alpm_backup_t *backup = i->data;
 		if (backup) {
 			char *b_str;
 			asprintf (&b_str, "%s\t%s", backup->name, backup->hash);
@@ -620,8 +621,6 @@ static int getcols(void)
 
 static void indent (const char *str)
 {
-	const char *c1 = NULL;
-	int cur_col = INDENT;
 	if (!str) {
 		return;
 	}
@@ -631,9 +630,10 @@ static void indent (const char *str)
 		return;
 	}
 	const char *c = str;
+	const char *c1 = NULL;
+	int cur_col = INDENT;
 	fprintf (stdout, "%*s", INDENT, "");
-	while ((c1 = strchr (c, ' ')) != NULL)
-	{
+	while ((c1 = strchr (c, ' ')) != NULL) {
 		const int len = c1 - c;
 		cur_col += len + 1;
 		if (cur_col >= cols) {
@@ -652,34 +652,101 @@ static void indent (const char *str)
 	}
 }
 
-void color_print_package (void *p, printpkgfn f)
+/* Helper functions for color_print_package() */
+
+static const char *color_print_repo (void *p, printpkgfn f)
+{
+	const char *info = (config.aur_foreign) ? f(p, 'r') : f(p, 's');
+	if (info) {
+		if (config.get_res) dprintf (FD_RES, "%s/", info);
+		fprintf (stdout, "%s%s/%s", color_repo (info), info, color(C_NO));
+	}
+	info = f(p, 'n');
+	if (config.get_res) {
+		dprintf (FD_RES, "%s\n", info);
+	}
+	fprintf (stdout, "%s%s%s ", color(C_PKG), info, color(C_NO));
+	return info;
+}
+
+static const char *color_print_aur_version (void *p, printpkgfn f, const char *i, const char *lver,
+											 const char *ver)
+{
+	const char *info = NULL, *lver_color = NULL;
+	if (!i) {
+		lver_color = color(C_ORPHAN);
+	} else {
+		info = f(p, 'o');
+		if (info && info[0] == '1') {
+			lver_color = color(C_OD);
+		}
+	}
+	fprintf (stdout, "%s%s%s", (lver_color) ? lver_color : color(C_VER), lver, color(C_NO));
+	if (alpm_pkg_vercmp (ver, lver) > 0) {
+		fprintf (stdout, " ( aur: %s )", ver);
+	}
+	return info;
+}
+
+static void color_print_size (void *p, printpkgfn f)
+{
+	const char *info = f(p, 'r');
+	if (info && strcmp (info, "aur") != 0) {
+		fprintf (stdout, " [%.2f M]", (double) get_size_pkg (p) / (1024.0 * 1024));
+	}
+}
+
+static void color_print_groups (void *p, printpkgfn f)
+{
+	const char *info = f(p, 'g');
+	if (info) {
+		fprintf (stdout, " %s(%s)%s", color(C_GRP), info, color(C_NO));
+	}
+}
+
+static void color_print_install_info (void *p, printpkgfn f, const char *lver, const char *ver)
+{
+	if (lver) {
+		const char *info = f(p, 'r');
+		if (info && strcmp (info, "local") != 0) {
+			fprintf (stdout, " %s[%s", color(C_INSTALLED), _("installed"));
+			if (strcmp (ver, lver) != 0) {
+				fprintf (stdout, ": %s%s%s%s", color(C_LVER), lver, color(C_NO), color(C_INSTALLED));
+			}
+			fprintf (stdout, "]%s", color(C_NO));
+		}
+	}
+}
+
+static void color_print_aur_status (void *p, printpkgfn f)
+{
+	const char *info = f(p, 'o');
+	if (info && info[0] == '1') {
+		fprintf (stdout, " %s(%s)%s", color(C_OD), _("Out of Date"), color(C_NO));
+	}
+	info = f(p, 'w');
+	if (info) {
+		fprintf (stdout, " %s(%s)%s", color(C_VOTES), info, color(C_NO));
+	}
+}
+
+static void color_print_package (void *p, printpkgfn f)
 {
 	static int number = 0;
-	const char *info, *lver;
-	char *ver = NULL;
 	const int aur = (f == aur_get_str);
 	const int grp = (f == alpm_grp_get_str);
-	string_t *cstr = string_new ();
 
 	/* Numbering list */
 	if (config.numbering) {
-		cstr = string_fcat (cstr, "%s%d%s ", color (C_NB), ++number, color (C_NO));
+		fprintf (stdout, "%s%d%s ", color (C_NB), ++number, color (C_NO));
 	}
 
 	/* repo/name */
-	info = (config.aur_foreign) ? f(p, 'r') : f(p, 's');
-	if (info) {
-		if (config.get_res) dprintf (FD_RES, "%s/", info);
-		cstr = string_fcat (cstr, "%s%s/%s", color_repo (info), info, color(C_NO));
-	}
-	info = f(p, 'n');
-	if (config.get_res) dprintf (FD_RES, "%s\n", info);
-	cstr = string_fcat (cstr, "%s%s%s ", color(C_PKG), info, color(C_NO));
+	const char *info = color_print_repo (p, f);
 
 	if (grp) {
 		/* no more output for groups */
-		fprintf (stdout, "%s\n", string_cstr (cstr));
-		string_free (cstr);
+		fprintf (stdout, "\n");
 		return;
 	}
 
@@ -689,103 +756,66 @@ void color_print_package (void *p, printpkgfn f)
 	 *   C_OD if package exists and is out of date
 	 *   C_VER otherwise
 	 */
-	lver = alpm_local_pkg_get_str (info, 'l');
+	const char *lver = alpm_local_pkg_get_str (info, 'l');
 	info = f(p, (config.aur_upgrades || config.filter & F_UPGRADES) ? 'V' : 'v');
-	ver = STRDUP (info);
+	char *ver = STRDUP (info);
 	info = (aur) ? f(p, 'm') : NULL;
 	if (config.aur_foreign) {
 		/* Compare foreign package with AUR */
 		if (aur) {
-			const char *lver_color = NULL;
-			if (!info) {
-				lver_color = color(C_ORPHAN);
-			} else {
-				info = f(p, 'o');
-				if (info && info[0] == '1') {
-					lver_color = color(C_OD);
-				}
-			}
-			cstr = string_fcat (cstr, "%s%s%s", 
-				(lver_color) ? lver_color : color(C_VER),
-				lver, color (C_NO));
-			if (alpm_pkg_vercmp (ver, lver) > 0) {
-				cstr = string_fcat (cstr, " ( aur: %s )", ver);
-			}
-			fprintf (stdout, "%s\n", string_cstr (cstr));
-			FREE (ver);
+			info = color_print_aur_version (p, f, info, lver, ver);
 		} else {
-			fprintf (stdout, "%s %s%s%s\n", string_cstr (cstr), color(C_VER), lver, color(C_NO));
+			fprintf (stdout, " %s%s%s\n", color(C_VER), lver, color(C_NO));
 		}
-		string_free (cstr);
+		FREE (ver);
 		return;
 	}
 
 	if (aur && !info) {
-		cstr = string_fcat (cstr, "%s", color(C_ORPHAN));
+		fprintf (stdout, "%s", color(C_ORPHAN));
 	} else {
-		cstr = string_fcat (cstr, "%s", color(C_VER));
+		fprintf (stdout, "%s", color(C_VER));
 	}
 	if (config.filter & F_UPGRADES) {
-		cstr = string_fcat (cstr, "%s%s -> %s%s%s", lver, color (C_NO), color(C_VER), ver, color (C_NO));
+		fprintf (stdout, "%s%s -> %s%s%s", lver, color (C_NO), color(C_VER), ver, color (C_NO));
 	} else {
-		cstr = string_fcat (cstr, "%s%s", ver, color (C_NO));
+		fprintf (stdout, "%s%s", ver, color (C_NO));
 	}
 
 	/* show size */
 	if (config.show_size) {
-		info = f(p, 'r');
-		if (info && strcmp (info, "aur") != 0) {
-			cstr = string_fcat (cstr, " [%.2f M]", (double) get_size_pkg (p) / (1024.0 * 1024));
-		}
+		color_print_size (p, f);
 	}
 
 	if (config.aur_upgrades || config.filter & F_UPGRADES) {
-		fprintf (stdout, "%s\n", string_cstr (cstr));
-		string_free (cstr);
+		fprintf (stdout, "\n");
 		FREE (ver);
 		return;
 	}
 
 	/* show groups */
-	info = f(p, 'g');
-	if (info) {
-		cstr = string_fcat (cstr, " %s(%s)%s", color(C_GRP), info, color(C_NO));
-	}
+	color_print_groups (p, f);
 
 	/* show install information */
-	if (lver) {
-		info = f(p, 'r');
-		if (info && strcmp (info, "local") != 0) {
-			cstr = string_fcat (cstr, " %s[%s", color(C_INSTALLED), _("installed"));
-			if (strcmp (ver, lver) != 0) {
-				cstr = string_fcat (cstr, ": %s%s%s%s", color(C_LVER), lver, color (C_NO), color(C_INSTALLED));
-			}
-			cstr = string_fcat (cstr, "]%s", color(C_NO));
-		}
-	}
+	color_print_install_info (p, f, lver, ver);
+
 	/* ver no more needed */
 	FREE (ver);
 
 	/* Out of date status & votes */
 	if (aur) {
-		info = f(p, 'o');
-		if (info && info[0] == '1') {
-			cstr = string_fcat (cstr, " %s(%s)%s", color(C_OD), _("Out of Date"), color(C_NO));
-		}
-		info = f(p, 'w');
-		if (info) {
-			cstr = string_fcat (cstr, " %s(%s)%s", color(C_VOTES), info, color(C_NO));
-		}
+		color_print_aur_status (p, f);
 	}
 
-	/* Display computed string */
-	fprintf (stdout, "%s\n", string_cstr (cstr));
-	string_free (cstr);
+	/* Nothing more to display */
+	fprintf (stdout, "\n");
 
 	/* Description
 	 * if -Q or -Sl or -Sg <target>, don't display description
 	 */
-	if (config.op != OP_SEARCH && config.op != OP_LIST_REPO_S) return;
+	if (config.op != OP_SEARCH && config.op != OP_LIST_REPO_S) {
+		return;
+	}
 	fprintf (stdout, "%s", color(C_DSC));
 	indent (f(p, 'd'));
 	fprintf (stdout, "%s", color(C_NO));
@@ -793,6 +823,7 @@ void color_print_package (void *p, printpkgfn f)
 
 void print_package (const char *target, void *pkg, printpkgfn f)
 {
+	if (!target || !pkg || !f) return;
 	if (config.quiet) return;
 	if (!config.custom_out) {
 		color_print_package (pkg, f);
@@ -811,12 +842,10 @@ char *pkg_to_str (const char *target, void *pkg, printpkgfn f, const char *forma
 {
 	if (!format) return NULL;
 	const char *c;
-	const char *info;
 	string_t *ret = string_new();
 	const char *ptr = format;
 	const char *end = &(format[strlen(format)]);
-	while ((c = strchr (ptr, '%')))
-	{
+	while ((c = strchr (ptr, '%'))) {
 		if (&(c[1]) == end) {
 			break;
 		}
@@ -824,7 +853,7 @@ char *pkg_to_str (const char *target, void *pkg, printpkgfn f, const char *forma
 			ret = string_ncat (ret, ptr, (c-ptr));
 			ret = string_cat (ret, "%%");
 		} else {
-			info = NULL;
+			const char *info = NULL;
 			if (strchr (FORMAT_LOCAL_PKG, c[1])) {
 				info = alpm_local_pkg_get_str (f(pkg, 'n'), c[1]);
 			} else if (c[1] == 't') {
@@ -893,8 +922,7 @@ void target_arg_free (target_arg_t *t)
 alpm_list_t *target_arg_clear (target_arg_t *t, alpm_list_t *targets)
 {
 	if (t && targets && config.just_one) {
-		alpm_list_t *i;
-		for (i = t->args; i; i = alpm_list_next (i)) {
+		for (alpm_list_t *i = t->args; i; i = alpm_list_next (i)) {
 			char *data = NULL;
 			targets = alpm_list_remove_str (targets, i->data, &data);
 			if (data) free (data);
@@ -910,14 +938,13 @@ alpm_list_t *target_arg_close (target_arg_t *t, alpm_list_t *targets)
 	return targets;
 }
 
-int does_name_contain_targets (alpm_list_t *targets, const char *name, int use_regex)
+int does_name_contain_targets (const alpm_list_t *targets, const char *name, int use_regex)
 {
 	if (!targets || !name) {
 		return 0;
 	}
 
-	alpm_list_t *t;
-	for(t = targets; t; t = alpm_list_next(t)) {
+	for (const alpm_list_t *t = targets; t; t = alpm_list_next (t)) {
 		const char *target = (const char *)(t->data);
 		if (!target) {
 			continue;
@@ -925,18 +952,19 @@ int does_name_contain_targets (alpm_list_t *targets, const char *name, int use_r
 
 		if (use_regex) {
 			regex_t reg;
-			if (regcomp(&reg, target, REG_EXTENDED | REG_NOSUB | REG_ICASE | REG_NEWLINE) != 0) {
+			if (regcomp (&reg, target, REG_EXTENDED | REG_NOSUB | REG_ICASE | REG_NEWLINE) != 0) {
 				return 0;
 			}
-			if (regexec(&reg, name, 0, 0, 0) != 0 && strstr(name, target) == NULL) {
-				regfree(&reg);
+			if (regexec (&reg, name, 0, 0, 0) != 0 && strstr (name, target) == NULL) {
+				regfree (&reg);
 				return 0;
 			}
-			regfree(&reg);
-		} else if (strcasestr(name, target) == NULL) {
+			regfree (&reg);
+		} else if (strcasestr (name, target) == NULL) {
 			return 0;
 		}
 	}
+
 	return 1;
 }
 
