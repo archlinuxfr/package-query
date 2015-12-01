@@ -455,7 +455,7 @@ off_t alpm_pkg_get_realsize (alpm_pkg_t *pkg)
 
 	chdir (alpm_option_get_root(config.handle));
 	CALLOC (inodes, files->count, sizeof (ino_t));
-	for (int k = 0; k < files->count; k++) {
+	for (size_t k = 0; k < files->count; k++) {
 		const alpm_file_t *f = files->files + k;
 		if (!f) continue;
 		int found = 0;
@@ -463,7 +463,7 @@ off_t alpm_pkg_get_realsize (alpm_pkg_t *pkg)
 		if (lstat (f->name, &buf) == -1 ||
 				!(S_ISREG (buf.st_mode) || S_ISLNK(buf.st_mode)))
 			continue;
-		for (int i = 0; i < files->count && i < j && !found; i++)
+		for (size_t i = 0; i < files->count && i < j && !found; i++)
 			if (inodes[i] == buf.st_ino) {
 				found = 1;
 				break;
