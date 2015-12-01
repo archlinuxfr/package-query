@@ -446,7 +446,7 @@ char *concat_file_list (alpm_filelist_t *f)
 
 	for(i = 0; i < f->count; i++) {
 		alpm_file_t *file = f->files + i;
-		if (file) {
+		if (file && file->name) {
 			/* data's len + space for separator */
 			len += strlen (file->name) + strlen (config.delimiter);
 		}
@@ -460,7 +460,7 @@ char *concat_file_list (alpm_filelist_t *f)
 	CALLOC (ret, len, sizeof (char));
 	for(i = 0; i < f->count; i++) {
 		alpm_file_t *file = f->files + i;
-		if (file) {
+		if (file && file->name) {
 			if (j++ > 0) strcat (ret, config.delimiter); /* seems that the condition doesn't make sense... */
 			strcat (ret, file->name);
 		}
