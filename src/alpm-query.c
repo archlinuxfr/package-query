@@ -74,10 +74,10 @@ int init_alpm ()
 	return 1;
 }
 
-static int parse_config_options (char *ptr, alpm_db_t *db, alpm_list_t **dbs, int reg)
+static int parse_config_options (char *ptr, alpm_db_t **db, alpm_list_t **dbs, int reg)
 {
 	if (reg) {
-		if ((db = alpm_register_syncdb(config.handle, ptr, ALPM_SIG_USE_DEFAULT)) == NULL) {
+		if ((*db = alpm_register_syncdb(config.handle, ptr, ALPM_SIG_USE_DEFAULT)) == NULL) {
 			fprintf(stderr,
 				"could not register '%s' database (%s)\n", ptr,
 				alpm_strerror(alpm_errno(config.handle)));
@@ -139,7 +139,7 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 					}
 					global_opt_parsed = 1;
 				}
-				if (!parse_config_options (ptr, db, dbs, reg)) {
+				if (!parse_config_options (ptr, &db, dbs, reg)) {
 					fclose (conf);
 					return 0;
 				}
