@@ -101,12 +101,14 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\nOptions:");
 	fprintf(stderr, "\n\t-1 --just-one        show the first answer only");
 	fprintf(stderr, "\n\t--delimiter          define list separator");
-	fprintf(stderr, "\n\t-f --format <format> ");
+	fprintf(stderr, "\n\t-f --format <format>");
 	fprintf(stderr, "\n\t-h --help            show this help");
 	fprintf(stderr, "\n\t-q --quiet           quiet");
 	fprintf(stderr, "\n\t-x --escape          escape \" on output");
+	fprintf(stderr, "\n\t--nocolor            output without colors");
 	fprintf(stderr, "\n\t--sort,--rsort [name,date,vote,size]");
 	fprintf(stderr, "\n\t--show-size          show package size");
+	fprintf(stderr, "\n\t--insecure           perform insecure ssl connection (curl)");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "\n\t-A --aur             query AUR database");
 	fprintf(stderr, "\n\t-Q --query           search in local database");
