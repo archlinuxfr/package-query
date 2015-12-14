@@ -65,6 +65,7 @@ void cleanup (int ret)
 	FREE (config.arch);
 	FREE (config.aur_url);
 	FREE (config.configfile);
+	FREE (config.format_out);
 	FREE (config.dbpath);
 	FREE (config.rootdir);
 	alpm_cleanup ();
@@ -268,7 +269,8 @@ int main (int argc, char **argv)
 				break;
 			case 'f':
 				config.custom_out = 1;
-				strncpy (config.format_out, optarg, PATH_MAX);
+				FREE (config.format_out);
+				config.format_out = strndup (optarg, PATH_MAX);
 				format_str (config.format_out);
 				break;
 			case 'g':
