@@ -104,13 +104,13 @@ typedef struct _aq_config
 	const char *myname;
 	alpm_handle_t *handle;
 	char delimiter[SEP_LEN];
-	bool aur;
+	unsigned short aur;
 	bool aur_foreign;
 	bool aur_upgrades;
 	bool colors;
 	bool custom_out;
-	bool db_local;
-	bool db_sync;
+	unsigned short db_local;
+	unsigned short db_sync;
 	bool escape;
 	unsigned short filter;
 	bool get_res;

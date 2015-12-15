@@ -246,7 +246,7 @@ int main (int argc, char **argv)
 	while ((opt = getopt_long (argc, argv, "1Ac:b:def:ghiLlmnpQqr:Sstuvx", opts, &opt_index)) != -1) {
 		switch (opt) {
 			case '1':
-				config.just_one = 1;
+				config.just_one = true;
 				break;
 			case 'A':
 				if (config.aur) break;
@@ -268,7 +268,7 @@ int main (int argc, char **argv)
 				config.filter |= F_EXPLICIT;
 				break;
 			case 'f':
-				config.custom_out = 1;
+				config.custom_out = true;
 				FREE (config.format_out);
 				config.format_out = strndup (optarg, PATH_MAX);
 				format_str (config.format_out);
@@ -291,7 +291,7 @@ int main (int argc, char **argv)
 				need |= N_TARGET | N_DB;
 				break;
 			case 'L':
-				config.list = 1;
+				config.list = true;
 				break;
 			case 'l':
 				if (config.op) break;
@@ -306,7 +306,7 @@ int main (int argc, char **argv)
 				config.filter |= F_NATIVE;
 				break;
 			case 'p':
-				config.is_file = 1;
+				config.is_file = true;
 				need |= N_TARGET;
 				break;
 			case 'Q':
@@ -315,7 +315,7 @@ int main (int argc, char **argv)
 				given |= N_DB;
 				break;
 			case 'q':
-				config.quiet = 1;
+				config.quiet = true;
 				break;
 			case 'r':
 				FREE (config.rootdir);
@@ -343,7 +343,7 @@ int main (int argc, char **argv)
 				config.filter |= F_UPGRADES;
 				break;
 			case 'x':
-				config.escape = 1;
+				config.escape = true;
 				break;
 			case 'v':
 				version();
@@ -379,7 +379,7 @@ int main (int argc, char **argv)
 				format_str (config.delimiter);
 				break;
 			case 1015: /* --rsort */
-				config.rsort = 1;
+				config.rsort = true;
 				/* fallthrough */
 			case 1002: /* --sort */
 				if (strlen (optarg) > 1) {
@@ -396,33 +396,33 @@ int main (int argc, char **argv)
 				}
 				break;
 			case 1003: /* --nocolor */
-				config.colors = 0;
+				config.colors = false;
 				break;
 			case 1004: /* --number */
-				config.numbering = 1;
+				config.numbering = true;
 				break;
 			case 1005: /* --get-res */
 				if (dup2(FD_RES, FD_RES) == FD_RES)
-					config.get_res = 1;
+					config.get_res = true;
 				break;
 			case 1006: /* --show-size */
-				config.show_size = 1;
+				config.show_size = true;
 				break;
 			case 1007: /* --aur-url */
 				FREE (config.aur_url);
 				config.aur_url = strdup (optarg);
 				break;
 			case 1008: /* --insecure */
-				config.insecure = 1;
+				config.insecure = true;
 				break;
 			case 1014: /* --color */
-				config.colors = 1;
+				config.colors = true;
 				break;
 			case 1016: /* --pkgbase */
-				config.pkgbase = 1;
+				config.pkgbase = true;
 				break;
 			case 1017: /* --nameonly */
-				config.name_only = 1;
+				config.name_only = true;
 				break;
 			default: /* '?' */
 				usage (1);
