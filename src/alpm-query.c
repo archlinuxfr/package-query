@@ -446,7 +446,7 @@ off_t get_size_pkg (alpm_pkg_t *pkg)
 
 off_t alpm_pkg_get_realsize (alpm_pkg_t *pkg)
 {
-	int j = 0;
+	size_t j = 0;
 	ino_t *inodes = NULL;
 	off_t size = 0;
 	const alpm_filelist_t *files = alpm_pkg_get_files (pkg);
