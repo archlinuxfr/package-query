@@ -220,7 +220,6 @@ int main (int argc, char **argv)
 		{"escape",     no_argument,       0, 'x'},
 		{"format",     required_argument, 0, 'f'},
 		{"list-repo",  required_argument, 0, 'L'},
-		{"query-type", required_argument, 0, 1000},
 		{"csep",       required_argument, 0, 1001},
 		{"delimiter",  required_argument, 0, 1001},
 		{"sort",       required_argument, 0, 1002},
@@ -347,17 +346,6 @@ int main (int argc, char **argv)
 				break;
 			case 'v':
 				version();
-				break;
-			/* TODO: is this one needed? it's duplicating 4 options below */
-			case 1000: /* --query-type */
-				if (strcmp (optarg, "depends") == 0)
-					SETQUERY (OP_Q_DEPENDS);
-				else if (strcmp (optarg, "conflicts") == 0)
-					SETQUERY (OP_Q_CONFLICTS);
-				else if (strcmp (optarg, "provides") == 0)
-					SETQUERY (OP_Q_PROVIDES);
-				else if (strcmp (optarg, "replaces") == 0)
-					SETQUERY (OP_Q_REPLACES);
 				break;
 			case 1009: /* --qdepends */
 				SETQUERY (OP_Q_DEPENDS);
