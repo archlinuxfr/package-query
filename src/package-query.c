@@ -219,7 +219,7 @@ int main (int argc, char **argv)
 		{"aur",        no_argument,       0, 'A'},
 		{"escape",     no_argument,       0, 'x'},
 		{"format",     required_argument, 0, 'f'},
-		{"list-repo",  required_argument, 0, 'L'},
+		{"list-repo",  no_argument,       0, 'L'},
 		{"query-type", required_argument, 0, 1000},
 		{"csep",       required_argument, 0, 1001},
 		{"delimiter",  required_argument, 0, 1001},
