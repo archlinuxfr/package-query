@@ -221,7 +221,6 @@ int main (int argc, char **argv)
 		{"format",     required_argument, 0, 'f'},
 		{"list-repo",  required_argument, 0, 'L'},
 		{"query-type", required_argument, 0, 1000},
-		{"csep",       required_argument, 0, 1001},
 		{"delimiter",  required_argument, 0, 1001},
 		{"sort",       required_argument, 0, 1002},
 		{"nocolor",    no_argument,       0, 1003},
