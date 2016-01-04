@@ -478,6 +478,7 @@ int main (int argc, char **argv)
 				continue;
 			}
 			print_package (filename, pkg, alpm_pkg_get_str);
+			alpm_pkg_free (pkg);
 			ret++;
 		}
 		cleanup(!ret);
