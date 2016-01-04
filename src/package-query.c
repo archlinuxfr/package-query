@@ -221,7 +221,6 @@ int main (int argc, char **argv)
 		{"escape",     no_argument,       0, 'x'},
 		{"format",     required_argument, 0, 'f'},
 		{"list-repo",  no_argument,       0, 'L'},
-		{"csep",       required_argument, 0, 1001},
 		{"delimiter",  required_argument, 0, 1001},
 		{"sort",       required_argument, 0, 1002},
 		{"nocolor",    no_argument,       0, 1003},
