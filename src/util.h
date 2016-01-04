@@ -19,6 +19,7 @@
 #ifndef _PQ_UTIL_H
 #define _PQ_UTIL_H
 #include <limits.h>
+#include <stdbool.h>
 #include <alpm.h>
 #include <alpm_list.h>
 
@@ -94,39 +95,38 @@
  */
 typedef struct _aq_config 
 {
-	const char *myname;
-	alpm_handle_t *handle;
-	unsigned short aur;
-	unsigned short aur_foreign;
-	unsigned short aur_upgrades;
-	unsigned short colors;
-	unsigned short custom_out;
-	unsigned short db_local;
-	unsigned short db_sync;
-	unsigned short escape;
-	unsigned short filter;
-	unsigned short get_res;
-	unsigned short is_file;
-	unsigned short insecure;
-	unsigned short just_one;
-	unsigned short numbering;
-	unsigned short list;
-	unsigned short op;
-	unsigned short pkgbase;
-	unsigned short quiet;
-	unsigned short query;
-	unsigned short show_size;
-	unsigned short updates;
-	unsigned short name_only;
 	char *arch;
 	char *aur_url;
 	char *configfile;
-	char delimiter[SEP_LEN];
 	char *dbpath;
-	char format_out[PATH_MAX];
+	char *format_out;
 	char *rootdir;
+	const char *myname;
+	alpm_handle_t *handle;
+	char delimiter[SEP_LEN];
+	unsigned short aur;
+	bool aur_foreign;
+	bool aur_upgrades;
+	bool colors;
+	bool custom_out;
+	unsigned short db_local;
+	unsigned short db_sync;
+	bool escape;
+	unsigned short filter;
+	bool get_res;
+	bool insecure;
+	bool is_file;
+	bool just_one;
+	bool list;
+	bool name_only;
+	bool numbering;
+	unsigned short op;
+	bool pkgbase;
+	bool quiet;
+	bool query;
+	bool show_size;
 	char sort;
-	unsigned short rsort;
+	bool rsort;
 } aq_config;
 
 aq_config config;
