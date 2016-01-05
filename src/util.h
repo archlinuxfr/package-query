@@ -123,7 +123,7 @@ typedef struct _aq_config
 	unsigned short op;
 	bool pkgbase;
 	bool quiet;
-	bool query;
+	unsigned short query;
 	bool show_size;
 	char sort;
 	bool rsort;
