@@ -329,7 +329,7 @@ static int json_end_map (void *ctx)
 	return 1;
 }
 
-static int json_key (void * ctx, const unsigned char * stringVal, size_t stringLen)
+static int json_key (void *ctx, const unsigned char *stringVal, size_t stringLen)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
@@ -348,7 +348,7 @@ static int json_key (void * ctx, const unsigned char * stringVal, size_t stringL
 	return 1;
 }
 
-static int json_integer (void * ctx, long long val)
+static int json_integer (void *ctx, long long val)
 {
 	const jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
@@ -362,6 +362,9 @@ static int json_integer (void * ctx, long long val)
 	switch (pkg_json->current_key) {
 		case AUR_ID:
 			pkg_json->pkg->id = (int) val;
+			break;
+		case AUR_PKGBASE_ID:
+			pkg_json->pkg->pkgbase_id = (int) val;
 			break;
 		case AUR_CAT:
 			pkg_json->pkg->category = (int) val;
@@ -385,7 +388,7 @@ static int json_integer (void * ctx, long long val)
 	return 1;
 }
 
-static int json_string (void * ctx, const unsigned char * stringVal, size_t stringLen)
+static int json_string (void *ctx, const unsigned char *stringVal, size_t stringLen)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
@@ -409,74 +412,43 @@ static int json_string (void * ctx, const unsigned char * stringVal, size_t stri
 		return 1;
 
 	char *s = strndup ((const char *)stringVal, stringLen);
-	int free_s = 1;
 	switch (pkg_json->current_key) {
 		case AUR_MAINTAINER:
 			FREE (pkg_json->pkg->maintainer);
 			pkg_json->pkg->maintainer = s;
-			free_s = 0;
-			break;
-		case AUR_ID:
-			pkg_json->pkg->id = atoi (s);
 			break;
 		case AUR_NAME:
 			FREE (pkg_json->pkg->name);
 			pkg_json->pkg->name = s;
-			free_s = 0;
-			break;
-		case AUR_PKGBASE_ID:
-			pkg_json->pkg->pkgbase_id = atoi (s);
 			break;
 		case AUR_PKGBASE:
 			FREE (pkg_json->pkg->pkgbase);
 			pkg_json->pkg->pkgbase = s;
-			free_s = 0;
 			break;
 		case AUR_VER:
 			FREE (pkg_json->pkg->version);
 			pkg_json->pkg->version = s;
-			free_s = 0;
-			break;
-		case AUR_CAT:
-			pkg_json->pkg->category = atoi (s);
 			break;
 		case AUR_DESC:
 			FREE (pkg_json->pkg->desc);
 			pkg_json->pkg->desc = s;
-			free_s = 0;
 			break;
 		case AUR_URL:
 			FREE (pkg_json->pkg->url);
 			pkg_json->pkg->url = s;
-			free_s = 0;
 			break;
 		case AUR_URLPATH:
 			FREE (pkg_json->pkg->urlpath);
 			pkg_json->pkg->urlpath = s;
-			free_s = 0;
 			break;
 		case AUR_LICENSE:
 			FREE (pkg_json->pkg->license);
 			pkg_json->pkg->license = s;
-			free_s = 0;
-			break;
-		case AUR_VOTE:
-			pkg_json->pkg->votes = atoi(s);
-			break;
-		case AUR_OUT:
-			pkg_json->pkg->outofdate = atoi(s);
-			break;
-		case AUR_FIRST:
-			pkg_json->pkg->firstsubmit = atol(s);
-			break;
-		case AUR_LAST:
-			pkg_json->pkg->lastmod = atol(s);
 			break;
 		default:
+			FREE (s);
 			break;
 	}
-	if (free_s)
-		free (s);
 
 	return 1;
 }
