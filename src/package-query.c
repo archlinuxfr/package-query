@@ -126,10 +126,11 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-m --foreign         search for foreign packages");
 	fprintf(stderr, "\n\t-n --native          search for native packages");
 	fprintf(stderr, "\n\t-p --file            query a package file");
-	fprintf(stderr, "\n\t--qdepends           depends on one of target");
-	fprintf(stderr, "\n\t--qconflicts         conflicts with one of target");
-	fprintf(stderr, "\n\t--qprovides          provides one of target");
-	fprintf(stderr, "\n\t--qreplaces          replaces one of target");
+	fprintf(stderr, "\n\t--qdepends           depends on one of the targets");
+	fprintf(stderr, "\n\t--qconflicts         conflicts with one of the targets");
+	fprintf(stderr, "\n\t--qprovides          provides one of the targets");
+	fprintf(stderr, "\n\t--qreplaces          replaces one of the targets");
+	fprintf(stderr, "\n\t--qrequires          required by one of the targets");
 	fprintf(stderr, "\n\t-s --search          search");
 	fprintf(stderr, "\n\t--nameonly           search in package names only");
 	fprintf(stderr, "\n\t-u --upgrades        list updates available");
