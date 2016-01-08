@@ -685,6 +685,7 @@ static const char *color_print_aur_version (void *p, printpkgfn f, const char *i
 	if (alpm_pkg_vercmp (ver, lver) > 0) {
 		fprintf (stdout, " ( aur: %s )", ver);
 	}
+	fprintf (stdout, "\n");
 	return info;
 }
 
