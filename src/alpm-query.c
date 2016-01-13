@@ -453,7 +453,10 @@ off_t alpm_pkg_get_realsize (alpm_pkg_t *pkg)
 	if (!files)
 		return 0;
 
-	chdir (alpm_option_get_root(config.handle));
+	int ret = chdir (alpm_option_get_root(config.handle));
+	if (ret != 0)
+		return 0;
+
 	CALLOC (inodes, files->count, sizeof (ino_t));
 	for (size_t k = 0; k < files->count; k++) {
 		const alpm_file_t *f = files->files + k;
