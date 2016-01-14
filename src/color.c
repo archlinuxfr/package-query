@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <alpm_list.h>
 
 #include "color.h"
 #include "util.h"

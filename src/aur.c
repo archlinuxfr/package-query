@@ -18,9 +18,7 @@
  */
 #include "config.h"
 #include <string.h>
-#include <alpm_list.h>
 #include <errno.h>
-
 
 #include <curl/curl.h>
 #include <curl/easy.h>

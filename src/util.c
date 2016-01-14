@@ -17,9 +17,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <stdio.h>
-#include <alpm.h>
-#include <alpm_list.h>
-#include <limits.h>
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
