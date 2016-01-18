@@ -722,7 +722,7 @@ static void color_print_install_info (void *p, printpkgfn f, const char *lver, c
 static void color_print_aur_status (void *p, printpkgfn f)
 {
 	const char *info = f(p, 'o');
-	if (info && info[0] == '1') {
+	if (info && info[0] != '0') {
 		fprintf (stdout, " %s(%s)%s", color(C_OD), _("Out of Date"), color(C_NO));
 	}
 	info = f(p, 'w');
@@ -734,8 +734,8 @@ static void color_print_aur_status (void *p, printpkgfn f)
 static void color_print_package (void *p, printpkgfn f)
 {
 	static int number = 0;
-	const int aur = (f == aur_get_str);
-	const int grp = (f == alpm_grp_get_str);
+	const bool aur = (f == aur_get_str);
+	const bool grp = (f == alpm_grp_get_str);
 
 	/* Numbering list */
 	if (config.numbering) {
