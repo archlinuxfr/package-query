@@ -370,7 +370,7 @@ static int json_integer (void * ctx, long long val)
 			pkg_json->pkg->votes = (int) val;
 			break;
 		case AUR_OUT:
-			pkg_json->pkg->outofdate = (int) val;
+			pkg_json->pkg->outofdate = 1;
 			break;
 		case AUR_FIRST:
 			pkg_json->pkg->firstsubmit = (time_t) val;
