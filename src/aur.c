@@ -788,8 +788,14 @@ const char *aur_get_str (void *p, unsigned char c)
 			free_info = 1;
 			break;
 		case 'p':
-			asprintf (&info, "%.2f", aur_pkg_get_popularity (pkg));
-			free_info = 1;
+			{
+				int ret = asprintf (&info, "%.2f", aur_pkg_get_popularity (pkg));
+				if (ret < 0) {
+					FREE (info);
+				} else {
+					free_info = 1;
+				}
+			}
 			break;
 		case 's':
 		case 'r':
