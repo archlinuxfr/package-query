@@ -58,23 +58,24 @@
 #define AUR_DEPENDS          4
 #define AUR_DESC             5
 #define AUR_FIRST            6
-#define AUR_ID               7
-#define AUR_LAST             8
-#define AUR_LICENSE          9
-#define AUR_MAINTAINER       10
-#define AUR_MAKEDEPENDS      11
-#define AUR_NAME             12
-#define AUR_NUMVOTE          13
-#define AUR_OPTDEPENDS       14
-#define AUR_OUT              15
-#define AUR_PKGBASE          16
-#define AUR_PKGBASE_ID       17
-#define AUR_POPULARITY       18
-#define AUR_URL              19
-#define AUR_URLPATH          20
-#define AUR_VER              21
-#define AUR_JSON_RESULTS_KEY 22
-#define AUR_JSON_TYPE_KEY    23
+#define AUR_GROUPS           7
+#define AUR_ID               8
+#define AUR_LAST             9
+#define AUR_LICENSE          10
+#define AUR_MAINTAINER       11
+#define AUR_MAKEDEPENDS      12
+#define AUR_NAME             13
+#define AUR_NUMVOTE          14
+#define AUR_OPTDEPENDS       15
+#define AUR_OUT              16
+#define AUR_PKGBASE          17
+#define AUR_PKGBASE_ID       18
+#define AUR_POPULARITY       19
+#define AUR_URL              20
+#define AUR_URLPATH          21
+#define AUR_VER              22
+#define AUR_JSON_RESULTS_KEY 23
+#define AUR_JSON_TYPE_KEY    24
 
 #define AUR_LAST_ID AUR_JSON_TYPE_KEY
 
@@ -87,6 +88,7 @@ const char *aur_key_types_names[] =
 	"Depends",
 	"Description",
 	"FirstSubmitted",
+	"Groups",
 	"ID",
 	"LastModified",
 	"License",
@@ -158,6 +160,7 @@ void aur_pkg_free (aurpkg_t *pkg)
 	FREE (pkg->version);
 
 	FREELIST (pkg->conflicts);
+	FREELIST (pkg->groups);
 	FREELIST (pkg->license);
 
 	FREE (pkg);
@@ -185,6 +188,7 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->version = STRDUP (pkg->version);
 
 	pkg_ret->conflicts = alpm_list_copy (pkg->conflicts);
+	pkg_ret->groups = alpm_list_copy (pkg->groups);
 	pkg_ret->license = alpm_list_copy (pkg->license);
 
 	return pkg_ret;
@@ -257,6 +261,13 @@ const alpm_list_t *aur_pkg_get_conflicts (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->conflicts;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_groups (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->groups;
 	return NULL;
 }
 
@@ -499,6 +510,9 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 			break;
 		case AUR_CONFLICTS:
 			pkg_json->pkg->conflicts = alpm_list_add (pkg_json->pkg->conflicts, s);
+			break;
+		case AUR_GROUPS:
+			pkg_json->pkg->groups = alpm_list_add (pkg_json->pkg->groups, s);
 			break;
 		case AUR_LICENSE:
 			pkg_json->pkg->license = alpm_list_add (pkg_json->pkg->license, s);
@@ -777,6 +791,10 @@ const char *aur_get_str (void *p, unsigned char c)
 			break;
 		case 'd':
 			info = (char *) aur_pkg_get_desc (pkg);
+			break;
+		case 'g':
+			info = concat_str_list (aur_pkg_get_groups (pkg));
+			free_info = 1;
 			break;
 		case 'G':
 			if (config.aur_url && aur_pkg_get_pkgbase (pkg)) {
