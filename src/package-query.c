@@ -75,7 +75,7 @@ void init_config (const char *myname)
 {
 	memset(&config, 0, sizeof(aq_config));
 	config.myname = mbasename(myname);
-	config.colors = isatty(1);
+	config.colors = isatty(1) ? true : false;
 	config.query = ALL;
 	config.aur_url = strdup (AUR_BASE_URL);
 	config.configfile = strndup (CONFFILE, PATH_MAX);
@@ -514,8 +514,8 @@ int main (int argc, char **argv)
 	} else if (config.aur && !(given & N_TARGET)) {
 		if (config.filter & F_FOREIGN) {
 			/* -Am */
-			config.aur_foreign = 1;
-			config.just_one = 1;
+			config.aur_foreign = true;
+			config.just_one = true;
 			alpm_search_local (config.filter, "%n", &targets);
 			ret += aur_info (&targets);
 			if (config.db_local) {
@@ -524,7 +524,7 @@ int main (int argc, char **argv)
 			}
 		} else if (config.filter & F_UPGRADES) {
 			/* -Au */
-			config.aur_upgrades = 1;
+			config.aur_upgrades = true;
 			if (config.db_local) {
 				/* -AQu */
 				ret += alpm_search_local (config.filter, NULL, NULL);
