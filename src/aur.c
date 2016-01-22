@@ -72,11 +72,12 @@
 #define AUR_PKGBASE_ID       18
 #define AUR_POPULARITY       19
 #define AUR_PROVIDES         20
-#define AUR_URL              21
-#define AUR_URLPATH          22
-#define AUR_VER              23
-#define AUR_JSON_RESULTS_KEY 24
-#define AUR_JSON_TYPE_KEY    25
+#define AUR_REPLACES         21
+#define AUR_URL              22
+#define AUR_URLPATH          23
+#define AUR_VER              24
+#define AUR_JSON_RESULTS_KEY 25
+#define AUR_JSON_TYPE_KEY    26
 
 #define AUR_LAST_ID AUR_JSON_TYPE_KEY
 
@@ -103,6 +104,7 @@ const char *aur_key_types_names[] =
 	"PackageBaseID",
 	"Popularity",
 	"Provides",
+	"Replaces",
 	"URL",
 	"URLPath",
 	"Version",
@@ -165,6 +167,7 @@ void aur_pkg_free (aurpkg_t *pkg)
 	FREELIST (pkg->groups);
 	FREELIST (pkg->license);
 	FREELIST (pkg->provides);
+	FREELIST (pkg->replaces);
 
 	FREE (pkg);
 }
@@ -194,6 +197,7 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->groups = alpm_list_copy (pkg->groups);
 	pkg_ret->license = alpm_list_copy (pkg->license);
 	pkg_ret->provides = alpm_list_copy (pkg->provides);
+	pkg_ret->replaces = alpm_list_copy (pkg->replaces);
 
 	return pkg_ret;
 }
@@ -286,6 +290,13 @@ const alpm_list_t *aur_pkg_get_provides (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->provides;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_replaces (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->replaces;
 	return NULL;
 }
 
@@ -530,6 +541,9 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 			break;
 		case AUR_PROVIDES:
 			pkg_json->pkg->provides = alpm_list_add (pkg_json->pkg->provides, s);
+			break;
+		case AUR_REPLACES:
+			pkg_json->pkg->replaces = alpm_list_add (pkg_json->pkg->replaces, s);
 			break;
 		default:
 			FREE (s);
@@ -853,6 +867,10 @@ const char *aur_get_str (void *p, unsigned char c)
 		case 's':
 		case 'r':
 			info = strdup (AUR_REPO);
+			free_info = 1;
+			break;
+		case 'R':
+			info = concat_str_list (aur_pkg_get_replaces (pkg));
 			free_info = 1;
 			break;
 		case 'u':
