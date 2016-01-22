@@ -38,8 +38,9 @@
  * AUR url
  */
 #define AUR_RPC          "/rpc.php"
-#define AUR_RPC_SEARCH   "?type=search&arg="
-#define AUR_RPC_INFO     "?type=multiinfo"
+#define AUR_RPC_VERSION  "?v=4"
+#define AUR_RPC_SEARCH   "&type=search&arg="
+#define AUR_RPC_INFO     "&type=multiinfo"
 #define AUR_RPC_INFO_ARG "&arg[]="
 #define AUR_URL_ID       "/packages.php?setlang=en&ID="
 
@@ -68,8 +69,13 @@
 #define AUR_URLPATH          15
 #define AUR_JSON_TYPE_KEY    16
 #define AUR_JSON_RESULTS_KEY 17
+#define AUR_DEPENDS          18
+#define AUR_MAKEDEPENDS      19
+#define AUR_CHECKDEPENDS     20
+#define AUR_OPTDEPENDS       21
+#define AUR_POPULARITY       22
 
-#define AUR_LAST_ID AUR_JSON_RESULTS_KEY
+#define AUR_LAST_ID AUR_POPULARITY
 
 const char *aur_key_types_names[] =
 {
@@ -90,7 +96,12 @@ const char *aur_key_types_names[] =
 	"LastModified",
 	"URLPath",
 	"type",
-	"results"
+	"results",
+	"Depends",
+	"MakeDepends",
+	"CheckDepends",
+	"OptDepends",
+	"Popularity"
 };
 
 /* AUR JSON error */
@@ -165,6 +176,7 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->firstsubmit = pkg->firstsubmit;
 	pkg_ret->lastmod = pkg->lastmod;
 	pkg_ret->maintainer = STRDUP (pkg->maintainer);
+	pkg_ret->popularity = pkg->popularity;
 	return pkg_ret;
 }
 
@@ -280,6 +292,13 @@ const char *aur_pkg_get_maintainer (const aurpkg_t *pkg)
 	return NULL;
 }
 
+double aur_pkg_get_popularity (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->popularity;
+	return 0.0;
+}
+
 static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
 {
 	string_t *s = (string_t *) userdata;
@@ -386,6 +405,28 @@ static int json_integer (void *ctx, long long val)
 	return 1;
 }
 
+static int json_double (void* ctx, double val)
+{
+	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
+
+	if (pkg_json == NULL || pkg_json->pkg == NULL)
+		return 1;
+
+	// package info in level 2
+	if (pkg_json->level < 2)
+		return 1;
+
+	switch (pkg_json->current_key) {
+		case AUR_POPULARITY:
+			pkg_json->pkg->popularity = val;
+			break;
+		default:
+			break;
+	}
+
+	return 1;
+}
+
 static int json_string (void *ctx, const unsigned char *stringVal, size_t stringLen)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
@@ -455,7 +496,7 @@ static yajl_callbacks callbacks = {
     NULL,
     NULL,
     json_integer,
-    NULL,
+    json_double,
     NULL,
     json_string,
     json_start_map,
@@ -528,6 +569,7 @@ static string_t *aur_prepare_url (const char *aur_rpc_type)
 	string_t *url = string_new();
 	url = string_cat (url, config.aur_url);
 	url = string_cat (url, AUR_RPC);
+	url = string_cat (url, AUR_RPC_VERSION);
 	url = string_cat (url, aur_rpc_type);
 	return url;
 }
@@ -743,6 +785,10 @@ const char *aur_get_str (void *p, unsigned char c)
 			break;
 		case 'o': 
 			info = itostr (aur_pkg_get_outofdate (pkg)); 
+			free_info = 1;
+			break;
+		case 'p':
+			asprintf (&info, "%.2f", aur_pkg_get_popularity (pkg));
 			free_info = 1;
 			break;
 		case 's':

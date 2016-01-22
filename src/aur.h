@@ -40,6 +40,7 @@ typedef struct _aurpkg_t
 	time_t firstsubmit;
 	time_t lastmod;
 	char *maintainer;
+	double popularity;
 } aurpkg_t;
 
 aurpkg_t *aur_pkg_new ();
@@ -62,6 +63,7 @@ unsigned short aur_pkg_get_outofdate (const aurpkg_t * pkg);
 time_t aur_pkg_get_firstsubmit (const aurpkg_t * pkg);
 time_t aur_pkg_get_lastmod (const aurpkg_t * pkg);
 const char * aur_pkg_get_maintainer (const aurpkg_t * pkg);
+double aur_pkg_get_popularity (const aurpkg_t * pkg);
 
 /*
  * AUR search function
