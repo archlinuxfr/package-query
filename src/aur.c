@@ -148,13 +148,15 @@ void aur_pkg_free (aurpkg_t *pkg)
 	if (pkg == NULL)
 		return;
 	FREE (pkg->desc);
-	FREE (pkg->license);
 	FREE (pkg->maintainer);
 	FREE (pkg->name);
 	FREE (pkg->pkgbase);
 	FREE (pkg->url);
 	FREE (pkg->urlpath);
 	FREE (pkg->version);
+
+	FREELIST (pkg->license);
+
 	FREE (pkg);
 }
 
@@ -173,12 +175,13 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->votes = pkg->votes;
 
 	pkg_ret->desc = STRDUP (pkg->desc);
-	pkg_ret->license = STRDUP (pkg->license);
 	pkg_ret->maintainer = STRDUP (pkg->maintainer);
 	pkg_ret->name = STRDUP (pkg->name);
 	pkg_ret->url = STRDUP (pkg->url);
 	pkg_ret->urlpath = STRDUP (pkg->urlpath);
 	pkg_ret->version = STRDUP (pkg->version);
+
+	pkg_ret->license = alpm_list_copy (pkg->license);
 
 	return pkg_ret;
 }
@@ -201,13 +204,6 @@ const char *aur_pkg_get_desc (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->desc;
-	return NULL;
-}
-
-const char *aur_pkg_get_license (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->license;
 	return NULL;
 }
 
@@ -250,6 +246,13 @@ const char *aur_pkg_get_version (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->version;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_license (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->license;
 	return NULL;
 }
 
@@ -459,10 +462,6 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 			FREE (pkg_json->pkg->desc);
 			pkg_json->pkg->desc = s;
 			break;
-		case AUR_LICENSE:
-			FREE (pkg_json->pkg->license);
-			pkg_json->pkg->license = s;
-			break;
 		case AUR_MAINTAINER:
 			FREE (pkg_json->pkg->maintainer);
 			pkg_json->pkg->maintainer = s;
@@ -486,6 +485,9 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 		case AUR_VER:
 			FREE (pkg_json->pkg->version);
 			pkg_json->pkg->version = s;
+			break;
+		case AUR_LICENSE:
+			pkg_json->pkg->license = alpm_list_add (pkg_json->pkg->license, s);
 			break;
 		default:
 			FREE (s);

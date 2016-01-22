@@ -26,13 +26,14 @@
 typedef struct _aurpkg_t
 {
 	char *desc;
-	char *license;
 	char *maintainer;
 	char *name;
 	char *pkgbase;
 	char *url;
 	char *urlpath;
 	char *version;
+
+	alpm_list_t *license;
 
 	unsigned int category;
 	unsigned int id;
@@ -54,13 +55,13 @@ int aur_pkg_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2);
 int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2);
 
 const char * aur_pkg_get_desc (const aurpkg_t * pkg);
-const char * aur_pkg_get_license (const aurpkg_t * pkg);
 const char * aur_pkg_get_maintainer (const aurpkg_t * pkg);
 const char * aur_pkg_get_name (const aurpkg_t * pkg);
 const char * aur_pkg_get_pkgbase (const aurpkg_t * pkg);
 const char * aur_pkg_get_url (const aurpkg_t * pkg);
 const char * aur_pkg_get_urlpath (const aurpkg_t * pkg);
 const char * aur_pkg_get_version (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_license (const aurpkg_t * pkg);
 unsigned int aur_pkg_get_id (const aurpkg_t * pkg);
 unsigned int aur_pkg_get_pkgbase_id (const aurpkg_t * pkg);
 unsigned int aur_pkg_get_votes (const aurpkg_t * pkg);
