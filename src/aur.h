@@ -36,6 +36,7 @@ typedef struct _aurpkg_t
 	alpm_list_t *conflicts;
 	alpm_list_t *groups;
 	alpm_list_t *license;
+	alpm_list_t *provides;
 
 	unsigned int category;
 	unsigned int id;
@@ -66,6 +67,7 @@ const char * aur_pkg_get_version (const aurpkg_t * pkg);
 const alpm_list_t * aur_pkg_get_conflicts (const aurpkg_t * pkg);
 const alpm_list_t * aur_pkg_get_groups (const aurpkg_t * pkg);
 const alpm_list_t * aur_pkg_get_license (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_provides (const aurpkg_t * pkg);
 unsigned int aur_pkg_get_id (const aurpkg_t * pkg);
 unsigned int aur_pkg_get_pkgbase_id (const aurpkg_t * pkg);
 unsigned int aur_pkg_get_votes (const aurpkg_t * pkg);

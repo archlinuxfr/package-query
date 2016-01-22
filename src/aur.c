@@ -71,11 +71,12 @@
 #define AUR_PKGBASE          17
 #define AUR_PKGBASE_ID       18
 #define AUR_POPULARITY       19
-#define AUR_URL              20
-#define AUR_URLPATH          21
-#define AUR_VER              22
-#define AUR_JSON_RESULTS_KEY 23
-#define AUR_JSON_TYPE_KEY    24
+#define AUR_PROVIDES         20
+#define AUR_URL              21
+#define AUR_URLPATH          22
+#define AUR_VER              23
+#define AUR_JSON_RESULTS_KEY 24
+#define AUR_JSON_TYPE_KEY    25
 
 #define AUR_LAST_ID AUR_JSON_TYPE_KEY
 
@@ -101,6 +102,7 @@ const char *aur_key_types_names[] =
 	"PackageBase",
 	"PackageBaseID",
 	"Popularity",
+	"Provides",
 	"URL",
 	"URLPath",
 	"Version",
@@ -162,6 +164,7 @@ void aur_pkg_free (aurpkg_t *pkg)
 	FREELIST (pkg->conflicts);
 	FREELIST (pkg->groups);
 	FREELIST (pkg->license);
+	FREELIST (pkg->provides);
 
 	FREE (pkg);
 }
@@ -190,6 +193,7 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->conflicts = alpm_list_copy (pkg->conflicts);
 	pkg_ret->groups = alpm_list_copy (pkg->groups);
 	pkg_ret->license = alpm_list_copy (pkg->license);
+	pkg_ret->provides = alpm_list_copy (pkg->provides);
 
 	return pkg_ret;
 }
@@ -275,6 +279,13 @@ const alpm_list_t *aur_pkg_get_license (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->license;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_provides (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->provides;
 	return NULL;
 }
 
@@ -516,6 +527,9 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 			break;
 		case AUR_LICENSE:
 			pkg_json->pkg->license = alpm_list_add (pkg_json->pkg->license, s);
+			break;
+		case AUR_PROVIDES:
+			pkg_json->pkg->provides = alpm_list_add (pkg_json->pkg->provides, s);
 			break;
 		default:
 			FREE (s);
@@ -830,6 +844,10 @@ const char *aur_get_str (void *p, unsigned char c)
 			break;
 		case 'p':
 			asprintf (&info, "%.2f", aur_pkg_get_popularity (pkg));
+			free_info = 1;
+			break;
+		case 'P':
+			info = concat_str_list (aur_pkg_get_provides (pkg));
 			free_info = 1;
 			break;
 		case 's':
