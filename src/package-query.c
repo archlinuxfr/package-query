@@ -25,9 +25,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <alpm.h>
-#include <alpm_list.h>
-#include <limits.h>
 #include <unistd.h>
 #include <getopt.h>
 #include <locale.h>

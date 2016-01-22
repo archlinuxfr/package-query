@@ -18,9 +18,6 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <alpm.h>
-#include <alpm_list.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <unistd.h>
