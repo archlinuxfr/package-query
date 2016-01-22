@@ -21,6 +21,6 @@ package_query_SOURCES = aur.h aur.c \
 	alpm-query.h alpm-query.c \
 	util.h util.c \
 	color.h color.c \
-	package-query.c 
+	package-query.c
 
 

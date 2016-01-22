@@ -121,7 +121,7 @@ static void parse_var (const char *s)
 	{
 		colors_set_color (sid, sval);
 	}
-	free (src); 
+	free (src);
 }
 
 void color_init (void)

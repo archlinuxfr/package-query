@@ -8,7 +8,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/package-query.c])
 AC_CONFIG_HEADER([config.h])
 
- 
+
 
 AC_PROG_CC
 AC_PROG_LIBTOOL

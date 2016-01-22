@@ -306,7 +306,7 @@ static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *user
 	return nmemb;
 }
 
-static int json_start_map (void *ctx) 
+static int json_start_map (void *ctx)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
@@ -333,11 +333,11 @@ static int json_end_map (void *ctx)
 	if (pkg_json->level == 1 && pkg_json->pkg != NULL) {
 		switch (config.sort) {
 			case S_VOTE:
-				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs, 
+				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs,
 					pkg_json->pkg, (alpm_list_fn_cmp) aur_pkg_votes_cmp);
 				break;
 			default:
-				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs, 
+				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs,
 					pkg_json->pkg, (alpm_list_fn_cmp) aur_pkg_cmp);
 				break;
 		}
@@ -769,8 +769,8 @@ const char *aur_get_str (void *p, unsigned char c)
 				free_info = 1;
 			}
 			break;
-		case 'i': 
-			info = itostr (aur_pkg_get_id (pkg)); 
+		case 'i':
+			info = itostr (aur_pkg_get_id (pkg));
 			free_info = 1;
 			break;
 		case 'm':
@@ -783,8 +783,8 @@ const char *aur_get_str (void *p, unsigned char c)
 			info = ttostr (aur_pkg_get_lastmod (pkg));
 			free_info = 1;
 			break;
-		case 'o': 
-			info = itostr (aur_pkg_get_outofdate (pkg)); 
+		case 'o':
+			info = itostr (aur_pkg_get_outofdate (pkg));
 			free_info = 1;
 			break;
 		case 'p':
@@ -796,7 +796,7 @@ const char *aur_get_str (void *p, unsigned char c)
 			info = strdup (AUR_REPO);
 			free_info = 1;
 			break;
-		case 'u': 
+		case 'u':
 			if (config.aur_url && aur_pkg_get_urlpath (pkg)) {
 				info = (char *) malloc (sizeof (char) *
 					(strlen (config.aur_url) +
@@ -819,8 +819,8 @@ const char *aur_get_str (void *p, unsigned char c)
 		case 'v':
 			info = (char *) aur_pkg_get_version (pkg);
 			break;
-		case 'w': 
-			info = itostr (aur_pkg_get_votes (pkg)); 
+		case 'w':
+			info = itostr (aur_pkg_get_votes (pkg));
 			free_info = 1;
 			break;
 		default:
