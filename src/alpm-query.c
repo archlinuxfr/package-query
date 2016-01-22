@@ -520,12 +520,12 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 		case 'f':
 			info = (char *) alpm_pkg_get_filename (pkg);
 			break;
-		case 'I':
-			info = itostr (alpm_pkg_has_scriptlet (pkg));
-			free_info = 1;
-			break;
 		case 'g':
 			info = concat_str_list (alpm_pkg_get_groups (pkg));
+			free_info = 1;
+			break;
+		case 'I':
+			info = itostr (alpm_pkg_has_scriptlet (pkg));
 			free_info = 1;
 			break;
 		case 'm':
@@ -576,12 +576,12 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 		case 'U':
 			info = (char *) alpm_pkg_get_url (pkg);
 			break;
-		case 'V':
-			pkg = get_sync_pkg (pkg);
-			if (!pkg) break;
 		case 'v':
 			info = (char *) alpm_pkg_get_version (pkg);
 			break;
+		case 'V':
+			pkg = get_sync_pkg (pkg);
+			if (!pkg) break;
 		default:
 			return NULL;
 	}
