@@ -54,26 +54,27 @@
  */
 #define AUR_CAT              1
 #define AUR_CHECKDEPENDS     2
-#define AUR_DEPENDS          3
-#define AUR_DESC             4
-#define AUR_FIRST            5
-#define AUR_ID               6
-#define AUR_LAST             7
-#define AUR_LICENSE          8
-#define AUR_MAINTAINER       9
-#define AUR_MAKEDEPENDS      10
-#define AUR_NAME             11
-#define AUR_NUMVOTE          12
-#define AUR_OPTDEPENDS       13
-#define AUR_OUT              14
-#define AUR_PKGBASE          15
-#define AUR_PKGBASE_ID       16
-#define AUR_POPULARITY       17
-#define AUR_URL              18
-#define AUR_URLPATH          19
-#define AUR_VER              20
-#define AUR_JSON_RESULTS_KEY 21
-#define AUR_JSON_TYPE_KEY    22
+#define AUR_CONFLICTS        3
+#define AUR_DEPENDS          4
+#define AUR_DESC             5
+#define AUR_FIRST            6
+#define AUR_ID               7
+#define AUR_LAST             8
+#define AUR_LICENSE          9
+#define AUR_MAINTAINER       10
+#define AUR_MAKEDEPENDS      11
+#define AUR_NAME             12
+#define AUR_NUMVOTE          13
+#define AUR_OPTDEPENDS       14
+#define AUR_OUT              15
+#define AUR_PKGBASE          16
+#define AUR_PKGBASE_ID       17
+#define AUR_POPULARITY       18
+#define AUR_URL              19
+#define AUR_URLPATH          20
+#define AUR_VER              21
+#define AUR_JSON_RESULTS_KEY 22
+#define AUR_JSON_TYPE_KEY    23
 
 #define AUR_LAST_ID AUR_JSON_TYPE_KEY
 
@@ -82,6 +83,7 @@ const char *aur_key_types_names[] =
 	"",
 	"CategoryID",
 	"CheckDepends",
+	"Conflicts",
 	"Depends",
 	"Description",
 	"FirstSubmitted",
@@ -155,6 +157,7 @@ void aur_pkg_free (aurpkg_t *pkg)
 	FREE (pkg->urlpath);
 	FREE (pkg->version);
 
+	FREELIST (pkg->conflicts);
 	FREELIST (pkg->license);
 
 	FREE (pkg);
@@ -181,6 +184,7 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->urlpath = STRDUP (pkg->urlpath);
 	pkg_ret->version = STRDUP (pkg->version);
 
+	pkg_ret->conflicts = alpm_list_copy (pkg->conflicts);
 	pkg_ret->license = alpm_list_copy (pkg->license);
 
 	return pkg_ret;
@@ -246,6 +250,13 @@ const char *aur_pkg_get_version (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->version;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_conflicts (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->conflicts;
 	return NULL;
 }
 
@@ -485,6 +496,9 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 		case AUR_VER:
 			FREE (pkg_json->pkg->version);
 			pkg_json->pkg->version = s;
+			break;
+		case AUR_CONFLICTS:
+			pkg_json->pkg->conflicts = alpm_list_add (pkg_json->pkg->conflicts, s);
 			break;
 		case AUR_LICENSE:
 			pkg_json->pkg->license = alpm_list_add (pkg_json->pkg->license, s);
@@ -757,6 +771,10 @@ const char *aur_get_str (void *p, unsigned char c)
 	info = NULL;
 	switch (c)
 	{
+		case 'C':
+			info = concat_str_list (aur_pkg_get_conflicts (pkg));
+			free_info = 1;
+			break;
 		case 'd':
 			info = (char *) aur_pkg_get_desc (pkg);
 			break;

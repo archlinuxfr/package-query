@@ -33,6 +33,7 @@ typedef struct _aurpkg_t
 	char *urlpath;
 	char *version;
 
+	alpm_list_t *conflicts;
 	alpm_list_t *license;
 
 	unsigned int category;
@@ -61,6 +62,7 @@ const char * aur_pkg_get_pkgbase (const aurpkg_t * pkg);
 const char * aur_pkg_get_url (const aurpkg_t * pkg);
 const char * aur_pkg_get_urlpath (const aurpkg_t * pkg);
 const char * aur_pkg_get_version (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_conflicts (const aurpkg_t * pkg);
 const alpm_list_t * aur_pkg_get_license (const aurpkg_t * pkg);
 unsigned int aur_pkg_get_id (const aurpkg_t * pkg);
 unsigned int aur_pkg_get_pkgbase_id (const aurpkg_t * pkg);
