@@ -866,7 +866,7 @@ char *pkg_to_str (const char *target, void *pkg, printpkgfn f, const char *forma
 			if (strchr (FORMAT_LOCAL_PKG, c[1])) {
 				info = alpm_local_pkg_get_str (f(pkg, 'n'), c[1]);
 			} else if (c[1] == 't') {
-				info = target; 
+				info = target;
 			} else {
 				info = f (pkg, c[1]);
 			}

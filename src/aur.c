@@ -52,56 +52,64 @@
 /*
  * AUR package information
  */
-#define AUR_MAINTAINER       1
-#define AUR_ID               2
-#define AUR_NAME             3
-#define AUR_PKGBASE_ID       4
-#define AUR_PKGBASE          5
-#define AUR_VER              6
-#define AUR_CAT              7
-#define AUR_DESC             8
-#define AUR_URL              9
+#define AUR_CAT              1
+#define AUR_CHECKDEPENDS     2
+#define AUR_CONFLICTS        3
+#define AUR_DEPENDS          4
+#define AUR_DESC             5
+#define AUR_FIRST            6
+#define AUR_GROUPS           7
+#define AUR_ID               8
+#define AUR_LAST             9
 #define AUR_LICENSE          10
-#define AUR_VOTE             11
-#define AUR_OUT              12
-#define AUR_FIRST            13
-#define AUR_LAST             14
-#define AUR_URLPATH          15
-#define AUR_JSON_TYPE_KEY    16
-#define AUR_JSON_RESULTS_KEY 17
-#define AUR_DEPENDS          18
-#define AUR_MAKEDEPENDS      19
-#define AUR_CHECKDEPENDS     20
-#define AUR_OPTDEPENDS       21
-#define AUR_POPULARITY       22
+#define AUR_MAINTAINER       11
+#define AUR_MAKEDEPENDS      12
+#define AUR_NAME             13
+#define AUR_NUMVOTE          14
+#define AUR_OPTDEPENDS       15
+#define AUR_OUT              16
+#define AUR_PKGBASE          17
+#define AUR_PKGBASE_ID       18
+#define AUR_POPULARITY       19
+#define AUR_PROVIDES         20
+#define AUR_REPLACES         21
+#define AUR_URL              22
+#define AUR_URLPATH          23
+#define AUR_VER              24
+#define AUR_JSON_RESULTS_KEY 25
+#define AUR_JSON_TYPE_KEY    26
 
-#define AUR_LAST_ID AUR_POPULARITY
+#define AUR_LAST_ID AUR_JSON_TYPE_KEY
 
 const char *aur_key_types_names[] =
 {
 	"",
-	"Maintainer",
-	"ID",
-	"Name",
-	"PackageBaseID",
-	"PackageBase",
-	"Version",
 	"CategoryID",
-	"Description",
-	"URL",
-	"License",
-	"NumVotes",
-	"OutOfDate",
-	"FirstSubmitted",
-	"LastModified",
-	"URLPath",
-	"type",
-	"results",
-	"Depends",
-	"MakeDepends",
 	"CheckDepends",
+	"Conflicts",
+	"Depends",
+	"Description",
+	"FirstSubmitted",
+	"Groups",
+	"ID",
+	"LastModified",
+	"License",
+	"Maintainer",
+	"MakeDepends",
+	"Name",
+	"NumVotes",
 	"OptDepends",
-	"Popularity"
+	"OutOfDate",
+	"PackageBase",
+	"PackageBaseID",
+	"Popularity",
+	"Provides",
+	"Replaces",
+	"URL",
+	"URLPath",
+	"Version",
+	"results",
+	"type"
 };
 
 /* AUR JSON error */
@@ -147,14 +155,24 @@ void aur_pkg_free (aurpkg_t *pkg)
 {
 	if (pkg == NULL)
 		return;
-	FREE (pkg->name);
-	FREE (pkg->version);
 	FREE (pkg->desc);
+	FREE (pkg->maintainer);
+	FREE (pkg->name);
+	FREE (pkg->pkgbase);
 	FREE (pkg->url);
 	FREE (pkg->urlpath);
-	FREE (pkg->license);
-	FREE (pkg->maintainer);
-	FREE (pkg->pkgbase);
+	FREE (pkg->version);
+
+	FREELIST (pkg->checkdepends);
+	FREELIST (pkg->conflicts);
+	FREELIST (pkg->depends);
+	FREELIST (pkg->groups);
+	FREELIST (pkg->license);
+	FREELIST (pkg->makedepends);
+	FREELIST (pkg->optdepends);
+	FREELIST (pkg->provides);
+	FREELIST (pkg->replaces);
+
 	FREE (pkg);
 }
 
@@ -163,20 +181,32 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	if (pkg == NULL)
 		return NULL;
 	aurpkg_t *pkg_ret = aur_pkg_new();
-	pkg_ret->id = pkg->id;
-	pkg_ret->name = STRDUP (pkg->name);
-	pkg_ret->version = STRDUP (pkg->version);
+
 	pkg_ret->category = pkg->category;
+	pkg_ret->firstsubmit = pkg->firstsubmit;
+	pkg_ret->id = pkg->id;
+	pkg_ret->lastmod = pkg->lastmod;
+	pkg_ret->outofdate = pkg->outofdate;
+	pkg_ret->popularity = pkg->popularity;
+	pkg_ret->votes = pkg->votes;
+
 	pkg_ret->desc = STRDUP (pkg->desc);
+	pkg_ret->maintainer = STRDUP (pkg->maintainer);
+	pkg_ret->name = STRDUP (pkg->name);
 	pkg_ret->url = STRDUP (pkg->url);
 	pkg_ret->urlpath = STRDUP (pkg->urlpath);
-	pkg_ret->license = STRDUP (pkg->license);
-	pkg_ret->votes = pkg->votes;
-	pkg_ret->outofdate = pkg->outofdate;
-	pkg_ret->firstsubmit = pkg->firstsubmit;
-	pkg_ret->lastmod = pkg->lastmod;
-	pkg_ret->maintainer = STRDUP (pkg->maintainer);
-	pkg_ret->popularity = pkg->popularity;
+	pkg_ret->version = STRDUP (pkg->version);
+
+	pkg_ret->checkdepends = alpm_list_copy (pkg->checkdepends);
+	pkg_ret->conflicts = alpm_list_copy (pkg->conflicts);
+	pkg_ret->depends = alpm_list_copy (pkg->depends);
+	pkg_ret->groups = alpm_list_copy (pkg->groups);
+	pkg_ret->license = alpm_list_copy (pkg->license);
+	pkg_ret->makedepends = alpm_list_copy (pkg->makedepends);
+	pkg_ret->optdepends = alpm_list_copy (pkg->optdepends);
+	pkg_ret->provides = alpm_list_copy (pkg->provides);
+	pkg_ret->replaces = alpm_list_copy (pkg->replaces);
+
 	return pkg_ret;
 }
 
@@ -194,11 +224,18 @@ int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
 	return 0;
 }
 
-unsigned int aur_pkg_get_id (const aurpkg_t *pkg)
+const char *aur_pkg_get_desc (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
-		return pkg->id;
-	return 0;
+		return pkg->desc;
+	return NULL;
+}
+
+const char *aur_pkg_get_maintainer (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->maintainer;
+	return NULL;
 }
 
 const char *aur_pkg_get_name (const aurpkg_t *pkg)
@@ -208,31 +245,10 @@ const char *aur_pkg_get_name (const aurpkg_t *pkg)
 	return NULL;
 }
 
-unsigned int aur_pkg_get_pkgbase_id (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->pkgbase_id;
-	return 0;
-}
-
 const char *aur_pkg_get_pkgbase (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->pkgbase;
-	return NULL;
-}
-
-const char *aur_pkg_get_version (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->version;
-	return NULL;
-}
-
-const char *aur_pkg_get_desc (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->desc;
 	return NULL;
 }
 
@@ -250,11 +266,88 @@ const char *aur_pkg_get_urlpath (const aurpkg_t *pkg)
 	return NULL;
 }
 
-const char *aur_pkg_get_license (const aurpkg_t *pkg)
+const char *aur_pkg_get_version (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->version;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_checkdepends (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->checkdepends;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_conflicts (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->conflicts;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_depends (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->depends;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_groups (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->groups;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_license (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->license;
 	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_makedepends (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->makedepends;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_optdepends (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->optdepends;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_provides (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->provides;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_replaces (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->replaces;
+	return NULL;
+}
+
+unsigned int aur_pkg_get_id (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->id;
+	return 0;
+}
+
+unsigned int aur_pkg_get_pkgbase_id (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->pkgbase_id;
+	return 0;
 }
 
 unsigned int aur_pkg_get_votes (const aurpkg_t *pkg)
@@ -285,13 +378,6 @@ time_t aur_pkg_get_lastmod (const aurpkg_t *pkg)
 	return 0;
 }
 
-const char *aur_pkg_get_maintainer (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->maintainer;
-	return NULL;
-}
-
 double aur_pkg_get_popularity (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
@@ -306,7 +392,7 @@ static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *user
 	return nmemb;
 }
 
-static int json_start_map (void *ctx) 
+static int json_start_map (void *ctx)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
@@ -333,11 +419,11 @@ static int json_end_map (void *ctx)
 	if (pkg_json->level == 1 && pkg_json->pkg != NULL) {
 		switch (config.sort) {
 			case S_VOTE:
-				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs, 
+				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs,
 					pkg_json->pkg, (alpm_list_fn_cmp) aur_pkg_votes_cmp);
 				break;
 			default:
-				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs, 
+				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs,
 					pkg_json->pkg, (alpm_list_fn_cmp) aur_pkg_cmp);
 				break;
 		}
@@ -377,26 +463,26 @@ static int json_integer (void *ctx, long long val)
 		return 1;
 
 	switch (pkg_json->current_key) {
-		case AUR_ID:
-			pkg_json->pkg->id = (int) val;
-			break;
-		case AUR_PKGBASE_ID:
-			pkg_json->pkg->pkgbase_id = (int) val;
-			break;
 		case AUR_CAT:
 			pkg_json->pkg->category = (int) val;
 			break;
-		case AUR_VOTE:
+		case AUR_FIRST:
+			pkg_json->pkg->firstsubmit = (time_t) val;
+			break;
+		case AUR_ID:
+			pkg_json->pkg->id = (int) val;
+			break;
+		case AUR_LAST:
+			pkg_json->pkg->lastmod = (time_t) val;
+			break;
+		case AUR_NUMVOTE:
 			pkg_json->pkg->votes = (int) val;
 			break;
 		case AUR_OUT:
 			pkg_json->pkg->outofdate = 1;
 			break;
-		case AUR_FIRST:
-			pkg_json->pkg->firstsubmit = (time_t) val;
-			break;
-		case AUR_LAST:
-			pkg_json->pkg->lastmod = (time_t) val;
+		case AUR_PKGBASE_ID:
+			pkg_json->pkg->pkgbase_id = (int) val;
 			break;
 		default:
 			break;
@@ -405,7 +491,7 @@ static int json_integer (void *ctx, long long val)
 	return 1;
 }
 
-static int json_double (void* ctx, double val)
+static int json_double (void *ctx, double val)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
@@ -452,6 +538,10 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 
 	char *s = strndup ((const char *)stringVal, stringLen);
 	switch (pkg_json->current_key) {
+		case AUR_DESC:
+			FREE (pkg_json->pkg->desc);
+			pkg_json->pkg->desc = s;
+			break;
 		case AUR_MAINTAINER:
 			FREE (pkg_json->pkg->maintainer);
 			pkg_json->pkg->maintainer = s;
@@ -464,14 +554,6 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 			FREE (pkg_json->pkg->pkgbase);
 			pkg_json->pkg->pkgbase = s;
 			break;
-		case AUR_VER:
-			FREE (pkg_json->pkg->version);
-			pkg_json->pkg->version = s;
-			break;
-		case AUR_DESC:
-			FREE (pkg_json->pkg->desc);
-			pkg_json->pkg->desc = s;
-			break;
 		case AUR_URL:
 			FREE (pkg_json->pkg->url);
 			pkg_json->pkg->url = s;
@@ -480,9 +562,36 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 			FREE (pkg_json->pkg->urlpath);
 			pkg_json->pkg->urlpath = s;
 			break;
+		case AUR_VER:
+			FREE (pkg_json->pkg->version);
+			pkg_json->pkg->version = s;
+			break;
+		case AUR_CHECKDEPENDS:
+			pkg_json->pkg->checkdepends = alpm_list_add (pkg_json->pkg->checkdepends, s);
+			break;
+		case AUR_CONFLICTS:
+			pkg_json->pkg->conflicts = alpm_list_add (pkg_json->pkg->conflicts, s);
+			break;
+		case AUR_DEPENDS:
+			pkg_json->pkg->depends = alpm_list_add (pkg_json->pkg->depends, s);
+			break;
+		case AUR_GROUPS:
+			pkg_json->pkg->groups = alpm_list_add (pkg_json->pkg->groups, s);
+			break;
 		case AUR_LICENSE:
-			FREE (pkg_json->pkg->license);
-			pkg_json->pkg->license = s;
+			pkg_json->pkg->license = alpm_list_add (pkg_json->pkg->license, s);
+			break;
+		case AUR_MAKEDEPENDS:
+			pkg_json->pkg->makedepends = alpm_list_add (pkg_json->pkg->makedepends, s);
+			break;
+		case AUR_OPTDEPENDS:
+			pkg_json->pkg->optdepends = alpm_list_add (pkg_json->pkg->optdepends, s);
+			break;
+		case AUR_PROVIDES:
+			pkg_json->pkg->provides = alpm_list_add (pkg_json->pkg->provides, s);
+			break;
+		case AUR_REPLACES:
+			pkg_json->pkg->replaces = alpm_list_add (pkg_json->pkg->replaces, s);
 			break;
 		default:
 			FREE (s);
@@ -752,8 +861,24 @@ const char *aur_get_str (void *p, unsigned char c)
 	info = NULL;
 	switch (c)
 	{
+		case 'c':
+			info = concat_str_list (aur_pkg_get_checkdepends (pkg));
+			free_info = 1;
+			break;
+		case 'C':
+			info = concat_str_list (aur_pkg_get_conflicts (pkg));
+			free_info = 1;
+			break;
 		case 'd':
 			info = (char *) aur_pkg_get_desc (pkg);
+			break;
+		case 'D':
+			info = concat_str_list (aur_pkg_get_depends (pkg));
+			free_info = 1;
+			break;
+		case 'g':
+			info = concat_str_list (aur_pkg_get_groups (pkg));
+			free_info = 1;
 			break;
 		case 'G':
 			if (config.aur_url && aur_pkg_get_pkgbase (pkg)) {
@@ -769,12 +894,16 @@ const char *aur_get_str (void *p, unsigned char c)
 				free_info = 1;
 			}
 			break;
-		case 'i': 
-			info = itostr (aur_pkg_get_id (pkg)); 
+		case 'i':
+			info = itostr (aur_pkg_get_id (pkg));
 			free_info = 1;
 			break;
 		case 'm':
 			info = (char *) aur_pkg_get_maintainer (pkg);
+			break;
+		case 'M':
+			info = concat_str_list (aur_pkg_get_makedepends (pkg));
+			free_info = 1;
 			break;
 		case 'n':
 			info = (char *) aur_pkg_get_name (pkg);
@@ -783,8 +912,12 @@ const char *aur_get_str (void *p, unsigned char c)
 			info = ttostr (aur_pkg_get_lastmod (pkg));
 			free_info = 1;
 			break;
-		case 'o': 
-			info = itostr (aur_pkg_get_outofdate (pkg)); 
+		case 'o':
+			info = itostr (aur_pkg_get_outofdate (pkg));
+			free_info = 1;
+			break;
+		case 'O':
+			info = concat_str_list (aur_pkg_get_optdepends (pkg));
 			free_info = 1;
 			break;
 		case 'p':
@@ -797,12 +930,20 @@ const char *aur_get_str (void *p, unsigned char c)
 				}
 			}
 			break;
+		case 'P':
+			info = concat_str_list (aur_pkg_get_provides (pkg));
+			free_info = 1;
+			break;
 		case 's':
 		case 'r':
 			info = strdup (AUR_REPO);
 			free_info = 1;
 			break;
-		case 'u': 
+		case 'R':
+			info = concat_str_list (aur_pkg_get_replaces (pkg));
+			free_info = 1;
+			break;
+		case 'u':
 			if (config.aur_url && aur_pkg_get_urlpath (pkg)) {
 				info = (char *) malloc (sizeof (char) *
 					(strlen (config.aur_url) +
@@ -825,8 +966,8 @@ const char *aur_get_str (void *p, unsigned char c)
 		case 'v':
 			info = (char *) aur_pkg_get_version (pkg);
 			break;
-		case 'w': 
-			info = itostr (aur_pkg_get_votes (pkg)); 
+		case 'w':
+			info = itostr (aur_pkg_get_votes (pkg));
 			free_info = 1;
 			break;
 		default:

@@ -255,7 +255,7 @@ int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets, int query_type)
 	alpm_list_t *(*f)(alpm_pkg_t *);
 	int free_fn_ret = 0;
 	/* free_fn_ret=1 to free f() return
-	 * free_fn_ret=2 to free g() return 
+	 * free_fn_ret=2 to free g() return
 	 *            =3 to free both
 	 */
 
@@ -431,7 +431,7 @@ off_t get_size_pkg (alpm_pkg_t *pkg)
 {
 	alpm_pkg_t *sync_pkg = get_sync_pkg (pkg);
 	if (config.filter & F_UPGRADES) {
-		if (sync_pkg) 
+		if (sync_pkg)
 			return alpm_pkg_download_size (sync_pkg);
 	}
 	else if (sync_pkg != pkg)
@@ -505,9 +505,8 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			info = concat_backup_list (alpm_pkg_get_backup (pkg));
 			free_info = 1;
 			break;
-		case 'c':
 		case 'C':
-			info = concat_dep_list (alpm_pkg_get_conflicts (pkg)); 
+			info = concat_dep_list (alpm_pkg_get_conflicts (pkg));
 			free_info = 1;
 			break;
 		case 'd':
@@ -520,12 +519,12 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 		case 'f':
 			info = (char *) alpm_pkg_get_filename (pkg);
 			break;
-		case 'I':
-			info = itostr (alpm_pkg_has_scriptlet (pkg));
+		case 'g':
+			info = concat_str_list (alpm_pkg_get_groups (pkg));
 			free_info = 1;
 			break;
-		case 'g':
-			info = concat_str_list (alpm_pkg_get_groups (pkg)); 
+		case 'I':
+			info = itostr (alpm_pkg_has_scriptlet (pkg));
 			free_info = 1;
 			break;
 		case 'm':
@@ -554,13 +553,13 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			info = concat_dep_list (alpm_pkg_get_replaces (pkg));
 			free_info = 1;
 			break;
-		case 's': 
+		case 's':
 			pkg = get_sync_pkg (pkg);
 			if (!pkg) pkg = (alpm_pkg_t *) p;
 		case 'r':
 			info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg));
 			break;
-		case 'u': 
+		case 'u':
 			{
 				const alpm_list_t *servers = alpm_db_get_servers(alpm_pkg_get_db(pkg));
 				if (servers) {
@@ -576,17 +575,17 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 		case 'U':
 			info = (char *) alpm_pkg_get_url (pkg);
 			break;
-		case 'V': 
-			pkg = get_sync_pkg (pkg);
-			if (!pkg) break;
 		case 'v':
 			info = (char *) alpm_pkg_get_version (pkg);
 			break;
+		case 'V':
+			pkg = get_sync_pkg (pkg);
+			if (!pkg) break;
 		default:
 			return NULL;
 	}
 	return info;
-}	
+}
 
 const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 {
@@ -626,7 +625,7 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 			return NULL;
 	}
 	return info;
-}	
+}
 
 const char *alpm_grp_get_str (void *p, unsigned char c)
 {

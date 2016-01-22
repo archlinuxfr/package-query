@@ -25,21 +25,34 @@
  */
 typedef struct _aurpkg_t
 {
-	unsigned int id;
-	char *name;
-	unsigned int pkgbase_id;
-	char *pkgbase;
-	char *version;
-	unsigned int category;
 	char *desc;
+	char *maintainer;
+	char *name;
+	char *pkgbase;
 	char *url;
 	char *urlpath;
-	char *license;
+	char *version;
+
+	alpm_list_t *checkdepends;
+	alpm_list_t *conflicts;
+	alpm_list_t *depends;
+	alpm_list_t *groups;
+	alpm_list_t *license;
+	alpm_list_t *makedepends;
+	alpm_list_t *optdepends;
+	alpm_list_t *provides;
+	alpm_list_t *replaces;
+
+	unsigned int category;
+	unsigned int id;
+	unsigned int pkgbase_id;
 	unsigned int votes;
+
 	unsigned short outofdate;
+
 	time_t firstsubmit;
 	time_t lastmod;
-	char *maintainer;
+
 	double popularity;
 } aurpkg_t;
 
@@ -49,20 +62,28 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg);
 int aur_pkg_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2);
 int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2);
 
-unsigned int aur_pkg_get_id (const aurpkg_t * pkg);
-const char * aur_pkg_get_name (const aurpkg_t * pkg);
-unsigned int aur_pkg_get_pkgbase_id (const aurpkg_t * pkg);
-const char * aur_pkg_get_pkgbase (const aurpkg_t * pkg);
-const char * aur_pkg_get_version (const aurpkg_t * pkg);
 const char * aur_pkg_get_desc (const aurpkg_t * pkg);
+const char * aur_pkg_get_maintainer (const aurpkg_t * pkg);
+const char * aur_pkg_get_name (const aurpkg_t * pkg);
+const char * aur_pkg_get_pkgbase (const aurpkg_t * pkg);
 const char * aur_pkg_get_url (const aurpkg_t * pkg);
 const char * aur_pkg_get_urlpath (const aurpkg_t * pkg);
-const char * aur_pkg_get_license (const aurpkg_t * pkg);
+const char * aur_pkg_get_version (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_checkdepends (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_conflicts (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_depends (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_groups (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_license (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_makedepends (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_optdepends (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_provides (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_replaces (const aurpkg_t * pkg);
+unsigned int aur_pkg_get_id (const aurpkg_t * pkg);
+unsigned int aur_pkg_get_pkgbase_id (const aurpkg_t * pkg);
 unsigned int aur_pkg_get_votes (const aurpkg_t * pkg);
 unsigned short aur_pkg_get_outofdate (const aurpkg_t * pkg);
 time_t aur_pkg_get_firstsubmit (const aurpkg_t * pkg);
 time_t aur_pkg_get_lastmod (const aurpkg_t * pkg);
-const char * aur_pkg_get_maintainer (const aurpkg_t * pkg);
 double aur_pkg_get_popularity (const aurpkg_t * pkg);
 
 /*
