@@ -505,7 +505,6 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			info = concat_backup_list (alpm_pkg_get_backup (pkg));
 			free_info = 1;
 			break;
-		case 'c':
 		case 'C':
 			info = concat_dep_list (alpm_pkg_get_conflicts (pkg));
 			free_info = 1;

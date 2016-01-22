@@ -163,6 +163,7 @@ void aur_pkg_free (aurpkg_t *pkg)
 	FREE (pkg->urlpath);
 	FREE (pkg->version);
 
+	FREELIST (pkg->checkdepends);
 	FREELIST (pkg->conflicts);
 	FREELIST (pkg->depends);
 	FREELIST (pkg->groups);
@@ -196,6 +197,7 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->urlpath = STRDUP (pkg->urlpath);
 	pkg_ret->version = STRDUP (pkg->version);
 
+	pkg_ret->checkdepends = alpm_list_copy (pkg->checkdepends);
 	pkg_ret->conflicts = alpm_list_copy (pkg->conflicts);
 	pkg_ret->depends = alpm_list_copy (pkg->depends);
 	pkg_ret->groups = alpm_list_copy (pkg->groups);
@@ -268,6 +270,13 @@ const char *aur_pkg_get_version (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->version;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_checkdepends (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->checkdepends;
 	return NULL;
 }
 
@@ -556,6 +565,9 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 		case AUR_VER:
 			FREE (pkg_json->pkg->version);
 			pkg_json->pkg->version = s;
+			break;
+		case AUR_CHECKDEPENDS:
+			pkg_json->pkg->checkdepends = alpm_list_add (pkg_json->pkg->checkdepends, s);
 			break;
 		case AUR_CONFLICTS:
 			pkg_json->pkg->conflicts = alpm_list_add (pkg_json->pkg->conflicts, s);
@@ -849,6 +861,10 @@ const char *aur_get_str (void *p, unsigned char c)
 	info = NULL;
 	switch (c)
 	{
+		case 'c':
+			info = concat_str_list (aur_pkg_get_checkdepends (pkg));
+			free_info = 1;
+			break;
 		case 'C':
 			info = concat_str_list (aur_pkg_get_conflicts (pkg));
 			free_info = 1;
