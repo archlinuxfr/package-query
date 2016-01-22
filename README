@@ -1,5 +1,10 @@
-Dependencies:
-	- libalpm: http://www.archlinux.org/pacman/
-	- yajl: http://lloyd.github.com/yajl/
-	- curl: http://curl.haxx.se
+package-query is a frontend to Arch Linux pacman's database - libalpm; it also
+adds support of Arch User Repository - AUR (https://aur.archlinux.org/).
 
+package-query is mostly used by yaourt (https://github.com/archlinuxfr/yaourt)
+but may as well be used as a stand-alone tool.
+
+Dependencies:
+	- libalpm: https://www.archlinux.org/pacman/
+	- yajl:    http://lloyd.github.com/yajl/
+	- curl:    http://curl.haxx.se
