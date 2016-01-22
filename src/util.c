@@ -343,9 +343,9 @@ string_t *string_fcat (string_t *dest, const char *format, ...)
 	char *s;
 	va_list args;
 	va_start(args, format);
-	vasprintf(&s, format, args);
+	int ret = vasprintf(&s, format, args);
 	va_end(args);
-	if (!s) {
+	if (!s || ret < 0) {
 		perror ("vasprintf");
 		exit (1);
 	}
@@ -477,7 +477,10 @@ char *concat_backup_list (const alpm_list_t *backups)
 		const alpm_backup_t *backup = i->data;
 		if (backup) {
 			char *b_str;
-			asprintf (&b_str, "%s\t%s", backup->name, backup->hash);
+			int ret = asprintf (&b_str, "%s\t%s", backup->name, backup->hash);
+			if (!b_str || ret < 0) {
+				continue;
+			}
 			backups_str = alpm_list_add (backups_str, b_str);
 		}
 	}
@@ -525,14 +528,22 @@ static void print_escape (const char *str)
 char * itostr (int i)
 {
 	char *is;
-	asprintf (&is, "%d", i);
+	int ret = asprintf (&is, "%d", i);
+	if (ret < 0) {
+		FREE (is);
+		return NULL;
+	}
 	return is;
 }
 
 char * ltostr (long i)
 {
 	char *is;
-	asprintf (&is, "%ld", i);
+	int ret = asprintf (&is, "%ld", i);
+	if (ret < 0) {
+		FREE (is);
+		return NULL;
+	}
 	return is;
 }
 
