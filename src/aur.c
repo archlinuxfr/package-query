@@ -167,6 +167,7 @@ void aur_pkg_free (aurpkg_t *pkg)
 	FREELIST (pkg->depends);
 	FREELIST (pkg->groups);
 	FREELIST (pkg->license);
+	FREELIST (pkg->makedepends);
 	FREELIST (pkg->optdepends);
 	FREELIST (pkg->provides);
 	FREELIST (pkg->replaces);
@@ -199,6 +200,7 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->depends = alpm_list_copy (pkg->depends);
 	pkg_ret->groups = alpm_list_copy (pkg->groups);
 	pkg_ret->license = alpm_list_copy (pkg->license);
+	pkg_ret->makedepends = alpm_list_copy (pkg->makedepends);
 	pkg_ret->optdepends = alpm_list_copy (pkg->optdepends);
 	pkg_ret->provides = alpm_list_copy (pkg->provides);
 	pkg_ret->replaces = alpm_list_copy (pkg->replaces);
@@ -294,6 +296,13 @@ const alpm_list_t *aur_pkg_get_license (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->license;
+	return NULL;
+}
+
+const alpm_list_t *aur_pkg_get_makedepends (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->makedepends;
 	return NULL;
 }
 
@@ -559,6 +568,9 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 			break;
 		case AUR_LICENSE:
 			pkg_json->pkg->license = alpm_list_add (pkg_json->pkg->license, s);
+			break;
+		case AUR_MAKEDEPENDS:
+			pkg_json->pkg->makedepends = alpm_list_add (pkg_json->pkg->makedepends, s);
 			break;
 		case AUR_OPTDEPENDS:
 			pkg_json->pkg->optdepends = alpm_list_add (pkg_json->pkg->optdepends, s);
@@ -872,6 +884,10 @@ const char *aur_get_str (void *p, unsigned char c)
 			break;
 		case 'm':
 			info = (char *) aur_pkg_get_maintainer (pkg);
+			break;
+		case 'M':
+			info = concat_str_list (aur_pkg_get_makedepends (pkg));
+			free_info = 1;
 			break;
 		case 'n':
 			info = (char *) aur_pkg_get_name (pkg);
