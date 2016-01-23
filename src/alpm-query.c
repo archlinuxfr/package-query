@@ -516,6 +516,10 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			info = concat_dep_list (alpm_pkg_get_depends (pkg));
 			free_info = 1;
 			break;
+		case 'e':
+			info = concat_str_list (alpm_pkg_get_licenses (pkg));
+			free_info = 1;
+			break;
 		case 'f':
 			info = (char *) alpm_pkg_get_filename (pkg);
 			break;
