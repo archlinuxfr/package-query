@@ -73,7 +73,7 @@ const alpm_list_t * aur_pkg_get_checkdepends (const aurpkg_t * pkg);
 const alpm_list_t * aur_pkg_get_conflicts (const aurpkg_t * pkg);
 const alpm_list_t * aur_pkg_get_depends (const aurpkg_t * pkg);
 const alpm_list_t * aur_pkg_get_groups (const aurpkg_t * pkg);
-const alpm_list_t * aur_pkg_get_license (const aurpkg_t * pkg);
+const alpm_list_t * aur_pkg_get_licenses (const aurpkg_t * pkg);
 const alpm_list_t * aur_pkg_get_makedepends (const aurpkg_t * pkg);
 const alpm_list_t * aur_pkg_get_optdepends (const aurpkg_t * pkg);
 const alpm_list_t * aur_pkg_get_provides (const aurpkg_t * pkg);

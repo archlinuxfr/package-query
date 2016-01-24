@@ -301,7 +301,7 @@ const alpm_list_t *aur_pkg_get_groups (const aurpkg_t *pkg)
 	return NULL;
 }
 
-const alpm_list_t *aur_pkg_get_license (const aurpkg_t *pkg)
+const alpm_list_t *aur_pkg_get_licenses (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->license;
@@ -874,6 +874,10 @@ const char *aur_get_str (void *p, unsigned char c)
 			break;
 		case 'D':
 			info = concat_str_list (aur_pkg_get_depends (pkg));
+			free_info = 1;
+			break;
+		case 'e':
+			info = concat_str_list (aur_pkg_get_licenses (pkg));
 			free_info = 1;
 			break;
 		case 'g':
