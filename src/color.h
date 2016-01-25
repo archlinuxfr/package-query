@@ -28,6 +28,7 @@
 #define C_GRP       "grp"
 #define C_OD        "od"
 #define C_VOTES     "votes"
+#define C_POPUL     "popularity"
 #define C_DSC       "dsc"
 #define C_ORPHAN    "orphan"
 #define C_NO        "no"

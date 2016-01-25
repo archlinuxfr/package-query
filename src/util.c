@@ -737,6 +737,10 @@ static void color_print_aur_status (void *p, printpkgfn f)
 	if (info) {
 		fprintf (stdout, " %s(%s)%s", color(C_VOTES), info, color(C_NO));
 	}
+	info = f(p, 'p');
+	if (info) {
+		fprintf (stdout, " %s(%s)%s", color(C_POPUL), info, color(C_NO));
+	}
 }
 
 static void color_print_package (void *p, printpkgfn f)
