@@ -31,7 +31,7 @@
 #define FORMAT_LOCAL_PKG "lF134"
 #define INDENT 4
 
-static alpm_list_t *results=NULL;
+static alpm_list_t *results = NULL;
 
 /* Results */
 typedef struct _results_t
@@ -278,17 +278,6 @@ string_t *string_new ()
 	return str;
 }
 
-void string_reset (string_t *str)
-{
-	if (!str) {
-		return;
-	}
-	str->used = 0;
-	if (str->s) {
-		str->s[0] = '\0';
-	}
-}
-
 void string_free (string_t *dest)
 {
 	if (!dest) {
@@ -298,7 +287,7 @@ void string_free (string_t *dest)
 	FREE (dest);
 }
 
-char *string_free2 (string_t *dest)
+static char *string_free2 (string_t *dest)
 {
 	if (!dest) {
 		return NULL;
@@ -330,25 +319,6 @@ string_t *string_cat (string_t *dest, const char *src)
 		return dest;
 	}
 	return string_ncat (dest, src, strlen (src));
-}
-
-string_t *string_fcat (string_t *dest, const char *format, ...)
-{
-	if (!format || !strlen (format)) {
-		return dest;
-	}
-	char *s;
-	va_list args;
-	va_start(args, format);
-	int ret = vasprintf(&s, format, args);
-	va_end(args);
-	if (!s || ret < 0) {
-		perror ("vasprintf");
-		exit (1);
-	}
-	dest = string_cat (dest, s);
-	free (s);
-	return dest;
 }
 
 const char *string_cstr (const string_t *str)
@@ -522,7 +492,7 @@ static void print_escape (const char *str)
 	}
 }
 
-char * itostr (int i)
+char *itostr (int i)
 {
 	char *is;
 	int ret = asprintf (&is, "%d", i);
@@ -533,7 +503,7 @@ char * itostr (int i)
 	return is;
 }
 
-char * ltostr (long i)
+char *ltostr (long i)
 {
 	char *is;
 	int ret = asprintf (&is, "%ld", i);
@@ -544,7 +514,7 @@ char * ltostr (long i)
 	return is;
 }
 
-char * ttostr (time_t t)
+char *ttostr (time_t t)
 {
 	char *ts;
 	CALLOC (ts, 11, sizeof (char));
@@ -917,7 +887,7 @@ int target_arg_add (target_arg_t *t, const char *s, void *item)
 	return ret;
 }
 
-void target_arg_free (target_arg_t *t)
+static void target_arg_free (target_arg_t *t)
 {
 	if (t) {
 		if (t->free_fn)
