@@ -379,7 +379,7 @@ static time_t aur_pkg_get_lastmod (const aurpkg_t *pkg)
 	return 0;
 }
 
-static double aur_pkg_get_popularity (const aurpkg_t *pkg)
+double aur_pkg_get_popularity (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->popularity;

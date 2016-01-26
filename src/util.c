@@ -103,6 +103,14 @@ static int results_votes (const results_t *r)
 	return aur_pkg_get_votes ((aurpkg_t *) r->ele);
 }
 
+static double results_popularity (const results_t *r)
+{
+	if (!r || r->type != R_AUR_PKG) {
+		return 0.0;
+	}
+	return aur_pkg_get_popularity ((aurpkg_t *) r->ele);
+}
+
 static int results_cmp (const results_t *r1, const results_t *r2)
 {
 	const char *r1name = results_name (r1);
@@ -132,6 +140,13 @@ static int results_votes_cmp (const results_t *r1, const results_t *r2)
 	return (results_votes (r1) - results_votes (r2));
 }
 
+static int results_popularity_cmp (const results_t *r1, const results_t *r2)
+{
+	if (results_popularity (r1) > results_popularity (r2)) return 1;
+	if (results_popularity (r2) > results_popularity (r1)) return -1;
+	return 0;
+}
+
 void print_or_add_result (void *pkg, unsigned short type)
 {
 	if (config.sort == 0) {
@@ -155,6 +170,7 @@ void show_results ()
 	switch (config.sort) {
 		case S_NAME: fn_cmp = (alpm_list_fn_cmp) results_cmp; break;
 		case S_VOTE: fn_cmp = (alpm_list_fn_cmp) results_votes_cmp; break;
+		case S_POP:  fn_cmp = (alpm_list_fn_cmp) results_popularity_cmp; break;
 		case S_IDATE: fn_cmp = (alpm_list_fn_cmp) results_installdate_cmp; break;
 		case S_ISIZE: fn_cmp = (alpm_list_fn_cmp) results_isize_cmp; break;
 	}
