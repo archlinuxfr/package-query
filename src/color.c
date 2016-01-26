@@ -24,7 +24,7 @@
 #include "util.h"
 
 #define COLOR_ENV_VAR  "PQ_COLORS"
-#define DEFAULT_COLORS "no=0:nb=1;33;7:pkg=1:ver=1;32:lver=1;31;7:installed=1;33;7:grp=1;34:od=1;33;7:votes=1;33;7:dsc=0:other=1;35:testing=1;31:core=1;31:extra=1;32:local=1;33:orphan=1;31"
+#define DEFAULT_COLORS "no=0:nb=1;33;7:pkg=1:ver=1;32:lver=1;31;7:installed=1;33;7:grp=1;34:od=1;33;7:votes=1;33;7:popularity=1;33;7:dsc=0:other=1;35:testing=1;31:core=1;31:extra=1;32:local=1;33:orphan=1;31"
 #define COL_ID(x) (x >= 'a' && x <= 'z')
 #define COL_VAL(x) ((x >= '0' && x <= '9') || x == ';')
 #define COLOR "0123456789;"
