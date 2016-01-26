@@ -144,7 +144,7 @@ typedef struct _jsonpkg_t
 
 
 
-aurpkg_t *aur_pkg_new ()
+static aurpkg_t *aur_pkg_new ()
 {
 	aurpkg_t *pkg = NULL;
 	MALLOC (pkg, sizeof(aurpkg_t));
@@ -210,12 +210,12 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	return pkg_ret;
 }
 
-int aur_pkg_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
+static int aur_pkg_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
 {
 	return strcmp (aur_pkg_get_name (pkg1), aur_pkg_get_name (pkg2));
 }
 
-int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
+static int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
 {
 	if (pkg1 && pkg2 && (pkg1->votes > pkg2->votes))
 		return 1;
@@ -224,14 +224,14 @@ int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
 	return 0;
 }
 
-const char *aur_pkg_get_desc (const aurpkg_t *pkg)
+static const char *aur_pkg_get_desc (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->desc;
 	return NULL;
 }
 
-const char *aur_pkg_get_maintainer (const aurpkg_t *pkg)
+static const char *aur_pkg_get_maintainer (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->maintainer;
@@ -245,105 +245,105 @@ const char *aur_pkg_get_name (const aurpkg_t *pkg)
 	return NULL;
 }
 
-const char *aur_pkg_get_pkgbase (const aurpkg_t *pkg)
+static const char *aur_pkg_get_pkgbase (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->pkgbase;
 	return NULL;
 }
 
-const char *aur_pkg_get_url (const aurpkg_t *pkg)
+static const char *aur_pkg_get_url (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->url;
 	return NULL;
 }
 
-const char *aur_pkg_get_urlpath (const aurpkg_t *pkg)
+static const char *aur_pkg_get_urlpath (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->urlpath;
 	return NULL;
 }
 
-const char *aur_pkg_get_version (const aurpkg_t *pkg)
+static const char *aur_pkg_get_version (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->version;
 	return NULL;
 }
 
-const alpm_list_t *aur_pkg_get_checkdepends (const aurpkg_t *pkg)
+static const alpm_list_t *aur_pkg_get_checkdepends (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->checkdepends;
 	return NULL;
 }
 
-const alpm_list_t *aur_pkg_get_conflicts (const aurpkg_t *pkg)
+static const alpm_list_t *aur_pkg_get_conflicts (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->conflicts;
 	return NULL;
 }
 
-const alpm_list_t *aur_pkg_get_depends (const aurpkg_t *pkg)
+static const alpm_list_t *aur_pkg_get_depends (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->depends;
 	return NULL;
 }
 
-const alpm_list_t *aur_pkg_get_groups (const aurpkg_t *pkg)
+static const alpm_list_t *aur_pkg_get_groups (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->groups;
 	return NULL;
 }
 
-const alpm_list_t *aur_pkg_get_licenses (const aurpkg_t *pkg)
+static const alpm_list_t *aur_pkg_get_licenses (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->license;
 	return NULL;
 }
 
-const alpm_list_t *aur_pkg_get_makedepends (const aurpkg_t *pkg)
+static const alpm_list_t *aur_pkg_get_makedepends (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->makedepends;
 	return NULL;
 }
 
-const alpm_list_t *aur_pkg_get_optdepends (const aurpkg_t *pkg)
+static const alpm_list_t *aur_pkg_get_optdepends (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->optdepends;
 	return NULL;
 }
 
-const alpm_list_t *aur_pkg_get_provides (const aurpkg_t *pkg)
+static const alpm_list_t *aur_pkg_get_provides (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->provides;
 	return NULL;
 }
 
-const alpm_list_t *aur_pkg_get_replaces (const aurpkg_t *pkg)
+static const alpm_list_t *aur_pkg_get_replaces (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->replaces;
 	return NULL;
 }
 
-unsigned int aur_pkg_get_id (const aurpkg_t *pkg)
+static unsigned int aur_pkg_get_id (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->id;
 	return 0;
 }
 
-unsigned int aur_pkg_get_pkgbase_id (const aurpkg_t *pkg)
+static unsigned int aur_pkg_get_pkgbase_id (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->pkgbase_id;
@@ -357,28 +357,28 @@ unsigned int aur_pkg_get_votes (const aurpkg_t *pkg)
 	return 0;
 }
 
-unsigned short aur_pkg_get_outofdate (const aurpkg_t *pkg)
+static unsigned short aur_pkg_get_outofdate (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->outofdate;
 	return 0;
 }
 
-time_t aur_pkg_get_firstsubmit (const aurpkg_t *pkg)
+static time_t aur_pkg_get_firstsubmit (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->firstsubmit;
 	return 0;
 }
 
-time_t aur_pkg_get_lastmod (const aurpkg_t *pkg)
+static time_t aur_pkg_get_lastmod (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->lastmod;
 	return 0;
 }
 
-double aur_pkg_get_popularity (const aurpkg_t *pkg)
+static double aur_pkg_get_popularity (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->popularity;
