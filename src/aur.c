@@ -19,6 +19,7 @@
 #include "config.h"
 #include <string.h>
 #include <errno.h>
+#include <locale.h>
 
 #include <curl/curl.h>
 #include <curl/easy.h>
@@ -667,7 +668,12 @@ static alpm_list_t *aur_fetch (CURL *curl, const char *url)
 		return NULL;
 	}
 
+	// this setlocale() hack is a workaround for the yajl issue:
+	// https://github.com/lloyd/yajl/issues/79
+	setlocale(LC_ALL, "C");
 	alpm_list_t *pkgs = aur_json_parse (string_cstr (res));
+	setlocale(LC_ALL, "");
+
 	string_free (res);
 
 	return pkgs;
