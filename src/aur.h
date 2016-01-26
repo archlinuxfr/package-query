@@ -37,7 +37,7 @@ typedef struct _aurpkg_t
 	alpm_list_t *conflicts;
 	alpm_list_t *depends;
 	alpm_list_t *groups;
-	alpm_list_t *license;
+	alpm_list_t *licenses;
 	alpm_list_t *makedepends;
 	alpm_list_t *optdepends;
 	alpm_list_t *provides;
