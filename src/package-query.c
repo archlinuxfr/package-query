@@ -104,7 +104,8 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-q --quiet           quiet");
 	fprintf(stderr, "\n\t-x --escape          escape \" on output");
 	fprintf(stderr, "\n\t--nocolor            output without colors");
-	fprintf(stderr, "\n\t--sort,--rsort [name,date,vote,pop,size]");
+	fprintf(stderr, "\n\t--sort <parameter>   sort search results by a parameter");
+	fprintf(stderr, "\n\t--rsort <parameter>  sort search results in reverse order");
 	fprintf(stderr, "\n\t--show-size          show package size");
 	fprintf(stderr, "\n\t--insecure           perform insecure ssl connection (curl)");
 	fprintf(stderr, "\n");
@@ -144,6 +145,12 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\tv: version, depends on search target");
 	fprintf(stderr, "\n\tV: (sync) version");
 	fprintf(stderr, "\n\tw: votes");
+	fprintf(stderr, "\n\nSorting parameters: ");
+	fprintf(stderr, "\n\tn, name: name");
+	fprintf(stderr, "\n\tw, vote: AUR votes");
+	fprintf(stderr, "\n\tp, pop:  AUR popularity");
+	fprintf(stderr, "\n\t1, date: install date");
+	fprintf(stderr, "\n\t2, size: install size");
 	fprintf(stderr, "\n");
 	cleanup (0);
 }
