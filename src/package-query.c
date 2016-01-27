@@ -104,7 +104,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-q --quiet           quiet");
 	fprintf(stderr, "\n\t-x --escape          escape \" on output");
 	fprintf(stderr, "\n\t--nocolor            output without colors");
-	fprintf(stderr, "\n\t--sort,--rsort [name,date,vote,size]");
+	fprintf(stderr, "\n\t--sort,--rsort [name,date,vote,pop,size]");
 	fprintf(stderr, "\n\t--show-size          show package size");
 	fprintf(stderr, "\n\t--insecure           perform insecure ssl connection (curl)");
 	fprintf(stderr, "\n");
@@ -374,6 +374,8 @@ int main (int argc, char **argv)
 						config.sort = S_NAME;
 					else if (strcmp (optarg, "vote") == 0)
 						config.sort = S_VOTE;
+					else if (strcmp (optarg, "pop") == 0)
+						config.sort = S_POP;
 					else if (strcmp (optarg, "date") == 0)
 						config.sort = S_IDATE;
 					else if (strcmp (optarg, "size") == 0)
