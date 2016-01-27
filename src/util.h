@@ -171,7 +171,6 @@ target_arg_t *target_arg_init (ta_dup_fn dup_fn,
                                alpm_list_fn_cmp cmp_fn,
                                alpm_list_fn_free free_fn);
 int target_arg_add (target_arg_t *t, const char *s, void *item);
-void target_arg_free (target_arg_t *t);
 alpm_list_t *target_arg_clear (target_arg_t *t, alpm_list_t *targets);
 alpm_list_t *target_arg_close (target_arg_t *t, alpm_list_t *targets);
 
@@ -187,12 +186,9 @@ typedef struct _string_t
 } string_t;
 
 string_t *string_new ();
-void string_reset (string_t *str);
 void string_free (string_t *dest);
-char *string_free2 (string_t *dest);
 string_t *string_ncat (string_t *dest, const char *src, size_t n);
 string_t *string_cat (string_t *dest, const char *src);
-string_t *string_fcat (string_t *dest, const char *format, ...);
 const char *string_cstr (const string_t *str);
 /* strtrim, strreplace are from pacman's code */
 char *strtrim(char *str);
@@ -204,20 +200,20 @@ char *concat_file_list (const alpm_filelist_t *f);
 char *concat_backup_list (const alpm_list_t *backups);
 
 /* integer/long to string */
-char * itostr (int i);
-char * ltostr (long i);
+char *itostr (int i);
+char *ltostr (long i);
 
 /* time to string */
-char * ttostr (time_t t);
+char *ttostr (time_t t);
 
 /*
  * Package output
  */
-typedef  alpm_list_t * (*alpm_list_nav)(const alpm_list_t *);
+typedef alpm_list_t *(*alpm_list_nav)(const alpm_list_t *);
 typedef const char *(*printpkgfn)(void *, unsigned char);
 void format_str (char *s);
-char *pkg_to_str (const char * target, void * pkg, printpkgfn f, const char *format);
-void print_package (const char * target, void * pkg, printpkgfn f);
+char *pkg_to_str (const char *target, void *pkg, printpkgfn f, const char *format);
+void print_package (const char *target, void *pkg, printpkgfn f);
 
 /* Results */
 void print_or_add_result (void *pkg, unsigned short type);
