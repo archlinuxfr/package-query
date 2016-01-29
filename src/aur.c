@@ -867,6 +867,9 @@ const char *aur_get_str (void *p, unsigned char c)
 	info = NULL;
 	switch (c)
 	{
+		case 'b':
+			info = (char *) aur_pkg_get_pkgbase (pkg);
+			break;
 		case 'c':
 			info = concat_str_list (aur_pkg_get_checkdepends (pkg));
 			free_info = 1;
