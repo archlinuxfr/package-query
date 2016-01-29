@@ -911,6 +911,10 @@ const char *aur_get_str (void *p, unsigned char c)
 			info = itostr (aur_pkg_get_id (pkg));
 			free_info = 1;
 			break;
+		case 'k':
+			info = itostr (aur_pkg_get_pkgbase_id (pkg));
+			free_info = 1;
+			break;
 		case 'm':
 			info = (char *) aur_pkg_get_maintainer (pkg);
 			break;
