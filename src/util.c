@@ -137,13 +137,13 @@ static int results_isize_cmp (const results_t *r1, const results_t *r2)
 
 static int results_votes_cmp (const results_t *r1, const results_t *r2)
 {
-	return (results_votes (r1) - results_votes (r2));
+	return (results_votes (r2) - results_votes (r1));
 }
 
 static int results_popularity_cmp (const results_t *r1, const results_t *r2)
 {
-	if (results_popularity (r1) > results_popularity (r2)) return 1;
-	if (results_popularity (r2) > results_popularity (r1)) return -1;
+	if (results_popularity (r1) > results_popularity (r2)) return -1;
+	if (results_popularity (r2) > results_popularity (r1)) return 1;
 	return 0;
 }
 
