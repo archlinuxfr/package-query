@@ -53,32 +53,34 @@
 /*
  * AUR package information
  */
-#define AUR_CAT              1
-#define AUR_CHECKDEPENDS     2
-#define AUR_CONFLICTS        3
-#define AUR_DEPENDS          4
-#define AUR_DESC             5
-#define AUR_FIRST            6
-#define AUR_GROUPS           7
-#define AUR_ID               8
-#define AUR_LAST             9
-#define AUR_LICENSE          10
-#define AUR_MAINTAINER       11
-#define AUR_MAKEDEPENDS      12
-#define AUR_NAME             13
-#define AUR_NUMVOTE          14
-#define AUR_OPTDEPENDS       15
-#define AUR_OUT              16
-#define AUR_PKGBASE          17
-#define AUR_PKGBASE_ID       18
-#define AUR_POPULARITY       19
-#define AUR_PROVIDES         20
-#define AUR_REPLACES         21
-#define AUR_URL              22
-#define AUR_URLPATH          23
-#define AUR_VER              24
-#define AUR_JSON_RESULTS_KEY 25
-#define AUR_JSON_TYPE_KEY    26
+typedef enum {
+	AUR_CATEGORY = 1,
+	AUR_CHECKDEPENDS,
+	AUR_CONFLICTS,
+	AUR_DEPENDS,
+	AUR_DESCRIPTION,
+	AUR_FIRST,
+	AUR_GROUPS,
+	AUR_ID,
+	AUR_LAST,
+	AUR_LICENSE,
+	AUR_MAINTAINER,
+	AUR_MAKEDEPENDS,
+	AUR_NAME,
+	AUR_NUMVOTES,
+	AUR_OPTDEPENDS,
+	AUR_OUTOFDATE,
+	AUR_PKGBASE,
+	AUR_PKGBASE_ID,
+	AUR_POPULARITY,
+	AUR_PROVIDES,
+	AUR_REPLACES,
+	AUR_URL,
+	AUR_URLPATH,
+	AUR_VERSION,
+	AUR_JSON_RESULTS_KEY,
+	AUR_JSON_TYPE_KEY
+} aurkeytype_t;
 
 #define AUR_LAST_ID AUR_JSON_TYPE_KEY
 
@@ -137,7 +139,7 @@ typedef struct _jsonpkg_t
 {
 	alpm_list_t *pkgs;
 	aurpkg_t *pkg;
-	int current_key;
+	aurkeytype_t current_key;
 	int error;
 	char *error_msg;
 	int level;
@@ -464,7 +466,7 @@ static int json_integer (void *ctx, long long val)
 		return 1;
 
 	switch (pkg_json->current_key) {
-		case AUR_CAT:
+		case AUR_CATEGORY:
 			pkg_json->pkg->category = (int) val;
 			break;
 		case AUR_FIRST:
@@ -476,10 +478,10 @@ static int json_integer (void *ctx, long long val)
 		case AUR_LAST:
 			pkg_json->pkg->lastmod = (time_t) val;
 			break;
-		case AUR_NUMVOTE:
+		case AUR_NUMVOTES:
 			pkg_json->pkg->votes = (int) val;
 			break;
-		case AUR_OUT:
+		case AUR_OUTOFDATE:
 			pkg_json->pkg->outofdate = 1;
 			break;
 		case AUR_PKGBASE_ID:
@@ -539,7 +541,7 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 
 	char *s = strndup ((const char *)stringVal, stringLen);
 	switch (pkg_json->current_key) {
-		case AUR_DESC:
+		case AUR_DESCRIPTION:
 			FREE (pkg_json->pkg->desc);
 			pkg_json->pkg->desc = s;
 			break;
@@ -563,7 +565,7 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 			FREE (pkg_json->pkg->urlpath);
 			pkg_json->pkg->urlpath = s;
 			break;
-		case AUR_VER:
+		case AUR_VERSION:
 			FREE (pkg_json->pkg->version);
 			pkg_json->pkg->version = s;
 			break;
