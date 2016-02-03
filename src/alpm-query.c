@@ -488,19 +488,21 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 	info = NULL;
 	switch (c) {
 		case '2':
-			info = ltostr (alpm_pkg_get_isize(pkg));
+			info = ltostr (alpm_pkg_get_isize (pkg));
 			free_info = 1;
 			break;
 		case '5':
 			pkg = get_sync_pkg (pkg);
 			if (!pkg) break;
-			info = ltostr (alpm_pkg_download_size(pkg));
+			info = ltostr (alpm_pkg_download_size (pkg));
 			free_info = 1;
 			break;
 		case 'a':
 			info = (char *) alpm_pkg_get_arch (pkg);
 			break;
 		case 'b':
+			info = (char *) alpm_pkg_get_base (pkg);
+			break;
 		case 'B':
 			info = concat_backup_list (alpm_pkg_get_backup (pkg));
 			free_info = 1;
