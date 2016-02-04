@@ -14,7 +14,7 @@ AC_PROG_CC
 AC_PROG_LIBTOOL
 
 # Checks for header files.
-AC_CHECK_HEADERS([ctype.h getopt.h libintl.h limits.h locale.h sys/ioctl.h sys/utsname.h])
+AC_CHECK_HEADERS([ctype.h getopt.h glob.h libintl.h limits.h locale.h regex.h signal.h sys/ioctl.h sys/stat.h sys/utsname.h])
 
 AC_CHECK_LIB([alpm], [alpm_version], ,
 	AC_MSG_ERROR([pacman is needed to compile package-query]))
