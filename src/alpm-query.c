@@ -581,12 +581,13 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 		case 'U':
 			info = (char *) alpm_pkg_get_url (pkg);
 			break;
-		case 'v':
-			info = (char *) alpm_pkg_get_version (pkg);
-			break;
 		case 'V':
 			pkg = get_sync_pkg (pkg);
 			if (!pkg) break;
+			// falling through
+		case 'v':
+			info = (char *) alpm_pkg_get_version (pkg);
+			break;
 		default:
 			return NULL;
 	}
