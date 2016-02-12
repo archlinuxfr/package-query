@@ -149,6 +149,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\tn, name: name");
 	fprintf(stderr, "\n\tw, vote: AUR votes");
 	fprintf(stderr, "\n\tp, pop:  AUR popularity");
+	fprintf(stderr, "\n\tr, rel:  search relevance");
 	fprintf(stderr, "\n\t1, date: install date");
 	fprintf(stderr, "\n\t2, size: install size");
 	fprintf(stderr, "\n");
@@ -383,6 +384,8 @@ int main (int argc, char **argv)
 						config.sort = S_VOTE;
 					else if (strcmp (optarg, "pop") == 0)
 						config.sort = S_POP;
+					else if (strcmp (optarg, "rel") == 0)
+						config.sort = S_REL;
 					else if (strcmp (optarg, "date") == 0)
 						config.sort = S_IDATE;
 					else if (strcmp (optarg, "size") == 0)
@@ -541,6 +544,10 @@ int main (int argc, char **argv)
 			alpm_search_local (F_FOREIGN | (config.filter & ~F_UPGRADES), "%n>%v", &targets);
 			ret += aur_info (&targets);
 		}
+	}
+
+	if (config.sort == S_REL) {
+		calculate_results_relevance(targets);
 	}
 
 	show_results();

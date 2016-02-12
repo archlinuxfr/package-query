@@ -87,6 +87,7 @@
 #define S_NAME 'n'
 #define S_VOTE 'w'
 #define S_POP  'p'
+#define S_REL  'r'
 #define S_IDATE '1'
 #define S_ISIZE '2'
 
@@ -217,6 +218,7 @@ char *pkg_to_str (const char *target, void *pkg, printpkgfn f, const char *forma
 void print_package (const char *target, void *pkg, printpkgfn f);
 
 /* Results */
+void calculate_results_relevance (alpm_list_t *targets);
 void print_or_add_result (void *pkg, unsigned short type);
 void show_results ();
 

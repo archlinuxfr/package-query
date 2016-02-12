@@ -37,6 +37,7 @@ static alpm_list_t *results = NULL;
 typedef struct _results_t
 {
 	void *ele;
+	size_t rel;
 	unsigned short type;
 } results_t;
 
@@ -45,6 +46,7 @@ static results_t *results_new (void *ele, unsigned short type)
 	results_t *r = NULL;
 	MALLOC (r, sizeof (results_t));
 	r->ele = (type == R_AUR_PKG) ? (void *) aur_pkg_dup ((aurpkg_t *) ele) : ele;
+	r->rel = SIZE_MAX;
 	r->type = type;
 	return r;
 }
@@ -111,6 +113,11 @@ static double results_popularity (const results_t *r)
 	return aur_pkg_get_popularity ((aurpkg_t *) r->ele);
 }
 
+static size_t results_relevance (const results_t *r)
+{
+	return r ? r->rel : SIZE_MAX;
+}
+
 static int results_cmp (const results_t *r1, const results_t *r2)
 {
 	const char *r1name = results_name (r1);
@@ -147,6 +154,49 @@ static int results_popularity_cmp (const results_t *r1, const results_t *r2)
 	return 0;
 }
 
+static int results_relevance_cmp (const results_t *r1, const results_t *r2)
+{
+	if (results_relevance (r1) > results_relevance (r2)) return 1;
+	if (results_relevance (r2) > results_relevance (r1)) return -1;
+	return 0;
+}
+
+// https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#C
+#define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
+size_t levenshtein_distance (const char *s1, const char *s2)
+{
+	const size_t s1len = strlen (s1);
+	const size_t s2len = strlen (s2);
+	size_t column[s1len + 1];
+	for (size_t x = 1; x <= s1len; x++) {
+		column[x] = x;
+	}
+	for (size_t x = 1; x <= s2len; x++) {
+		column[0] = x;
+		size_t lastdiag = x - 1;
+		for (size_t y = 1; y <= s1len; y++) {
+			size_t olddiag = column[y];
+			column[y] = MIN3 (column[y] + 1, column[y-1] + 1, lastdiag + (s1[y-1] == s2[x-1] ? 0 : 1));
+			lastdiag = olddiag;
+		}
+	}
+	return column[s1len];
+}
+
+void calculate_results_relevance (alpm_list_t *targets)
+{
+	for (alpm_list_t *t = targets; t; t = alpm_list_next(t)) {
+		const char *target = t->data;
+		for (alpm_list_t *r = results; r; r = alpm_list_next(r)) {
+			const char *result = results_name (r->data);
+			const size_t lev_dst = levenshtein_distance(target, result);
+			if (lev_dst < ((results_t *) r->data)->rel) {
+				((results_t *) r->data)->rel = lev_dst;
+			}
+		}
+	}
+}
+
 void print_or_add_result (void *pkg, unsigned short type)
 {
 	if (config.sort == 0) {
@@ -173,6 +223,7 @@ void show_results ()
 		case S_POP:  fn_cmp = (alpm_list_fn_cmp) results_popularity_cmp; break;
 		case S_IDATE: fn_cmp = (alpm_list_fn_cmp) results_installdate_cmp; break;
 		case S_ISIZE: fn_cmp = (alpm_list_fn_cmp) results_isize_cmp; break;
+		case S_REL: fn_cmp = (alpm_list_fn_cmp) results_relevance_cmp; break;
 	}
 	if (fn_cmp) {
 		results = alpm_list_msort (results, alpm_list_count (results), fn_cmp);
