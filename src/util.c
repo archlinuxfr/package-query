@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <regex.h>
+#include <float.h>
 
 #include "util.h"
 #include "alpm-query.h"
@@ -100,7 +101,7 @@ static off_t results_isize (const results_t *r)
 static int results_votes (const results_t *r)
 {
 	if (!r || r->type != R_AUR_PKG) {
-		return 0;
+		return INT_MAX; // put ALPM packages on top
 	}
 	return aur_pkg_get_votes ((aurpkg_t *) r->ele);
 }
@@ -108,7 +109,7 @@ static int results_votes (const results_t *r)
 static double results_popularity (const results_t *r)
 {
 	if (!r || r->type != R_AUR_PKG) {
-		return 0.0;
+		return DBL_MAX; // put ALPM packages on top
 	}
 	return aur_pkg_get_popularity ((aurpkg_t *) r->ele);
 }
