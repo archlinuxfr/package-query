@@ -41,6 +41,7 @@
 #define AUR_RPC          "/rpc.php"
 #define AUR_RPC_VERSION  "?v=5"
 #define AUR_RPC_SEARCH   "&type=search&arg="
+#define AUR_RPC_BYNAME   "&by=name"
 #define AUR_RPC_INFO     "&type=multiinfo"
 #define AUR_RPC_INFO_ARG "&arg[]="
 #define AUR_URL_ID       "/packages.php?setlang=en&ID="
@@ -716,23 +717,20 @@ static int aur_request_search (alpm_list_t **targets, CURL *curl)
 	string_t *url = aur_prepare_url (AUR_RPC_SEARCH);
 	url = string_cat (url, encoded_arg);
 	curl_free (encoded_arg);
+	if (config.name_only) {
+		url = string_cat (url, AUR_RPC_BYNAME);
+	}
 	alpm_list_t *pkgs = aur_fetch (curl, string_cstr (url));
 	string_free (url);
 
 	for (const alpm_list_t *p = pkgs; p; p = alpm_list_next (p)) {
 		int match = 1;
-		if (config.name_only) {
-			if (!does_name_contain_targets (*targets, aur_pkg_get_name (p->data), 0)) {
+		for (const alpm_list_t *t = alpm_list_next (*targets); t; t = alpm_list_next (t)) {
+			if (strcasestr (aur_pkg_get_name (p->data), t->data) == NULL &&
+					(aur_pkg_get_desc (p->data) == NULL ||
+					strcasestr (aur_pkg_get_desc (p->data), t->data) == NULL)) {
 				match = 0;
-			}
-		} else {
-			for (const alpm_list_t *t = alpm_list_next (*targets); t; t = alpm_list_next (t)) {
-				if (strcasestr (aur_pkg_get_name (p->data), t->data) == NULL &&
-						(aur_pkg_get_desc (p->data) == NULL ||
-						strcasestr (aur_pkg_get_desc (p->data), t->data) == NULL)) {
-					match = 0;
-					break;
-				}
+				break;
 			}
 		}
 		if (match) {
