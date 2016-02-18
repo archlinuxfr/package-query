@@ -39,7 +39,7 @@
  * AUR url
  */
 #define AUR_RPC          "/rpc.php"
-#define AUR_RPC_VERSION  "?v=4"
+#define AUR_RPC_VERSION  "?v=5"
 #define AUR_RPC_SEARCH   "&type=search&arg="
 #define AUR_RPC_INFO     "&type=multiinfo"
 #define AUR_RPC_INFO_ARG "&arg[]="
@@ -62,8 +62,9 @@ typedef enum {
 	AUR_FIRST,
 	AUR_GROUPS,
 	AUR_ID,
+	AUR_KEYWORDS,
 	AUR_LAST,
-	AUR_LICENSE,
+	AUR_LICENSES,
 	AUR_MAINTAINER,
 	AUR_MAKEDEPENDS,
 	AUR_NAME,
@@ -95,6 +96,7 @@ const char *aur_key_types_names[] =
 	"FirstSubmitted",
 	"Groups",
 	"ID",
+	"Keywords",
 	"LastModified",
 	"License",
 	"Maintainer",
@@ -170,6 +172,7 @@ void aur_pkg_free (aurpkg_t *pkg)
 	FREELIST (pkg->conflicts);
 	FREELIST (pkg->depends);
 	FREELIST (pkg->groups);
+	FREELIST (pkg->keywords);
 	FREELIST (pkg->licenses);
 	FREELIST (pkg->makedepends);
 	FREELIST (pkg->optdepends);
@@ -204,6 +207,7 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->conflicts = alpm_list_copy (pkg->conflicts);
 	pkg_ret->depends = alpm_list_copy (pkg->depends);
 	pkg_ret->groups = alpm_list_copy (pkg->groups);
+	pkg_ret->keywords = alpm_list_copy (pkg->keywords);
 	pkg_ret->licenses = alpm_list_copy (pkg->licenses);
 	pkg_ret->makedepends = alpm_list_copy (pkg->makedepends);
 	pkg_ret->optdepends = alpm_list_copy (pkg->optdepends);
@@ -301,6 +305,13 @@ static const alpm_list_t *aur_pkg_get_groups (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->groups;
+	return NULL;
+}
+
+static const alpm_list_t *aur_pkg_get_keywords (const aurpkg_t *pkg)
+{
+	if (pkg != NULL)
+		return pkg->keywords;
 	return NULL;
 }
 
@@ -581,7 +592,10 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 		case AUR_GROUPS:
 			pkg_json->pkg->groups = alpm_list_add (pkg_json->pkg->groups, s);
 			break;
-		case AUR_LICENSE:
+		case AUR_KEYWORDS:
+			pkg_json->pkg->keywords = alpm_list_add (pkg_json->pkg->keywords, s);
+			break;
+		case AUR_LICENSES:
 			pkg_json->pkg->licenses = alpm_list_add (pkg_json->pkg->licenses, s);
 			break;
 		case AUR_MAKEDEPENDS:
@@ -915,6 +929,10 @@ const char *aur_get_str (void *p, unsigned char c)
 			break;
 		case 'k':
 			info = itostr (aur_pkg_get_pkgbase_id (pkg));
+			free_info = 1;
+			break;
+		case 'K':
+			info = concat_str_list (aur_pkg_get_keywords (pkg));
 			free_info = 1;
 			break;
 		case 'm':
