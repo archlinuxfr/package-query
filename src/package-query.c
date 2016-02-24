@@ -76,7 +76,7 @@ void init_config (const char *myname)
 	memset(&config, 0, sizeof(aq_config));
 	config.myname = mbasename(myname);
 	config.colors = isatty(1) ? true : false;
-	config.query = ALL;
+	config.query = OP_Q_ALL;
 	config.aur_url = strdup (AUR_BASE_URL);
 	config.configfile = strndup (CONFFILE, PATH_MAX);
 	strcpy (config.delimiter, " ");
@@ -170,7 +170,7 @@ int deal_db (alpm_db_t *db)
 		case OP_LIST_GROUP:
 			return list_grp (db, targets);
 		case OP_QUERY:
-			return search_pkg_by_type (db, &targets, config.query);
+			return search_pkg_by_type (db, &targets);
 		default:
 			return 0;
 	}
