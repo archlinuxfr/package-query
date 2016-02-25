@@ -119,6 +119,7 @@ void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-r --root <path>     default: %s", ROOTDIR);
 	fprintf(stderr, "\n\nModifiers:");
 	fprintf(stderr, "\n\t-i --info            search by name");
+	fprintf(stderr, "\n\t--maintainer         search by maintainer (AUR only)");
 	fprintf(stderr, "\n\t--pkgbase            limit info to pkgbase (AUR only)");
 	fprintf(stderr, "\n\t-l --list            list repository content");
 	fprintf(stderr, "\n\t-m --foreign         search for foreign packages");
@@ -244,6 +245,7 @@ int main (int argc, char **argv)
 		{"rsort",      required_argument, 0, 1015},
 		{"pkgbase",    no_argument,       0, 1016},
 		{"nameonly",   no_argument,       0, 1017},
+		{"maintainer", no_argument,       0, 1018},
 		{"version",    no_argument,       0, 'v'},
 
 		{0, 0, 0, 0}
@@ -423,6 +425,9 @@ int main (int argc, char **argv)
 			case 1017: /* --nameonly */
 				config.name_only = true;
 				break;
+			case 1018: /* --maintainer */
+				config.aur_maintainer = true;
+				break;
 			default: /* '?' */
 				usage (1);
 				break;
@@ -467,7 +472,7 @@ int main (int argc, char **argv)
 		usage(1);
 	}
 	if (targets == NULL) {
-		if (config.op == OP_SEARCH) {
+		if (config.op == OP_SEARCH && !config.aur_maintainer) {
 			config.op = OP_LIST_REPO_S;
 		}
 	}

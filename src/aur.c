@@ -42,6 +42,7 @@
 #define AUR_RPC_VERSION  "?v=5"
 #define AUR_RPC_SEARCH   "&type=search&arg="
 #define AUR_RPC_BYNAME   "&by=name"
+#define AUR_RPC_BYMAINT  "&by=maintainer"
 #define AUR_RPC_INFO     "&type=multiinfo"
 #define AUR_RPC_INFO_ARG "&arg[]="
 #define AUR_URL_ID       "/packages.php?setlang=en&ID="
@@ -708,9 +709,12 @@ static string_t *aur_prepare_url (const char *aur_rpc_type)
 
 static int aur_request_search (alpm_list_t **targets, CURL *curl)
 {
-	char *encoded_arg = curl_easy_escape (curl, (*targets)->data, 0);
-	if (encoded_arg == NULL) {
-		return 0;
+	char *encoded_arg = NULL;
+	if (*targets) {
+		encoded_arg = curl_easy_escape (curl, (*targets)->data, 0);
+		if (encoded_arg == NULL) {
+			return 0;
+		}
 	}
 
 	int pkgs_found = 0;
@@ -719,6 +723,8 @@ static int aur_request_search (alpm_list_t **targets, CURL *curl)
 	curl_free (encoded_arg);
 	if (config.name_only) {
 		url = string_cat (url, AUR_RPC_BYNAME);
+	} else if (config.aur_maintainer) {
+		url = string_cat (url, AUR_RPC_BYMAINT);
 	}
 	alpm_list_t *pkgs = aur_fetch (curl, string_cstr (url));
 	string_free (url);
@@ -827,7 +833,7 @@ static int aur_request_info (alpm_list_t **targets, CURL *curl)
 
 static int aur_request (alpm_list_t **targets, int type)
 {
-	if (targets == NULL) {
+	if (targets == NULL && !config.aur_maintainer) {
 		return 0;
 	}
 
