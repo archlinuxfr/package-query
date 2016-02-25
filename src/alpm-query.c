@@ -249,7 +249,7 @@ static int filter_state (alpm_pkg_t *pkg)
 	return ret;
 }
 
-int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets, int query_type)
+int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets)
 {
 	int ret = 0;
 	alpm_list_t *(*f)(alpm_pkg_t *);
@@ -264,7 +264,7 @@ int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets, int query_type)
 
 	retcharfn g = (retcharfn) alpm_dep_compute_string;
 	free_fn_ret = 2;
-	switch (query_type) {
+	switch (config.query) {
 		case OP_Q_DEPENDS:   f = alpm_pkg_get_depends; break;
 		case OP_Q_CONFLICTS: f = alpm_pkg_get_conflicts; break;
 		case OP_Q_PROVIDES:  f = alpm_pkg_get_provides; break;

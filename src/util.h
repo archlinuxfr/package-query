@@ -53,24 +53,29 @@
 /*
  * Operations
  */
-#define OP_LIST_GROUP  1
-#define OP_INFO        2
-#define OP_INFO_P      3
-#define OP_LIST_REPO   4
-#define OP_LIST_REPO_S 5
-#define OP_SEARCH      6
-#define OP_QUERY       7
+typedef enum
+{
+	OP_LIST_GROUP  = 1,
+	OP_INFO        = 2,
+	OP_INFO_P      = 3,
+	OP_LIST_REPO   = 4,
+	OP_LIST_REPO_S = 5,
+	OP_SEARCH      = 6,
+	OP_QUERY       = 7
+} optype_t;
 
 /*
  * Query type
  */
-#define ALL	0
-
-#define OP_Q_DEPENDS   1
-#define OP_Q_CONFLICTS 2
-#define OP_Q_PROVIDES  3
-#define OP_Q_REPLACES  4
-#define OP_Q_REQUIRES  5
+typedef enum
+{
+	OP_Q_ALL	   = 0,
+	OP_Q_DEPENDS   = 1,
+	OP_Q_CONFLICTS = 2,
+	OP_Q_PROVIDES  = 3,
+	OP_Q_REPLACES  = 4,
+	OP_Q_REQUIRES  = 5
+} qtype_t;
 
 #define SEP_LEN 10
 
@@ -122,10 +127,10 @@ typedef struct _aq_config
 	bool list;
 	bool name_only;
 	bool numbering;
-	unsigned short op;
+	optype_t op;
 	bool pkgbase;
+	qtype_t query;
 	bool quiet;
-	unsigned short query;
 	bool show_size;
 	char sort;
 	bool rsort;

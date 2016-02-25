@@ -54,7 +54,7 @@ int init_db_sync ();
  * Returns number of packages found
  * Those functions call print_package()
  */
-int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets, int query_type);
+int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets);
 int search_pkg_by_name (alpm_db_t *db, alpm_list_t **targets);
 int list_grp (alpm_db_t *db, alpm_list_t *targets);
 int search_pkg (alpm_db_t *db, alpm_list_t *targets);
