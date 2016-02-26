@@ -69,7 +69,7 @@ typedef enum
  */
 typedef enum
 {
-	OP_Q_ALL	   = 0,
+	OP_Q_ALL       = 0,
 	OP_Q_DEPENDS   = 1,
 	OP_Q_CONFLICTS = 2,
 	OP_Q_PROVIDES  = 3,
@@ -113,6 +113,7 @@ typedef struct _aq_config
 	char delimiter[SEP_LEN];
 	unsigned short aur;
 	bool aur_foreign;
+	bool aur_maintainer;
 	bool aur_upgrades;
 	bool colors;
 	bool custom_out;
