@@ -222,7 +222,7 @@ static int filter (alpm_pkg_t *pkg, unsigned int _filter)
 			return 0;
 		}
 		if (!(_filter & F_UNREQUIRED_2)) {
-			alpm_list_t *requiredby = alpm_pkg_compute_optionalfor(pkg);
+			requiredby = alpm_pkg_compute_optionalfor(pkg);
 			if (requiredby) {
 				FREELIST(requiredby);
 				return 0;
@@ -441,7 +441,7 @@ off_t get_size_pkg (alpm_pkg_t *pkg)
 	return 0;
 }
 
-off_t alpm_pkg_get_realsize (alpm_pkg_t *pkg)
+static off_t alpm_pkg_get_realsize (alpm_pkg_t *pkg)
 {
 	size_t j = 0;
 	ino_t *inodes = NULL;

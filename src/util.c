@@ -164,7 +164,7 @@ static int results_relevance_cmp (const results_t *r1, const results_t *r2)
 
 // https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#C
 #define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
-size_t levenshtein_distance (const char *s1, const char *s2)
+static size_t levenshtein_distance (const char *s1, const char *s2)
 {
 	const size_t s1len = strlen (s1);
 	const size_t s2len = strlen (s2);
