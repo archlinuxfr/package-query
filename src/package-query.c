@@ -48,7 +48,7 @@ extern int optind;
 
 static alpm_list_t *targets = NULL;
 
-void cleanup (int ret)
+static void cleanup (int ret)
 {
 	static int cleaned = 0;
 	if (cleaned) {
@@ -71,7 +71,7 @@ void cleanup (int ret)
 	exit (ret);
 }
 
-void init_config (const char *myname)
+static void init_config (const char *myname)
 {
 	memset(&config, 0, sizeof(aq_config));
 	config.myname = mbasename(myname);
@@ -82,13 +82,13 @@ void init_config (const char *myname)
 	strcpy (config.delimiter, " ");
 }
 
-void version ()
+static void version (void)
 {
 	printf ("%s %s\n", config.myname, PACKAGE_VERSION);
 	cleanup (0);
 }
 
-void usage (unsigned short _error)
+static void usage (unsigned short _error)
 {
 	fprintf(stderr, "Query alpm database and/or AUR\n");
 	fprintf(stderr, "Usage: %s [options] [targets ...]\n", config.myname);
@@ -157,7 +157,7 @@ void usage (unsigned short _error)
 	cleanup (0);
 }
 
-int deal_db (alpm_db_t *db)
+static int deal_db (alpm_db_t *db)
 {
 	switch (config.op) {
 		case OP_LIST_REPO:
@@ -177,11 +177,10 @@ int deal_db (alpm_db_t *db)
 	}
 }
 
-int deal_sync_dbs ()
+static int deal_sync_dbs (void)
 {
 	int ret = 0;
-	alpm_list_t *t;
-	for (t = alpm_get_syncdbs(config.handle); t; t = alpm_list_next(t)) {
+	for (alpm_list_t *t = alpm_get_syncdbs(config.handle); t; t = alpm_list_next(t)) {
 		ret += deal_db (t->data);
 	}
 	return ret;
