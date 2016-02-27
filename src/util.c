@@ -874,17 +874,25 @@ static void color_print_package (void *p, printpkgfn f)
 
 void print_package (const char *target, void *pkg, printpkgfn f)
 {
-	if (!target || !pkg || !f) return;
-	if (config.quiet) return;
+	if (config.quiet || !target || !pkg || !f) {
+		return;
+	}
+
 	if (!config.custom_out) {
 		color_print_package (pkg, f);
 		return;
 	}
+
 	char *s = pkg_to_str (target, pkg, f, config.format_out);
-	if (config.escape)
+	if (!s) {
+		return;
+	}
+
+	if (config.escape) {
 		print_escape (s);
-	else
+	} else {
 		printf ("%s\n", s);
+	}
 	free (s);
 	fflush (NULL);
 }
