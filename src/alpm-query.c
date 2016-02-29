@@ -44,7 +44,7 @@ static void setarch(const char *arch)
 	}
 }
 
-int init_alpm ()
+int init_alpm (void)
 {
 	if (config.rootdir) {
 		if (!config.dbpath) {
@@ -193,14 +193,14 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 	return 1;
 }
 
-alpm_list_t *get_db_sync ()
+alpm_list_t *get_db_sync (void)
 {
 	alpm_list_t *dbs = NULL;
 	parse_configfile (&dbs, config.configfile, 0);
 	return dbs;
 }
 
-int init_db_sync ()
+int init_db_sync (void)
 {
 	return parse_configfile (NULL, config.configfile, 1);
 }
@@ -647,7 +647,7 @@ const char *alpm_grp_get_str (void *p, unsigned char c)
 	}
 }
 
-void alpm_cleanup ()
+void alpm_cleanup (void)
 {
 	alpm_pkg_get_str (NULL, 0);
 	alpm_local_pkg_get_str (NULL, 0);

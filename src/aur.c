@@ -151,7 +151,7 @@ typedef struct _jsonpkg_t
 
 
 
-static aurpkg_t *aur_pkg_new ()
+static aurpkg_t *aur_pkg_new (void)
 {
 	aurpkg_t *pkg = NULL;
 	MALLOC (pkg, sizeof(aurpkg_t));

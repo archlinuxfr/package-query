@@ -193,7 +193,7 @@ typedef struct _string_t
 	size_t used;
 } string_t;
 
-string_t *string_new ();
+string_t *string_new (void);
 void string_free (string_t *dest);
 string_t *string_ncat (string_t *dest, const char *src, size_t n);
 string_t *string_cat (string_t *dest, const char *src);
@@ -226,7 +226,7 @@ void print_package (const char *target, void *pkg, printpkgfn f);
 /* Results */
 void calculate_results_relevance (alpm_list_t *targets);
 void print_or_add_result (void *pkg, unsigned short type);
-void show_results ();
+void show_results (void);
 
 /* Utils */
 /* mbasename is from pacman's code */

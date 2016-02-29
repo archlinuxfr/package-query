@@ -77,7 +77,8 @@ int aur_search (alpm_list_t *targets);
  */
 const char *aur_get_str (void *p, unsigned char c);
 
-void aur_cleanup ();
+void aur_cleanup (void);
+
 #endif
 
 /* vim: set ts=4 sw=4 noet: */

@@ -208,7 +208,7 @@ void print_or_add_result (void *pkg, unsigned short type)
 	results = alpm_list_add (results, results_new (pkg, type));
 }
 
-void show_results ()
+void show_results (void)
 {
 	alpm_list_t *i_first;
 	alpm_list_nav fn_nav = NULL;
@@ -339,7 +339,7 @@ int target_name_cmp (const target_t *t1, const char *name)
 	return strcmp (t1->name, name);
 }
 
-string_t *string_new ()
+string_t *string_new (void)
 {
 	string_t *str = NULL;
 	MALLOC (str, sizeof (string_t));

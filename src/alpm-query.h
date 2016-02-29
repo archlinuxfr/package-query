@@ -38,16 +38,15 @@
 /*
  * Init alpm
  */
-int init_alpm ();
+int init_alpm (void);
 
 /*
  * Parse pacman config to find sync databases
  */
 /* get_db_sync() returns new list, use FREELIST() to free the list */
-alpm_list_t *get_db_sync ();
+alpm_list_t *get_db_sync (void);
 /* init_db_sync()  register sync database */
-int init_db_sync ();
-
+int init_db_sync (void);
 
 /*
  * ALPM search functions
@@ -61,7 +60,6 @@ int search_pkg (alpm_db_t *db, alpm_list_t *targets);
 int list_db (alpm_db_t *db, alpm_list_t *targets);
 int alpm_search_local (unsigned short filter, const char *format,
                        alpm_list_t **res);
-
 
 off_t get_size_pkg (alpm_pkg_t *pkg);
 alpm_pkg_t *get_sync_pkg_by_name (const char *pkgname);
@@ -77,8 +75,7 @@ const char *alpm_pkg_get_str (void *p, unsigned char c);
 const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c);
 const char *alpm_grp_get_str (void *p, unsigned char c);
 
-
-void alpm_cleanup ();
+void alpm_cleanup (void);
 
 #endif
 
