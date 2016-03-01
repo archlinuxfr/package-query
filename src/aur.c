@@ -404,7 +404,7 @@ double aur_pkg_get_popularity (const aurpkg_t *pkg)
 static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
 {
 	string_t *s = (string_t *) userdata;
-	string_ncat (s, data, nmemb);
+	string_ncat (s, data, size*nmemb);
 	return nmemb;
 }
 
