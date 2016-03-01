@@ -23,6 +23,7 @@
 #include <sys/ioctl.h>
 #include <regex.h>
 #include <float.h>
+#include <time.h>
 
 #include "util.h"
 #include "alpm-query.h"
