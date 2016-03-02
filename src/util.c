@@ -372,8 +372,12 @@ string_t *string_ncat (string_t *dest, const char *src, size_t n)
 		return dest;
 	}
 	if (dest->size <= dest->used + n) {
-		dest->size += ((n/PATH_MAX) + 1) * PATH_MAX;
-		/* dest->size += dest->used + n + 1; */
+		if (dest->used == 0) {
+			dest->size = PATH_MAX;
+		}
+		while (dest->size <= dest->used + n) {
+			dest->size *= 2;
+		}
 		REALLOC (dest->s, dest->size * sizeof (char));
 		if (dest->used == 0) dest->s[0] = '\0';
 	}
