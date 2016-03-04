@@ -299,10 +299,10 @@ void target_free (target_t *t)
 	FREE (t);
 }
 
-int target_check_version (const target_t *t, const char *ver)
+bool target_check_version (const target_t *t, const char *ver)
 {
 	if (!t || !ver || t->mod == ALPM_DEP_MOD_ANY) {
-		return 1;
+		return true;
 	}
 	const int ret = alpm_pkg_vercmp (ver, t->ver);
 	switch (t->mod)
@@ -312,24 +312,21 @@ int target_check_version (const target_t *t, const char *ver)
 		case ALPM_DEP_MOD_LT: return (ret < 0);
 		case ALPM_DEP_MOD_GT: return (ret > 0);
 		case ALPM_DEP_MOD_EQ: return (ret == 0);
-		default: return 1;
+		default: return true;
 	}
 }
 
-int target_compatible (const target_t *t1, const target_t *t2)
+bool target_compatible (const target_t *t1, const target_t *t2)
 {
-	if (!t1 || !t2) {
-		return 0;
-	}
-	if (t2->mod != ALPM_DEP_MOD_EQ && t2->mod != ALPM_DEP_MOD_ANY) {
-		return 0;
+	if (!t1 || !t2 || t2->mod != ALPM_DEP_MOD_EQ && t2->mod != ALPM_DEP_MOD_ANY) {
+		return false;
 	}
 	if (strcmp (t1->name, t2->name) == 0 &&
 			(t1->mod == ALPM_DEP_MOD_ANY || t2->mod == ALPM_DEP_MOD_ANY ||
 			target_check_version (t1, t2->ver))) {
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 int target_name_cmp (const target_t *t1, const char *name)
@@ -955,13 +952,13 @@ target_arg_t *target_arg_init (ta_dup_fn dup_fn, alpm_list_fn_cmp cmp_fn,
 	return t;
 }
 
-int target_arg_add (target_arg_t *t, const char *s, void *item)
+bool target_arg_add (target_arg_t *t, const char *s, void *item)
 {
-	int ret = 1;
+	int ret = true;
 	if (t && config.just_one) {
 		if ((t->cmp_fn && alpm_list_find (t->items, item, t->cmp_fn)) ||
 				(!t->cmp_fn && alpm_list_find_ptr (t->items, item))) {
-			ret = 0;
+			ret = false;
 		} else if (t->dup_fn) {
 			t->items = alpm_list_add (t->items, t->dup_fn (item));
 		} else {
@@ -1002,10 +999,10 @@ alpm_list_t *target_arg_close (target_arg_t *t, alpm_list_t *targets)
 	return targets;
 }
 
-int does_name_contain_targets (const alpm_list_t *targets, const char *name, int use_regex)
+bool does_name_contain_targets (const alpm_list_t *targets, const char *name, bool use_regex)
 {
 	if (!targets || !name) {
-		return 0;
+		return false;
 	}
 
 	for (const alpm_list_t *t = targets; t; t = alpm_list_next (t)) {
@@ -1017,19 +1014,19 @@ int does_name_contain_targets (const alpm_list_t *targets, const char *name, int
 		if (use_regex) {
 			regex_t reg;
 			if (regcomp (&reg, target, REG_EXTENDED | REG_NOSUB | REG_ICASE | REG_NEWLINE) != 0) {
-				return 0;
+				return false;
 			}
 			if (regexec (&reg, name, 0, 0, 0) != 0 && strstr (name, target) == NULL) {
 				regfree (&reg);
-				return 0;
+				return false;
 			}
 			regfree (&reg);
 		} else if (strcasestr (name, target) == NULL) {
-			return 0;
+			return false;
 		}
 	}
 
-	return 1;
+	return true;
 }
 
 /* vim: set ts=4 sw=4 noet: */

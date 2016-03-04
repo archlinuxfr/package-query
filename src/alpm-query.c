@@ -367,7 +367,7 @@ int search_pkg (alpm_db_t *db, alpm_list_t *targets)
 		alpm_pkg_t *info = t->data;
 		if (!filter (info, config.filter) ||
 				(config.name_only &&
-				!does_name_contain_targets (targets, alpm_pkg_get_name (info), 1)))
+				!does_name_contain_targets (targets, alpm_pkg_get_name (info), true)))
 			continue;
 		ret++;
 		print_or_add_result ((void *) info, R_ALPM_PKG);
