@@ -189,7 +189,8 @@ static int deal_sync_dbs (void)
 int main (int argc, char **argv)
 {
 	int ret = 0 , i;
-	int need = 0, given = 0, cycle_db = 0, db_order = 0;
+	int need = 0, given = 0, db_order = 0;
+	bool cycle_db = false;
 	alpm_list_t *t;
 
 	struct sigaction a;
@@ -284,7 +285,7 @@ int main (int argc, char **argv)
 				if (config.op) break;
 				config.op = OP_LIST_GROUP;
 				config.filter |= F_GROUP;
-				cycle_db = 1;
+				cycle_db = true;
 				break;
 			case 'h':
 				usage (0);
@@ -304,7 +305,7 @@ int main (int argc, char **argv)
 				if (config.op) break;
 				config.op = OP_LIST_REPO;
 				need |= N_DB;
-				cycle_db = 1;
+				cycle_db = true;
 				break;
 			case 'm':
 				config.filter |= F_FOREIGN;
@@ -332,7 +333,7 @@ int main (int argc, char **argv)
 				if (config.op) break;
 				config.op = OP_SEARCH;
 				need |= N_DB;
-				cycle_db = 1;
+				cycle_db = true;
 				break;
 			case 'S':
 				if (config.db_sync) break;
