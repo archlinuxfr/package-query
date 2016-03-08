@@ -50,11 +50,11 @@ static alpm_list_t *targets = NULL;
 
 static void cleanup (int ret)
 {
-	static int cleaned = 0;
+	static bool cleaned = false;
 	if (cleaned) {
 		return;
 	}
-	cleaned = 1;
+	cleaned = true;
 	if (config.handle && alpm_release(config.handle) == -1) {
 		fprintf(stderr, "error releasing alpm library\n");
 	}
