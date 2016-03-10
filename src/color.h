@@ -35,8 +35,8 @@
 
 void color_init (void);
 void color_cleanup (void);
-const char * color (const char* col);
-const char * color_repo (const char *repo);
+const char *color (const char *col);
+const char *color_repo (const char *repo);
 
 #endif
 
