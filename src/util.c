@@ -336,6 +336,8 @@ string_t *string_new (void)
 {
 	string_t *str = NULL;
 	MALLOC (str, sizeof (string_t));
+	str->size = PATH_MAX;
+	MALLOC (str->s, str->size * sizeof (char));
 	return str;
 }
 
@@ -364,14 +366,10 @@ string_t *string_ncat (string_t *dest, const char *src, size_t n)
 		return dest;
 	}
 	if (dest->size <= dest->used + n) {
-		if (dest->used == 0) {
-			dest->size = PATH_MAX;
-		}
 		while (dest->size <= dest->used + n) {
 			dest->size *= 2;
 		}
 		REALLOC (dest->s, dest->size * sizeof (char));
-		if (dest->used == 0) dest->s[0] = '\0';
 	}
 	dest->used += n;
 	strncat (dest->s, src, n);
