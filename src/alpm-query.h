@@ -18,6 +18,7 @@
  */
 #ifndef _PQ_ALPM_QUERY_H
 #define _PQ_ALPM_QUERY_H
+#include <stdbool.h>
 #include <alpm.h>
 #include <alpm_list.h>
 
@@ -38,7 +39,7 @@
 /*
  * Init alpm
  */
-int init_alpm (void);
+bool init_alpm (void);
 
 /*
  * Parse pacman config to find sync databases
@@ -46,7 +47,7 @@ int init_alpm (void);
 /* get_db_sync() returns new list, use FREELIST() to free the list */
 alpm_list_t *get_db_sync (void);
 /* init_db_sync()  register sync database */
-int init_db_sync (void);
+bool init_db_sync (void);
 
 /*
  * ALPM search functions

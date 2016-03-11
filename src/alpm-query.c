@@ -44,7 +44,7 @@ static void setarch(const char *arch)
 	}
 }
 
-int init_alpm (void)
+bool init_alpm (void)
 {
 	if (config.rootdir) {
 		if (!config.dbpath) {
@@ -63,27 +63,27 @@ int init_alpm (void)
 	if (!handle) {
 		fprintf(stderr, "failed to initialize alpm library (%s)\n",
 			alpm_strerror(err));
-		return 0;
+		return false;
 	}
 	if (!config.arch) setarch ("auto");
 	alpm_option_set_arch(handle, config.arch);
 	config.handle = handle;
-	return 1;
+	return true;
 }
 
-static int parse_config_options (char *ptr, alpm_db_t **db, alpm_list_t **dbs, int reg)
+static bool parse_config_options (char *ptr, alpm_db_t **db, alpm_list_t **dbs, bool reg)
 {
 	if (reg) {
 		if ((*db = alpm_register_syncdb(config.handle, ptr, ALPM_SIG_USE_DEFAULT)) == NULL) {
 			fprintf(stderr,
 				"could not register '%s' database (%s)\n", ptr,
 				alpm_strerror(alpm_errno(config.handle)));
-			return 0;
+			return false;
 		}
 	} else {
 		*dbs = alpm_list_add (*dbs, strdup (ptr));
 	}
-	return 1;
+	return true;
 }
 
 static void parse_config_server (char *ptr, alpm_db_t *db)
@@ -100,7 +100,7 @@ static void parse_config_server (char *ptr, alpm_db_t *db)
 	FREE (server);
 }
 
-static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
+static bool parse_configfile (alpm_list_t **dbs, const char *configfile, bool reg)
 {
 	char line[PATH_MAX+1];
 	char *ptr;
@@ -110,7 +110,7 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 	static int global_opt_parsed = 0;
 	if ((conf = fopen (configfile, "r")) == NULL) {
 		fprintf(stderr, "Unable to open file: %s\n", configfile);
-		return 0;
+		return false;
 	}
 
 	while (fgets (line, PATH_MAX, conf)) {
@@ -132,13 +132,13 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 				if (!global_opt_parsed) {
 					if (!init_alpm ()) {
 						fclose (conf);
-						return 0;
+						return false;
 					}
 					global_opt_parsed = 1;
 				}
 				if (!parse_config_options (ptr, &db, dbs, reg)) {
 					fclose (conf);
-					return 0;
+					return false;
 				}
 			} else if (!global_opt_parsed) {
 				in_option = 1;
@@ -170,7 +170,7 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 						if (!parse_configfile (dbs, globbuf.gl_pathv[gindex], reg)) {
 							globfree (&globbuf);
 							fclose (conf);
-							return 0;
+							return false;
 						}
 					}
 					break;
@@ -190,50 +190,50 @@ static int parse_configfile (alpm_list_t **dbs, const char *configfile, int reg)
 		}
 	}
 	fclose (conf);
-	return 1;
+	return true;
 }
 
 alpm_list_t *get_db_sync (void)
 {
 	alpm_list_t *dbs = NULL;
-	parse_configfile (&dbs, config.configfile, 0);
+	parse_configfile (&dbs, config.configfile, false);
 	return dbs;
 }
 
-int init_db_sync (void)
+bool init_db_sync (void)
 {
-	return parse_configfile (NULL, config.configfile, 1);
+	return parse_configfile (NULL, config.configfile, true);
 }
 
-static int filter (alpm_pkg_t *pkg, unsigned int _filter)
+static bool filter (alpm_pkg_t *pkg, unsigned int _filter)
 {
 	if ((_filter & F_FOREIGN) && get_sync_pkg (pkg) != NULL)
-		return 0;
+		return false;
 	if ((_filter & F_NATIVE) && get_sync_pkg (pkg) == NULL)
-		return 0;
-	if ((_filter & F_EXPLICIT) && alpm_pkg_get_reason(pkg) != ALPM_PKG_REASON_EXPLICIT)
-		return 0;
-	if ((_filter & F_DEPS) && alpm_pkg_get_reason(pkg) != ALPM_PKG_REASON_DEPEND)
-		return 0;
+		return false;
+	if ((_filter & F_EXPLICIT) && alpm_pkg_get_reason (pkg) != ALPM_PKG_REASON_EXPLICIT)
+		return false;
+	if ((_filter & F_DEPS) && alpm_pkg_get_reason (pkg) != ALPM_PKG_REASON_DEPEND)
+		return false;
 	if (_filter & F_UNREQUIRED) {
-		alpm_list_t *requiredby = alpm_pkg_compute_requiredby(pkg);
+		alpm_list_t *requiredby = alpm_pkg_compute_requiredby (pkg);
 		if (requiredby) {
-			FREELIST(requiredby);
-			return 0;
+			FREELIST (requiredby);
+			return false;
 		}
 		if (!(_filter & F_UNREQUIRED_2)) {
-			requiredby = alpm_pkg_compute_optionalfor(pkg);
+			requiredby = alpm_pkg_compute_optionalfor (pkg);
 			if (requiredby) {
-				FREELIST(requiredby);
-				return 0;
+				FREELIST (requiredby);
+				return false;
 			}
 		}
 	}
 	if ((_filter & F_UPGRADES) && !alpm_sync_newversion (pkg, alpm_get_syncdbs(config.handle)))
-		return 0;
+		return false;
 	if ((_filter & F_GROUP) && !alpm_pkg_get_groups (pkg))
-		return 0;
-	return 1;
+		return false;
+	return true;
 }
 
 static int filter_state (alpm_pkg_t *pkg)
@@ -480,22 +480,22 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 {
 	alpm_pkg_t *pkg = (alpm_pkg_t *) p;
 	static char *info = NULL;
-	static int free_info = 0;
+	static bool free_info = false;
 	if (free_info) {
 		free (info);
-		free_info = 0;
+		free_info = false;
 	}
 	info = NULL;
 	switch (c) {
 		case '2':
 			info = ltostr (alpm_pkg_get_isize (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case '5':
 			pkg = get_sync_pkg (pkg);
 			if (!pkg) break;
 			info = ltostr (alpm_pkg_download_size (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case 'a':
 			info = (char *) alpm_pkg_get_arch (pkg);
@@ -505,33 +505,33 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 			break;
 		case 'B':
 			info = concat_backup_list (alpm_pkg_get_backup (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case 'C':
 			info = concat_dep_list (alpm_pkg_get_conflicts (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case 'd':
 			info = (char *) alpm_pkg_get_desc (pkg);
 			break;
 		case 'D':
 			info = concat_dep_list (alpm_pkg_get_depends (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case 'e':
 			info = concat_str_list (alpm_pkg_get_licenses (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case 'f':
 			info = (char *) alpm_pkg_get_filename (pkg);
 			break;
 		case 'g':
 			info = concat_str_list (alpm_pkg_get_groups (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case 'I':
 			info = itostr (alpm_pkg_has_scriptlet (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case 'm':
 			info = (char *) alpm_pkg_get_packager (pkg);
@@ -544,20 +544,20 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 				alpm_list_t *reqs = alpm_pkg_compute_requiredby (pkg);
 				info = concat_str_list (reqs);
 				FREELIST (reqs);
-				free_info = 1;
+				free_info = true;
 			}
 			break;
 		case 'O':
 			info = concat_dep_list (alpm_pkg_get_optdepends (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case 'P':
 			info = concat_dep_list (alpm_pkg_get_provides (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case 'R':
 			info = concat_dep_list (alpm_pkg_get_replaces (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case 's':
 			pkg = get_sync_pkg (pkg);
@@ -574,7 +574,7 @@ const char *alpm_pkg_get_str (void *p, unsigned char c)
 					if (!dburl || !pkgfilename) return NULL;
 					CALLOC (info, strlen (dburl) + strlen(pkgfilename) + 2, sizeof (char));
 					sprintf (info, "%s/%s", dburl, pkgfilename);
-					free_info = 1;
+					free_info = true;
 				}
 			}
 			break;
