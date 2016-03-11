@@ -211,33 +211,27 @@ void print_or_add_result (void *pkg, unsigned short type)
 
 void show_results (void)
 {
-	alpm_list_t *i_first;
-	alpm_list_nav fn_nav = NULL;
-	alpm_list_fn_cmp fn_cmp = NULL;
-
 	if (!results) {
 		return;
 	}
 
+	alpm_list_fn_cmp fn_cmp = NULL;
 	switch (config.sort) {
-		case S_NAME: fn_cmp = (alpm_list_fn_cmp) results_cmp; break;
-		case S_VOTE: fn_cmp = (alpm_list_fn_cmp) results_votes_cmp; break;
-		case S_POP:  fn_cmp = (alpm_list_fn_cmp) results_popularity_cmp; break;
+		case S_NAME:  fn_cmp = (alpm_list_fn_cmp) results_cmp; break;
+		case S_VOTE:  fn_cmp = (alpm_list_fn_cmp) results_votes_cmp; break;
+		case S_POP:   fn_cmp = (alpm_list_fn_cmp) results_popularity_cmp; break;
 		case S_IDATE: fn_cmp = (alpm_list_fn_cmp) results_installdate_cmp; break;
 		case S_ISIZE: fn_cmp = (alpm_list_fn_cmp) results_isize_cmp; break;
-		case S_REL: fn_cmp = (alpm_list_fn_cmp) results_relevance_cmp; break;
+		case S_REL:   fn_cmp = (alpm_list_fn_cmp) results_relevance_cmp; break;
 	}
 	if (fn_cmp) {
 		results = alpm_list_msort (results, alpm_list_count (results), fn_cmp);
 	}
-	if (config.rsort) {
-		fn_nav = (alpm_list_nav) alpm_list_previous;
-		i_first = alpm_list_last (results);
-	} else {
-		fn_nav = (alpm_list_nav) alpm_list_next;
-		i_first = results;
-	}
-	for (alpm_list_t *i = i_first; i; i = fn_nav(i)) {
+
+	alpm_list_nav fn_nav = config.rsort ? alpm_list_previous : alpm_list_next;
+	alpm_list_t *i_first = config.rsort ? alpm_list_last (results) : results;
+
+	for (alpm_list_t *i = i_first; i; i = fn_nav (i)) {
 		const results_t *r = i->data;
 		if (r && r->type == R_ALPM_PKG) {
 			print_package ("", r->ele, alpm_pkg_get_str);
@@ -245,6 +239,7 @@ void show_results (void)
 			print_package ("", r->ele, aur_get_str);
 		}
 	}
+
 	alpm_list_free_inner (results, (alpm_list_fn_free) results_free);
 	alpm_list_free (results);
 	results = NULL;
@@ -278,7 +273,7 @@ target_t *target_parse (const char *str)
 		ret->ver = strdup (&(c[1]));
 	} else if ((c = strchr (s, '=')) != NULL) {
 		ret->mod = ALPM_DEP_MOD_EQ;
-		ret->ver =strdup (&(c[1]));
+		ret->ver = strdup (&(c[1]));
 	} else {
 		ret->mod = ALPM_DEP_MOD_ANY;
 		ret->ver = NULL;
