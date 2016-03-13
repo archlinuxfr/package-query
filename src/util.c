@@ -56,7 +56,9 @@ static results_t *results_new (void *ele, unsigned short type)
 static results_t *results_free (results_t *r)
 {
 	if (r) {
-		if (r->type == R_AUR_PKG) aur_pkg_free (r->ele);
+		if (r->type == R_AUR_PKG) {
+			aur_pkg_free (r->ele);
+		}
 		free (r);
 	}
 	return NULL;
@@ -84,9 +86,9 @@ static time_t results_installdate (const results_t *r)
 	}
 	time_t idate = 0;
 	const char *r_name = results_name (r);
-	alpm_pkg_t *pkg = alpm_db_get_pkg(alpm_get_localdb(config.handle), r_name);
+	alpm_pkg_t *pkg = alpm_db_get_pkg (alpm_get_localdb(config.handle), r_name);
 	if (pkg) {
-		idate = alpm_pkg_get_installdate(pkg);
+		idate = alpm_pkg_get_installdate (pkg);
 	}
 	return idate;
 }
@@ -96,7 +98,7 @@ static off_t results_isize (const results_t *r)
 	if (!r || r->type == R_AUR_PKG) {
 		return 0;
 	}
-	return alpm_pkg_get_isize(r->ele);
+	return alpm_pkg_get_isize (r->ele);
 }
 
 static int results_votes (const results_t *r)
@@ -187,11 +189,11 @@ static size_t levenshtein_distance (const char *s1, const char *s2)
 
 void calculate_results_relevance (alpm_list_t *targets)
 {
-	for (alpm_list_t *t = targets; t; t = alpm_list_next(t)) {
+	for (alpm_list_t *t = targets; t; t = alpm_list_next (t)) {
 		const char *target = t->data;
 		for (alpm_list_t *r = results; r; r = alpm_list_next(r)) {
 			const char *result = results_name (r->data);
-			const size_t lev_dst = levenshtein_distance(target, result);
+			const size_t lev_dst = levenshtein_distance (target, result);
 			if (lev_dst < ((results_t *) r->data)->rel) {
 				((results_t *) r->data)->rel = lev_dst;
 			}
@@ -402,7 +404,7 @@ char *strtrim(char *str)
 		pch++;
 	}
 	if (pch != str) {
-		memmove(str, pch, (strlen(pch) + 1));
+		memmove (str, pch, (strlen(pch) + 1));
 	}
 
 	/* check if there wasn't anything but whitespace in the string. */
@@ -581,48 +583,48 @@ char *ttostr (time_t t)
 {
 	char *ts;
 	CALLOC (ts, 11, sizeof (char));
-	strftime(ts, 11, "%s", localtime(&t));
+	strftime (ts, 11, "%s", localtime (&t));
 	return ts;
 }
 
 /* Helper function for strreplace */
-static void _strnadd(char **str, const char *append, size_t count)
+static void _strnadd (char **str, const char *append, size_t count)
 {
 	if (!str) {
 		return;
 	}
 
 	if (*str) {
-		REALLOC(*str, strlen(*str) + count + 1);
+		REALLOC (*str, strlen (*str) + count + 1);
 	} else {
-		CALLOC(*str, sizeof(char), count + 1);
+		CALLOC (*str, sizeof (char), count + 1);
 	}
 
-	strncat(*str, append, count);
+	strncat (*str, append, count);
 }
 
 /* Replace all occurances of 'needle' with 'replace' in 'str', returning
  * a new string (must be free'd) */
-char *strreplace(const char *str, const char *needle, const char *replace)
+char *strreplace (const char *str, const char *needle, const char *replace)
 {
 	const char *p = str, *q = str;
 	char *newstr = NULL;
-	const size_t needlesz = strlen(needle), replacesz = strlen(replace);
+	const size_t needlesz = strlen (needle), replacesz = strlen (replace);
 
 	while (1) {
-		q = strstr(p, needle);
+		q = strstr (p, needle);
 		if (!q) { /* not found */
 			if (*p) {
 				/* add the rest of 'p' */
-				_strnadd(&newstr, p, strlen(p));
+				_strnadd (&newstr, p, strlen (p));
 			}
 			break;
 		} else { /* found match */
 			if (q > p) {
 				/* add chars between this occurance and last occurance, if any */
-				_strnadd(&newstr, p, q - p);
+				_strnadd (&newstr, p, q - p);
 			}
-			_strnadd(&newstr, replace, replacesz);
+			_strnadd (&newstr, replace, replacesz);
 			p = q + needlesz;
 		}
 	}
@@ -635,9 +637,9 @@ char *strreplace(const char *str, const char *needle, const char *replace)
 *
 * @return everything following the final '/'
 */
-const char *mbasename(const char *path)
+const char *mbasename (const char *path)
 {
-	const char *last = strrchr(path, '/');
+	const char *last = strrchr (path, '/');
 	if (last) {
 		return last + 1;
 	}
@@ -699,7 +701,9 @@ static const char *color_print_repo (void *p, printpkgfn f)
 {
 	const char *info = (config.aur_foreign) ? f(p, 'r') : f(p, 's');
 	if (info) {
-		if (config.get_res) dprintf (FD_RES, "%s/", info);
+		if (config.get_res) {
+			dprintf (FD_RES, "%s/", info);
+		}
 		fprintf (stdout, "%s%s/%s", color_repo (info), info, color(C_NO));
 	}
 	info = f(p, 'n');
@@ -947,7 +951,7 @@ target_arg_t *target_arg_init (ta_dup_fn dup_fn, alpm_list_fn_cmp cmp_fn,
 
 bool target_arg_add (target_arg_t *t, const char *s, void *item)
 {
-	int ret = true;
+	bool ret = true;
 	if (t && config.just_one) {
 		if ((t->cmp_fn && alpm_list_find (t->items, item, t->cmp_fn)) ||
 				(!t->cmp_fn && alpm_list_find_ptr (t->items, item))) {
@@ -965,8 +969,9 @@ bool target_arg_add (target_arg_t *t, const char *s, void *item)
 static void target_arg_free (target_arg_t *t)
 {
 	if (t) {
-		if (t->free_fn)
+		if (t->free_fn) {
 			alpm_list_free_inner (t->items, (alpm_list_fn_free) t->free_fn);
+		}
 		alpm_list_free (t->items);
 		alpm_list_free (t->args);
 		FREE (t);
@@ -979,7 +984,9 @@ alpm_list_t *target_arg_clear (target_arg_t *t, alpm_list_t *targets)
 		for (alpm_list_t *i = t->args; i; i = alpm_list_next (i)) {
 			char *data = NULL;
 			targets = alpm_list_remove_str (targets, i->data, &data);
-			if (data) free (data);
+			if (data) {
+				free (data);
+			}
 		}
 	}
 	return targets;
