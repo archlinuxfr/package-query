@@ -162,6 +162,7 @@ void aur_pkg_free (aurpkg_t *pkg)
 {
 	if (pkg == NULL)
 		return;
+
 	FREE (pkg->desc);
 	FREE (pkg->maintainer);
 	FREE (pkg->name);
@@ -188,6 +189,7 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 {
 	if (pkg == NULL)
 		return NULL;
+
 	aurpkg_t *pkg_ret = aur_pkg_new();
 
 	pkg_ret->category = pkg->category;
@@ -195,12 +197,14 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->id = pkg->id;
 	pkg_ret->lastmod = pkg->lastmod;
 	pkg_ret->outofdate = pkg->outofdate;
+	pkg_ret->pkgbase_id = pkg->pkgbase_id;
 	pkg_ret->popularity = pkg->popularity;
 	pkg_ret->votes = pkg->votes;
 
 	pkg_ret->desc = STRDUP (pkg->desc);
 	pkg_ret->maintainer = STRDUP (pkg->maintainer);
 	pkg_ret->name = STRDUP (pkg->name);
+	pkg_ret->pkgbase = STRDUP (pkg->pkgbase);
 	pkg_ret->url = STRDUP (pkg->url);
 	pkg_ret->urlpath = STRDUP (pkg->urlpath);
 	pkg_ret->version = STRDUP (pkg->version);
@@ -457,8 +461,8 @@ static int json_key (void *ctx, const unsigned char *stringVal, size_t stringLen
 
 	stringLen = (stringLen >= AUR_ID_LEN) ? AUR_ID_LEN - 1 : stringLen;
 	for (int i = 0; i <= AUR_LAST_ID; ++i) {
-		if (strlen(aur_key_types_names[i]) == stringLen &&
-				strncmp(aur_key_types_names[i], (const char*)stringVal, stringLen) == 0) {
+		if (strlen (aur_key_types_names[i]) == stringLen &&
+				strncmp (aur_key_types_names[i], (const char *) stringVal, stringLen) == 0) {
 			pkg_json->current_key = i;
 			break;
 		}
@@ -539,12 +543,12 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 	// package info in level 2
 	if (pkg_json->level < 2) {
 		if (pkg_json->current_key == AUR_JSON_TYPE_KEY &&
-				strncmp ((const char *)stringVal, AUR_TYPE_ERROR, stringLen) == 0) {
+				strncmp ((const char *) stringVal, AUR_TYPE_ERROR, stringLen) == 0) {
 			pkg_json->error = 1;
 		}
 		if (pkg_json->error && pkg_json->current_key == AUR_JSON_RESULTS_KEY) {
 			FREE (pkg_json->error_msg);
-			pkg_json->error_msg = strndup ((const char *)stringVal, stringLen);
+			pkg_json->error_msg = strndup ((const char *) stringVal, stringLen);
 		}
 		return 1;
 	}
@@ -640,17 +644,17 @@ static alpm_list_t *aur_json_parse (const char *s)
 		return NULL;
 
 	const size_t len = strlen (s);
-	jsonpkg_t pkg_json = { NULL, NULL, 0, 0, NULL, 0};
-	yajl_handle hand = yajl_alloc(&callbacks, NULL, (void *) &pkg_json);
-	yajl_status stat = yajl_parse(hand, (const unsigned char *) s, len);
+	jsonpkg_t pkg_json = {NULL, NULL, 0, 0, NULL, 0};
+	yajl_handle hand = yajl_alloc (&callbacks, NULL, (void *) &pkg_json);
+	yajl_status stat = yajl_parse (hand, (const unsigned char *) s, len);
 
 	if (stat == yajl_status_ok) {
-		stat = yajl_complete_parse(hand);
+		stat = yajl_complete_parse (hand);
 	}
 	if (stat != yajl_status_ok) {
-		unsigned char * str = yajl_get_error(hand, 1, (const unsigned char *) s, len);
+		unsigned char * str = yajl_get_error (hand, 1, (const unsigned char *) s, len);
 		fprintf(stderr, "%s\n", (const char *) str);
-		yajl_free_error(hand, str);
+		yajl_free_error (hand, str);
 		alpm_list_free_inner (pkg_json.pkgs, (alpm_list_fn_free) aur_pkg_free);
 		alpm_list_free (pkg_json.pkgs);
 		pkg_json.pkgs = NULL;

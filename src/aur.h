@@ -60,7 +60,7 @@ typedef struct _aurpkg_t
 void aur_pkg_free (aurpkg_t *pkg);
 aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg);
 
-const char * aur_pkg_get_name (const aurpkg_t *pkg);
+const char *aur_pkg_get_name (const aurpkg_t *pkg);
 unsigned int aur_pkg_get_votes (const aurpkg_t *pkg);
 double aur_pkg_get_popularity (const aurpkg_t *pkg);
 
