@@ -55,10 +55,10 @@ static void cleanup (int ret)
 		return;
 	}
 	cleaned = true;
-	if (config.handle && alpm_release(config.handle) == -1) {
+	if (config.handle && alpm_release (config.handle) == -1) {
 		fprintf(stderr, "error releasing alpm library\n");
 	}
-	FREELIST(targets);
+	FREELIST (targets);
 	FREE (config.arch);
 	FREE (config.aur_url);
 	FREE (config.configfile);
@@ -73,8 +73,8 @@ static void cleanup (int ret)
 
 static void init_config (const char *myname)
 {
-	memset(&config, 0, sizeof(aq_config));
-	config.myname = mbasename(myname);
+	memset (&config, 0, sizeof (aq_config));
+	config.myname = mbasename (myname);
 	config.colors = isatty(1) ? true : false;
 	config.query = OP_Q_ALL;
 	config.aur_url = strdup (AUR_BASE_URL);
@@ -180,7 +180,7 @@ static int deal_db (alpm_db_t *db)
 static int deal_sync_dbs (void)
 {
 	int ret = 0;
-	for (alpm_list_t *t = alpm_get_syncdbs(config.handle); t; t = alpm_list_next(t)) {
+	for (const alpm_list_t *t = alpm_get_syncdbs (config.handle); t; t = alpm_list_next (t)) {
 		ret += deal_db (t->data);
 	}
 	return ret;
@@ -188,7 +188,7 @@ static int deal_sync_dbs (void)
 
 int main (int argc, char **argv)
 {
-	int ret = 0 , i;
+	int ret = 0, i;
 	int need = 0, given = 0, db_order = 0;
 	bool cycle_db = false;
 	alpm_list_t *t;
@@ -196,10 +196,10 @@ int main (int argc, char **argv)
 	struct sigaction a;
 	init_config (argv[0]);
 	a.sa_handler = cleanup;
-	sigemptyset(&a.sa_mask);
+	sigemptyset (&a.sa_mask);
 	a.sa_flags = 0;
-	sigaction(SIGINT, &a, NULL);
-	sigaction(SIGTERM, &a, NULL);
+	sigaction (SIGINT, &a, NULL);
+	sigaction (SIGTERM, &a, NULL);
 
 	int opt;
 	int opt_index = 0;
@@ -437,7 +437,7 @@ int main (int argc, char **argv)
 		/* -L displays respository list and exits. */
 		alpm_list_t *dbs = get_db_sync ();
 		if (dbs) {
-			for (t = dbs; t; t = alpm_list_next(t)) {
+			for (t = dbs; t; t = alpm_list_next (t)) {
 				printf ("%s\n", (char *)t->data);
 			}
 			FREELIST (dbs);
@@ -461,7 +461,7 @@ int main (int argc, char **argv)
 	}
 	for (i = optind; i < argc; i++) {
 		if (!config.just_one || !alpm_list_find_str (targets, argv[i])) {
-			targets = alpm_list_add(targets, strdup(argv[i]));
+			targets = alpm_list_add (targets, strdup (argv[i]));
 		}
 	}
 	if (i != optind) {
@@ -469,7 +469,7 @@ int main (int argc, char **argv)
 	}
 	if ((need & N_TARGET) && !(given & N_TARGET)) {
 		fprintf(stderr, "no targets specified.\n");
-		usage(1);
+		usage (1);
 	}
 	if (targets == NULL) {
 		if (config.op == OP_SEARCH && !config.aur_maintainer) {
@@ -481,10 +481,10 @@ int main (int argc, char **argv)
 	}
 	// init_db_sync initializes alpm after parsing [options]
 	if (!init_db_sync ()) {
-		cleanup(1);
+		cleanup (1);
 	}
 	if (config.is_file) {
-		for (t = targets; t; t = alpm_list_next(t)) {
+		for (t = targets; t; t = alpm_list_next (t)) {
 			alpm_pkg_t *pkg = NULL;
 			const char *filename = t->data;
 			if (alpm_pkg_load (config.handle, filename, 0, ALPM_SIG_USE_DEFAULT, &pkg) != 0 || pkg == NULL) {
@@ -495,7 +495,7 @@ int main (int argc, char **argv)
 			alpm_pkg_free (pkg);
 			ret++;
 		}
-		cleanup(!ret);
+		cleanup (!ret);
 	}
 
 	if (cycle_db || targets) {
@@ -509,7 +509,7 @@ int main (int argc, char **argv)
 					config.op = OP_INFO_P;
 				}
 			} else if (config.db_local == i) {
-				alpm_db_t *localdb = alpm_get_localdb(config.handle);
+				alpm_db_t *localdb = alpm_get_localdb (config.handle);
 				ret += deal_db (localdb);
 				if (!ret && config.op == OP_INFO_P) {
 					config.op = OP_QUERY;
@@ -537,7 +537,7 @@ int main (int argc, char **argv)
 			ret += aur_info (&targets);
 			if (config.db_local) {
 				/* -AQm */
-				ret += search_pkg_by_name (alpm_get_localdb(config.handle), &targets);
+				ret += search_pkg_by_name (alpm_get_localdb (config.handle), &targets);
 			}
 		} else if (config.filter & F_UPGRADES) {
 			/* -Au */
@@ -552,13 +552,13 @@ int main (int argc, char **argv)
 	}
 
 	if (config.sort == S_REL) {
-		calculate_results_relevance(targets);
+		calculate_results_relevance (targets);
 	}
 
 	show_results();
 
 	/* Some cleanups */
-	cleanup(!ret);
+	cleanup (!ret);
 	return 0;
 }
 
