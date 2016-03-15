@@ -179,7 +179,7 @@ static size_t levenshtein_distance (const char *s1, const char *s2)
 		column[0] = x;
 		size_t lastdiag = x - 1;
 		for (size_t y = 1; y <= s1len; y++) {
-			size_t olddiag = column[y];
+			const size_t olddiag = column[y];
 			column[y] = MIN3 (column[y] + 1, column[y-1] + 1, lastdiag + (s1[y-1] == s2[x-1] ? 0 : 1));
 			lastdiag = olddiag;
 		}
@@ -189,9 +189,9 @@ static size_t levenshtein_distance (const char *s1, const char *s2)
 
 void calculate_results_relevance (alpm_list_t *targets)
 {
-	for (alpm_list_t *t = targets; t; t = alpm_list_next (t)) {
+	for (const alpm_list_t *t = targets; t; t = alpm_list_next (t)) {
 		const char *target = t->data;
-		for (alpm_list_t *r = results; r; r = alpm_list_next(r)) {
+		for (const alpm_list_t *r = results; r; r = alpm_list_next(r)) {
 			const char *result = results_name (r->data);
 			const size_t lev_dst = levenshtein_distance (target, result);
 			if (lev_dst < ((results_t *) r->data)->rel) {
@@ -230,10 +230,10 @@ void show_results (void)
 		results = alpm_list_msort (results, alpm_list_count (results), fn_cmp);
 	}
 
-	alpm_list_nav fn_nav = config.rsort ? alpm_list_previous : alpm_list_next;
-	alpm_list_t *i_first = config.rsort ? alpm_list_last (results) : results;
+	const alpm_list_nav fn_nav = config.rsort ? alpm_list_previous : alpm_list_next;
+	const alpm_list_t *i_first = config.rsort ? alpm_list_last (results) : results;
 
-	for (alpm_list_t *i = i_first; i; i = fn_nav (i)) {
+	for (const alpm_list_t *i = i_first; i; i = fn_nav (i)) {
 		const results_t *r = i->data;
 		if (r && r->type == R_ALPM_PKG) {
 			print_package ("", r->ele, alpm_pkg_get_str);
