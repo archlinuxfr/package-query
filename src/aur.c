@@ -192,7 +192,8 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 
 	aurpkg_t *pkg_ret = aur_pkg_new();
 
-	pkg_ret->category = pkg->category;
+	// Only copy the values provided by the AUR search request:
+	// category as well as all array values are not provided
 	pkg_ret->firstsubmit = pkg->firstsubmit;
 	pkg_ret->id = pkg->id;
 	pkg_ret->lastmod = pkg->lastmod;
@@ -208,17 +209,6 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	pkg_ret->url = STRDUP (pkg->url);
 	pkg_ret->urlpath = STRDUP (pkg->urlpath);
 	pkg_ret->version = STRDUP (pkg->version);
-
-	pkg_ret->checkdepends = alpm_list_copy (pkg->checkdepends);
-	pkg_ret->conflicts = alpm_list_copy (pkg->conflicts);
-	pkg_ret->depends = alpm_list_copy (pkg->depends);
-	pkg_ret->groups = alpm_list_copy (pkg->groups);
-	pkg_ret->keywords = alpm_list_copy (pkg->keywords);
-	pkg_ret->licenses = alpm_list_copy (pkg->licenses);
-	pkg_ret->makedepends = alpm_list_copy (pkg->makedepends);
-	pkg_ret->optdepends = alpm_list_copy (pkg->optdepends);
-	pkg_ret->provides = alpm_list_copy (pkg->provides);
-	pkg_ret->replaces = alpm_list_copy (pkg->replaces);
 
 	return pkg_ret;
 }
