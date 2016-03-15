@@ -367,11 +367,11 @@ unsigned int aur_pkg_get_votes (const aurpkg_t *pkg)
 	return 0;
 }
 
-static unsigned short aur_pkg_get_outofdate (const aurpkg_t *pkg)
+static bool aur_pkg_get_outofdate (const aurpkg_t *pkg)
 {
 	if (pkg != NULL)
 		return pkg->outofdate;
-	return 0;
+	return false;
 }
 
 static time_t aur_pkg_get_firstsubmit (const aurpkg_t *pkg)
@@ -489,7 +489,7 @@ static int json_integer (void *ctx, long long val)
 			pkg_json->pkg->votes = (int) val;
 			break;
 		case AUR_OUTOFDATE:
-			pkg_json->pkg->outofdate = 1;
+			pkg_json->pkg->outofdate = true;
 			break;
 		case AUR_PKGBASE_ID:
 			pkg_json->pkg->pkgbase_id = (int) val;

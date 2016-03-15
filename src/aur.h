@@ -18,6 +18,7 @@
  */
 #ifndef _PQ_AUR_H
 #define _PQ_AUR_H
+#include <stdbool.h>
 #include <alpm_list.h>
 
 /*
@@ -49,7 +50,7 @@ typedef struct _aurpkg_t
 	unsigned int pkgbase_id;
 	unsigned int votes;
 
-	unsigned short outofdate;
+	bool outofdate;
 
 	time_t firstsubmit;
 	time_t lastmod;
