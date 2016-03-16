@@ -26,14 +26,14 @@
 /*
  * Filter
  */
-#define F_FOREIGN      1 << 0 /* 1 */
-#define F_EXPLICIT     1 << 1 /* 2 */
-#define F_DEPS         1 << 2 /* 4 */
-#define F_UNREQUIRED   1 << 3 /* 8 */
-#define F_UPGRADES     1 << 4 /* 16 */
-#define F_GROUP        1 << 5 /* 32 */
-#define F_NATIVE       1 << 6 /* 64 */
-#define F_UNREQUIRED_2 1 << 7 /* 128 */
+#define F_FOREIGN      (1 << 0) /* 1 */
+#define F_EXPLICIT     (1 << 1) /* 2 */
+#define F_DEPS         (1 << 2) /* 4 */
+#define F_UNREQUIRED   (1 << 3) /* 8 */
+#define F_UPGRADES     (1 << 4) /* 16 */
+#define F_GROUP        (1 << 5) /* 32 */
+#define F_NATIVE       (1 << 6) /* 64 */
+#define F_UNREQUIRED_2 (1 << 7) /* 128 */
 
 
 /*
