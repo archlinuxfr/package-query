@@ -315,7 +315,7 @@ bool target_check_version (const target_t *t, const char *ver)
 
 bool target_compatible (const target_t *t1, const target_t *t2)
 {
-	if (!t1 || !t2 || t2->mod != ALPM_DEP_MOD_EQ && t2->mod != ALPM_DEP_MOD_ANY) {
+	if (!t1 || !t2 || (t2->mod != ALPM_DEP_MOD_EQ && t2->mod != ALPM_DEP_MOD_ANY)) {
 		return false;
 	}
 	if (strcmp (t1->name, t2->name) == 0 &&
