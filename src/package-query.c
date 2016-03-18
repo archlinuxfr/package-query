@@ -519,9 +519,9 @@ int main (int argc, char **argv)
 				}
 			} else if (config.aur == i) {
 				if (config.op == OP_INFO || config.op == OP_INFO_P) {
-					ret += aur_info (&targets);
+					ret += aur_request (&targets, AUR_INFO);
 				} else if (config.op == OP_SEARCH) {
-					ret += aur_search (targets);
+					ret += aur_request (&targets, AUR_SEARCH);
 				}
 			}
 		}
@@ -534,7 +534,7 @@ int main (int argc, char **argv)
 			config.aur_foreign = true;
 			config.just_one = true;
 			alpm_search_local (config.filter, "%n", &targets);
-			ret += aur_info (&targets);
+			ret += aur_request (&targets, AUR_INFO);
 			if (config.db_local) {
 				/* -AQm */
 				ret += search_pkg_by_name (alpm_get_localdb (config.handle), &targets);
@@ -547,7 +547,7 @@ int main (int argc, char **argv)
 				ret += alpm_search_local (config.filter, NULL, NULL);
 			}
 			alpm_search_local (F_FOREIGN | (config.filter & ~F_UPGRADES), "%n>%v", &targets);
-			ret += aur_info (&targets);
+			ret += aur_request (&targets, AUR_INFO);
 		}
 	}
 
