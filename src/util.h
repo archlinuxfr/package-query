@@ -199,8 +199,8 @@ string_t *string_ncat (string_t *dest, const char *src, size_t n);
 string_t *string_cat (string_t *dest, const char *src);
 const char *string_cstr (const string_t *str);
 /* strtrim, strreplace are from pacman's code */
-char *strtrim(char *str);
-char *strreplace(const char *str, const char *needle, const char *replace);
+char *strtrim (char *str);
+char *strreplace (const char *str, const char *needle, const char *replace);
 
 char *concat_str_list (const alpm_list_t *l);
 char *concat_dep_list (const alpm_list_t *deps);
@@ -230,10 +230,10 @@ void show_results (void);
 
 /* Utils */
 /* mbasename is from pacman's code */
-const char *mbasename(const char *path);
+const char *mbasename (const char *path);
 
-/* Returns 1 if package name contains all targets; 0 otherwise */
-/* use_regex: 0 for AUR search, 1 for pacman search */
+/* Returns true if package name contains all targets; false otherwise */
+/* use_regex: true for AUR search, false for pacman search */
 bool does_name_contain_targets (const alpm_list_t *targets, const char *name, bool use_regex);
 
 #endif
