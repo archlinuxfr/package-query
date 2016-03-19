@@ -341,11 +341,7 @@ int main (int argc, char **argv)
 				given |= N_DB;
 				break;
 			case 't':
-				if (config.filter & F_UNREQUIRED) {
-					config.filter |= F_UNREQUIRED_2;
-				} else {
-					config.filter |= F_UNREQUIRED;
-				}
+				config.filter |= (config.filter & F_UNREQUIRED) ? F_UNREQUIRED_2 : F_UNREQUIRED;
 				break;
 			case 'u':
 				config.filter |= F_UPGRADES;
@@ -354,7 +350,7 @@ int main (int argc, char **argv)
 				config.escape = true;
 				break;
 			case 'v':
-				version();
+				version ();
 				break;
 			case 1009: /* --qdepends */
 				SETQUERY (OP_Q_DEPENDS);
@@ -403,7 +399,7 @@ int main (int argc, char **argv)
 				config.numbering = true;
 				break;
 			case 1005: /* --get-res */
-				if (dup2(FD_RES, FD_RES) == FD_RES)
+				if (dup2 (FD_RES, FD_RES) == FD_RES)
 					config.get_res = true;
 				break;
 			case 1006: /* --show-size */
@@ -433,6 +429,7 @@ int main (int argc, char **argv)
 				break;
 		}
 	}
+
 	if (config.list) {
 		/* -L displays respository list and exits. */
 		alpm_list_t *dbs = get_db_sync ();
@@ -444,9 +441,10 @@ int main (int argc, char **argv)
 		}
 		cleanup (0);
 	}
+
 	if (!config.custom_out) {
 		if (config.colors) {
-			color_init();
+			color_init ();
 		}
 #if defined(HAVE_GETTEXT) && defined(ENABLE_NLS)
 		/* TODO: specific package-query locale ? */
@@ -455,10 +453,12 @@ int main (int argc, char **argv)
 		textdomain ("yaourt");
 #endif
 	}
+
 	if ((need & N_DB) && !(given & N_DB)) {
-		fprintf(stderr, "search or information must have database target (-{Q,S,A}).\n");
+		fprintf (stderr, "search or information must have database target (-{Q,S,A}).\n");
 		cleanup (1);
 	}
+
 	for (i = optind; i < argc; i++) {
 		if (!config.just_one || !alpm_list_find_str (targets, argv[i])) {
 			targets = alpm_list_add (targets, strdup (argv[i]));
@@ -468,27 +468,28 @@ int main (int argc, char **argv)
 		given |= N_TARGET;
 	}
 	if ((need & N_TARGET) && !(given & N_TARGET)) {
-		fprintf(stderr, "no targets specified.\n");
+		fprintf (stderr, "no targets specified.\n");
 		usage (1);
 	}
 	if (targets == NULL) {
 		if (config.op == OP_SEARCH && !config.aur_maintainer) {
 			config.op = OP_LIST_REPO_S;
 		}
-	}
-	else if (!config.op && (given & N_DB)) {/* Show info by default */
+	} else if (!config.op && (given & N_DB)) {/* Show info by default */
 		config.op = OP_INFO;
 	}
+
 	// init_db_sync initializes alpm after parsing [options]
 	if (!init_db_sync ()) {
 		cleanup (1);
 	}
+
 	if (config.is_file) {
 		for (t = targets; t; t = alpm_list_next (t)) {
 			alpm_pkg_t *pkg = NULL;
 			const char *filename = t->data;
 			if (alpm_pkg_load (config.handle, filename, 0, ALPM_SIG_USE_DEFAULT, &pkg) != 0 || pkg == NULL) {
-				fprintf(stderr, "unable to read %s.\n", filename);
+				fprintf (stderr, "unable to read %s.\n", filename);
 				continue;
 			}
 			print_package (filename, pkg, alpm_pkg_get_str);
@@ -525,8 +526,7 @@ int main (int argc, char **argv)
 				}
 			}
 		}
-	}
-	else if (!config.aur && config.db_local) {
+	} else if (!config.aur && config.db_local) {
 		ret += alpm_search_local (config.filter, NULL, NULL);
 	} else if (config.aur && !(given & N_TARGET)) {
 		if (config.filter & F_FOREIGN) {
@@ -555,7 +555,7 @@ int main (int argc, char **argv)
 		calculate_results_relevance (targets);
 	}
 
-	show_results();
+	show_results ();
 
 	/* Some cleanups */
 	cleanup (!ret);
