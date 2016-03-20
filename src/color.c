@@ -44,44 +44,44 @@ static void colors_free (colors_t *c)
 	FREE (c);
 }
 
-static int colors_cmp (void *c1, void *c2)
+static int colors_cmp (const void *c1, const void *c2)
 {
 	if (!c1 || !c2) {
 		return 0;
 	}
 
-	const char *c1id = ((colors_t *)c1)->id;
-	const char *c2id = ((colors_t *)c2)->id;
+	const char *c1id = ((colors_t *) c1)->id;
+	const char *c2id = ((colors_t *) c2)->id;
 	if (!c1id || !c2id) {
 		return 0;
 	}
 
-	return strcmp (((colors_t *)c1)->id, ((colors_t *)c2)->id);
+	return strcmp (c1id, c2id);
 }
 
-static int colors_cmp_id (void *c1, void *id)
+static int colors_cmp_id (const void *c1, const void *id)
 {
-	if (!c1) {
-		return -1;
+	if (!c1 || !id) {
+		return 0;
 	}
 
-	const char *c1id = ((colors_t *)c1)->id;
+	const char *c1id = ((colors_t *) c1)->id;
 	if (!c1id) {
 		return -1;
 	}
 
-	return strcmp (c1id, (char *)id);
+	return strcmp (c1id, (char *) id);
 }
 
 static void colors_set_color (const char *id, const char *color)
 {
-	colors_t *c = alpm_list_find (colors, id, (alpm_list_fn_cmp) colors_cmp_id);
+	colors_t *c = alpm_list_find (colors, id, colors_cmp_id);
 	if (c) {
 		FREE (c->color);
 	} else {
 		MALLOC (c, sizeof (colors_t));
 		c->id = strdup (id);
-		colors = alpm_list_add_sorted (colors, c, (alpm_list_fn_cmp) colors_cmp);
+		colors = alpm_list_add_sorted (colors, c, colors_cmp);
 	}
 	CALLOC (c->color, (strlen (color) + 4), sizeof (char)); /* + "\033[m" */
 	sprintf (c->color, "\033[%sm", color);
@@ -100,14 +100,14 @@ static void parse_var (const char *s)
 	while (*t != '\0') {
 		if (!sval && sid != t && *t == '=') {
 			*t = '\0';
-			sval = t + sizeof(char);
+			sval = t + sizeof (char);
 		} else if (sval && sval != t && *t == ':') {
 			*t = '\0';
 			colors_set_color (sid, sval);
-			sid = t + sizeof(char);
+			sid = t + sizeof (char);
 			sval = NULL;
 		} else if ((!sval && !COL_ID(*t)) || (sval && !COL_VAL(*t))) {
-			sid = t + sizeof(char);
+			sid = t + sizeof (char);
 			sval = NULL;
 		}
 		t++;
@@ -135,7 +135,7 @@ void color_cleanup (void)
 const char *color (const char *col)
 {
 	if (config.colors) {
-		colors_t *c = alpm_list_find (colors, col, (alpm_list_fn_cmp) colors_cmp_id);
+		const colors_t *c = alpm_list_find (colors, col, (alpm_list_fn_cmp) colors_cmp_id);
 		if (c) {
 			return c->color;
 		}
