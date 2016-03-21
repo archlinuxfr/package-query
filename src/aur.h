@@ -58,6 +58,14 @@ typedef struct _aurpkg_t
 	double popularity;
 } aurpkg_t;
 
+/*
+ * AUR REQUEST
+ */
+typedef enum {
+	AUR_INFO   = 1,
+	AUR_SEARCH = 2
+} aurrequest_t;
+
 void aur_pkg_free (aurpkg_t *pkg);
 aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg);
 
@@ -66,11 +74,10 @@ unsigned int aur_pkg_get_votes (const aurpkg_t *pkg);
 double aur_pkg_get_popularity (const aurpkg_t *pkg);
 
 /*
- * AUR search function
+ * AUR search/info function
  * Returns number of packages found
  */
-int aur_info (alpm_list_t **targets);
-int aur_search (alpm_list_t *targets);
+int aur_request (alpm_list_t **targets, aurrequest_t type);
 
 /*
  * aur_get_str() get info for package

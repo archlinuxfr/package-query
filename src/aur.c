@@ -45,7 +45,6 @@
 #define AUR_RPC_BYMAINT  "&by=maintainer"
 #define AUR_RPC_INFO     "&type=multiinfo"
 #define AUR_RPC_INFO_ARG "&arg[]="
-#define AUR_URL_ID       "/packages.php?setlang=en&ID="
 
 /*
  * AUR repo name
@@ -123,12 +122,6 @@ const char *aur_key_types_names[] =
 #define AUR_TYPE_ERROR   "error"
 
 /*
- * AUR REQUEST
- */
-#define AUR_INFO        1
-#define AUR_SEARCH      2
-
-/*
  * AUR max argument for info query
  */
 #ifndef AUR_MAX_ARG
@@ -154,7 +147,7 @@ typedef struct _jsonpkg_t
 static aurpkg_t *aur_pkg_new (void)
 {
 	aurpkg_t *pkg = NULL;
-	MALLOC (pkg, sizeof(aurpkg_t));
+	MALLOC (pkg, sizeof (aurpkg_t));
 	return pkg;
 }
 
@@ -190,7 +183,7 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	if (pkg == NULL)
 		return NULL;
 
-	aurpkg_t *pkg_ret = aur_pkg_new();
+	aurpkg_t *pkg_ret = aur_pkg_new ();
 
 	// Only copy the values provided by the AUR search request:
 	// category as well as all array values are not provided
@@ -398,7 +391,7 @@ double aur_pkg_get_popularity (const aurpkg_t *pkg)
 static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
 {
 	string_t *s = (string_t *) userdata;
-	string_ncat (s, data, size*nmemb);
+	string_ncat (s, data, size * nmemb);
 	return nmemb;
 }
 
@@ -412,7 +405,7 @@ static int json_start_map (void *ctx)
 	pkg_json->level += 1;
 	if (pkg_json->level > 1) {
 		aur_pkg_free (pkg_json->pkg);
-		pkg_json->pkg = aur_pkg_new();
+		pkg_json->pkg = aur_pkg_new ();
 	}
 
 	return 1;
@@ -682,9 +675,9 @@ static alpm_list_t *aur_fetch (CURL *curl, const char *url)
 
 	// this setlocale() hack is a workaround for the yajl issue:
 	// https://github.com/lloyd/yajl/issues/79
-	setlocale(LC_ALL, "C");
+	setlocale (LC_ALL, "C");
 	alpm_list_t *pkgs = aur_json_parse (string_cstr (res));
-	setlocale(LC_ALL, "");
+	setlocale (LC_ALL, "");
 
 	string_free (res);
 
@@ -693,7 +686,7 @@ static alpm_list_t *aur_fetch (CURL *curl, const char *url)
 
 static string_t *aur_prepare_url (const char *aur_rpc_type)
 {
-	string_t *url = string_new();
+	string_t *url = string_new ();
 	url = string_cat (url, config.aur_url);
 	url = string_cat (url, AUR_RPC);
 	url = string_cat (url, AUR_RPC_VERSION);
@@ -748,7 +741,7 @@ static int aur_request_search (alpm_list_t **targets, CURL *curl)
 static int aur_request_info (alpm_list_t **targets, CURL *curl)
 {
 	alpm_list_t *real_targets = NULL;
-	for (const alpm_list_t *t = *targets; t; t = alpm_list_next(t)) {
+	for (const alpm_list_t *t = *targets; t; t = alpm_list_next (t)) {
 		target_t *one_target = target_parse (t->data);
 		if (one_target->db && strcmp (one_target->db, AUR_REPO) !=0 ) {
 			target_free (one_target);
@@ -825,16 +818,16 @@ static int aur_request_info (alpm_list_t **targets, CURL *curl)
 	return pkgs_found;
 }
 
-static int aur_request (alpm_list_t **targets, int type)
+int aur_request (alpm_list_t **targets, aurrequest_t type)
 {
 	if (targets == NULL && !config.aur_maintainer) {
 		return 0;
 	}
 
 	if (strncmp (config.aur_url, "https", strlen ("https")) == 0) {
-		curl_global_init(CURL_GLOBAL_SSL);
+		curl_global_init (CURL_GLOBAL_SSL);
 	} else {
-		curl_global_init(CURL_GLOBAL_NOTHING);
+		curl_global_init (CURL_GLOBAL_NOTHING);
 	}
 
 	CURL *curl = curl_easy_init ();
@@ -853,20 +846,10 @@ static int aur_request (alpm_list_t **targets, int type)
 			? aur_request_search (targets, curl)
 			: aur_request_info (targets, curl);
 
-	curl_easy_cleanup(curl);
-	curl_global_cleanup();
+	curl_easy_cleanup (curl);
+	curl_global_cleanup ();
 
 	return aur_pkgs_found;
-}
-
-int aur_info (alpm_list_t **targets)
-{
-	return aur_request (targets, AUR_INFO);
-}
-
-int aur_search (alpm_list_t *targets)
-{
-	return aur_request (&targets, AUR_SEARCH);
 }
 
 const char *aur_get_str (void *p, unsigned char c)
