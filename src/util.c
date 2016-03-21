@@ -40,10 +40,10 @@ typedef struct _results_t
 {
 	void *ele;
 	size_t rel;
-	unsigned short type;
+	pkgtype_t type;
 } results_t;
 
-static results_t *results_new (void *ele, unsigned short type)
+static results_t *results_new (void *ele, pkgtype_t type)
 {
 	results_t *r = NULL;
 	MALLOC (r, sizeof (results_t));
@@ -201,7 +201,7 @@ void calculate_results_relevance (alpm_list_t *targets)
 	}
 }
 
-void print_or_add_result (void *pkg, unsigned short type)
+void print_or_add_result (void *pkg, pkgtype_t type)
 {
 	if (config.sort == 0) {
 		print_package ("", pkg, (type == R_ALPM_PKG) ? alpm_pkg_get_str : aur_get_str);

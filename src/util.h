@@ -77,13 +77,14 @@ typedef enum
 	OP_Q_REQUIRES  = 5
 } qtype_t;
 
-#define SEP_LEN 10
-
 /*
  * Results type
  */
-#define R_ALPM_PKG 1
-#define R_AUR_PKG 2
+typedef enum
+{
+	R_ALPM_PKG = 1,
+	R_AUR_PKG  = 2
+} pkgtype_t;
 
 /* Results FD */
 #define FD_RES 3
@@ -96,6 +97,7 @@ typedef enum
 #define S_IDATE '1'
 #define S_ISIZE '2'
 
+#define SEP_LEN 10
 
 /*
  * General config
@@ -225,7 +227,7 @@ void print_package (const char *target, void *pkg, printpkgfn f);
 
 /* Results */
 void calculate_results_relevance (alpm_list_t *targets);
-void print_or_add_result (void *pkg, unsigned short type);
+void print_or_add_result (void *pkg, pkgtype_t type);
 void show_results (void);
 
 /* Utils */
