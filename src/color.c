@@ -135,7 +135,7 @@ void color_cleanup (void)
 const char *color (const char *col)
 {
 	if (config.colors) {
-		const colors_t *c = alpm_list_find (colors, col, (alpm_list_fn_cmp) colors_cmp_id);
+		const colors_t *c = alpm_list_find (colors, col, colors_cmp_id);
 		if (c) {
 			return c->color;
 		}

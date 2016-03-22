@@ -73,7 +73,7 @@ static const char *results_name (const results_t *r)
 		case R_ALPM_PKG:
 			return alpm_pkg_get_name ((alpm_pkg_t *) r->ele);
 		case R_AUR_PKG:
-			return aur_pkg_get_name ((aurpkg_t *) r->ele);
+			return aur_pkg_get_name ((const aurpkg_t *) r->ele);
 		default:
 			return NULL;
 	}
@@ -86,7 +86,7 @@ static time_t results_installdate (const results_t *r)
 	}
 	time_t idate = 0;
 	const char *r_name = results_name (r);
-	alpm_pkg_t *pkg = alpm_db_get_pkg (alpm_get_localdb(config.handle), r_name);
+	alpm_pkg_t *pkg = alpm_db_get_pkg (alpm_get_localdb (config.handle), r_name);
 	if (pkg) {
 		idate = alpm_pkg_get_installdate (pkg);
 	}
@@ -98,7 +98,7 @@ static off_t results_isize (const results_t *r)
 	if (!r || r->type == R_AUR_PKG) {
 		return 0;
 	}
-	return alpm_pkg_get_isize (r->ele);
+	return alpm_pkg_get_isize ((alpm_pkg_t *) r->ele);
 }
 
 static int results_votes (const results_t *r)
@@ -106,7 +106,7 @@ static int results_votes (const results_t *r)
 	if (!r || r->type != R_AUR_PKG) {
 		return INT_MAX; // put ALPM packages on top
 	}
-	return aur_pkg_get_votes ((aurpkg_t *) r->ele);
+	return aur_pkg_get_votes ((const aurpkg_t *) r->ele);
 }
 
 static double results_popularity (const results_t *r)
@@ -114,7 +114,7 @@ static double results_popularity (const results_t *r)
 	if (!r || r->type != R_AUR_PKG) {
 		return DBL_MAX; // put ALPM packages on top
 	}
-	return aur_pkg_get_popularity ((aurpkg_t *) r->ele);
+	return aur_pkg_get_popularity ((const aurpkg_t *) r->ele);
 }
 
 static size_t results_relevance (const results_t *r)
@@ -122,46 +122,54 @@ static size_t results_relevance (const results_t *r)
 	return r ? r->rel : SIZE_MAX;
 }
 
-static int results_cmp (const results_t *r1, const results_t *r2)
+static int results_cmp (const void *r1, const void *r2)
 {
-	const char *r1name = results_name (r1);
-	const char *r2name = results_name (r2);
+	const char *r1name = results_name ((const results_t *) r1);
+	const char *r2name = results_name ((const results_t *) r2);
 	if (!r1name || !r2name) {
 		return 0;
 	}
 	return strcmp (r1name, r2name);
 }
 
-static int results_installdate_cmp (const results_t *r1, const results_t *r2)
+static int results_installdate_cmp (const void *r1, const void *r2)
 {
-	if (results_installdate (r1) > results_installdate (r2)) return 1;
-	if (results_installdate (r2) > results_installdate (r1)) return -1;
+	const time_t idate1 = results_installdate ((const results_t *) r1);
+	const time_t idate2 = results_installdate ((const results_t *) r2);
+	if (idate1 > idate2) return 1;
+	if (idate2 > idate1) return -1;
 	return 0;
 }
 
-static int results_isize_cmp (const results_t *r1, const results_t *r2)
+static int results_isize_cmp (const void *r1, const void *r2)
 {
-	if (results_isize (r1) > results_isize (r2)) return 1;
-	if (results_isize (r2) > results_isize (r1)) return -1;
+	const off_t isize1 = results_isize ((const results_t *) r1);
+	const off_t isize2 = results_isize ((const results_t *) r2);
+	if (isize1 > isize2) return 1;
+	if (isize2 > isize1) return -1;
 	return 0;
 }
 
-static int results_votes_cmp (const results_t *r1, const results_t *r2)
+static int results_votes_cmp (const void *r1, const void *r2)
 {
-	return (results_votes (r2) - results_votes (r1));
+	return (results_votes ((const results_t *) r2) - results_votes ((const results_t *) r1));
 }
 
-static int results_popularity_cmp (const results_t *r1, const results_t *r2)
+static int results_popularity_cmp (const void *r1, const void *r2)
 {
-	if (results_popularity (r1) > results_popularity (r2)) return -1;
-	if (results_popularity (r2) > results_popularity (r1)) return 1;
+	const double pop1 = results_popularity ((const results_t *) r1);
+	const double pop2 = results_popularity ((const results_t *) r2);
+	if (pop1 > pop2) return -1;
+	if (pop2 > pop1) return 1;
 	return 0;
 }
 
-static int results_relevance_cmp (const results_t *r1, const results_t *r2)
+static int results_relevance_cmp (const void *r1, const void *r2)
 {
-	if (results_relevance (r1) > results_relevance (r2)) return 1;
-	if (results_relevance (r2) > results_relevance (r1)) return -1;
+	const size_t rel1 = results_relevance ((const results_t *) r1);
+	const size_t rel2 = results_relevance ((const results_t *) r2);
+	if (rel1 > rel2) return 1;
+	if (rel2 > rel1) return -1;
 	return 0;
 }
 
@@ -219,12 +227,12 @@ void show_results (void)
 
 	alpm_list_fn_cmp fn_cmp = NULL;
 	switch (config.sort) {
-		case S_NAME:  fn_cmp = (alpm_list_fn_cmp) results_cmp; break;
-		case S_VOTE:  fn_cmp = (alpm_list_fn_cmp) results_votes_cmp; break;
-		case S_POP:   fn_cmp = (alpm_list_fn_cmp) results_popularity_cmp; break;
-		case S_IDATE: fn_cmp = (alpm_list_fn_cmp) results_installdate_cmp; break;
-		case S_ISIZE: fn_cmp = (alpm_list_fn_cmp) results_isize_cmp; break;
-		case S_REL:   fn_cmp = (alpm_list_fn_cmp) results_relevance_cmp; break;
+		case S_NAME:  fn_cmp = results_cmp; break;
+		case S_VOTE:  fn_cmp = results_votes_cmp; break;
+		case S_POP:   fn_cmp = results_popularity_cmp; break;
+		case S_IDATE: fn_cmp = results_installdate_cmp; break;
+		case S_ISIZE: fn_cmp = results_isize_cmp; break;
+		case S_REL:   fn_cmp = results_relevance_cmp; break;
 	}
 	if (fn_cmp) {
 		results = alpm_list_msort (results, alpm_list_count (results), fn_cmp);
