@@ -132,6 +132,7 @@ static void usage (unsigned short _error)
 	fprintf(stderr, "\n\t--qrequires          required by one of the targets");
 	fprintf(stderr, "\n\t-s --search          search");
 	fprintf(stderr, "\n\t--nameonly           search in package names only");
+	fprintf(stderr, "\n\t-t --unrequired      search for unrequired packages (-tt for optional deps)");
 	fprintf(stderr, "\n\t-u --upgrades        list updates available");
 	fprintf(stderr, "\n\nFormats (man for more infos): ");
 	fprintf(stderr, "\n\ta: arch");
