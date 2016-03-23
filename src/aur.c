@@ -153,8 +153,9 @@ static aurpkg_t *aur_pkg_new (void)
 
 void aur_pkg_free (aurpkg_t *pkg)
 {
-	if (pkg == NULL)
+	if (pkg == NULL) {
 		return;
+	}
 
 	FREE (pkg->desc);
 	FREE (pkg->maintainer);
@@ -180,8 +181,9 @@ void aur_pkg_free (aurpkg_t *pkg)
 
 aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 {
-	if (pkg == NULL)
+	if (pkg == NULL) {
 		return NULL;
+	}
 
 	aurpkg_t *pkg_ret = aur_pkg_new ();
 
@@ -206,19 +208,26 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 	return pkg_ret;
 }
 
-static int aur_pkg_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
+static int aur_pkg_cmp (const void *p1, const void *p2)
 {
-	if (pkg1 && pkg1->name && pkg2 && pkg2->name)
+	const aurpkg_t *pkg1 = (const aurpkg_t *) p1;
+	const aurpkg_t *pkg2 = (const aurpkg_t *) p2;
+	if (pkg1 && pkg1->name && pkg2 && pkg2->name) {
 		return strcmp (pkg1->name, pkg2->name);
+	}
 	return 0;
 }
 
-static int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
+static int aur_pkg_votes_cmp (const void *p1, const void *p2)
 {
-	if (pkg1 && pkg2 && (pkg1->votes > pkg2->votes))
+	const aurpkg_t *pkg1 = (const aurpkg_t *) p1;
+	const aurpkg_t *pkg2 = (const aurpkg_t *) p2;
+	if (pkg1 && pkg2 && (pkg1->votes > pkg2->votes)) {
 		return 1;
-	if (pkg1 && pkg2 && (pkg1->votes < pkg2->votes))
+	}
+	if (pkg1 && pkg2 && (pkg1->votes < pkg2->votes)) {
 		return -1;
+	}
 	return 0;
 }
 
@@ -318,8 +327,9 @@ static time_t aur_pkg_get_time_value (const aurpkg_t *pkg, aurkeytype_t key)
 
 static bool aur_pkg_get_outofdate (const aurpkg_t *pkg)
 {
-	if (pkg != NULL)
+	if (pkg != NULL) {
 		return pkg->outofdate;
+	}
 	return false;
 }
 
@@ -335,8 +345,9 @@ unsigned int aur_pkg_get_votes (const aurpkg_t *pkg)
 
 double aur_pkg_get_popularity (const aurpkg_t *pkg)
 {
-	if (pkg != NULL)
+	if (pkg != NULL) {
 		return pkg->popularity;
+	}
 	return 0.0;
 }
 
@@ -351,8 +362,9 @@ static int json_start_map (void *ctx)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
-	if (pkg_json == NULL)
+	if (pkg_json == NULL) {
 		return 1;
+	}
 
 	pkg_json->level += 1;
 	if (pkg_json->level > 1) {
@@ -367,21 +379,14 @@ static int json_end_map (void *ctx)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
-	if (pkg_json == NULL)
+	if (pkg_json == NULL) {
 		return 1;
+	}
 
 	pkg_json->level -= 1;
 	if (pkg_json->level == 1 && pkg_json->pkg != NULL) {
-		switch (config.sort) {
-			case S_VOTE:
-				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs,
-					pkg_json->pkg, (alpm_list_fn_cmp) aur_pkg_votes_cmp);
-				break;
-			default:
-				pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs,
-					pkg_json->pkg, (alpm_list_fn_cmp) aur_pkg_cmp);
-				break;
-		}
+		alpm_list_fn_cmp fn_cmp = (config.sort == S_VOTE) ? aur_pkg_votes_cmp : aur_pkg_cmp;
+		pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs, pkg_json->pkg, fn_cmp);
 		pkg_json->pkg = NULL;
 	}
 	return 1;
@@ -391,8 +396,9 @@ static int json_key (void *ctx, const unsigned char *stringVal, size_t stringLen
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
-	if (pkg_json == NULL || stringVal == NULL)
+	if (pkg_json == NULL || stringVal == NULL) {
 		return 1;
+	}
 
 	stringLen = (stringLen >= AUR_ID_LEN) ? AUR_ID_LEN - 1 : stringLen;
 	for (int i = 0; i <= AUR_LAST_ID; ++i) {
@@ -410,12 +416,14 @@ static int json_integer (void *ctx, long long val)
 {
 	const jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
-	if (pkg_json == NULL || pkg_json->pkg == NULL)
+	if (pkg_json == NULL || pkg_json->pkg == NULL) {
 		return 1;
+	}
 
 	// package info in level 2
-	if (pkg_json->level < 2)
+	if (pkg_json->level < 2) {
 		return 1;
+	}
 
 	switch (pkg_json->current_key) {
 		case AUR_CATEGORY:
@@ -448,14 +456,16 @@ static int json_integer (void *ctx, long long val)
 
 static int json_double (void *ctx, double val)
 {
-	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
+	const jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
-	if (pkg_json == NULL || pkg_json->pkg == NULL)
+	if (pkg_json == NULL || pkg_json->pkg == NULL) {
 		return 1;
+	}
 
 	// package info in level 2
-	if (pkg_json->level < 2)
+	if (pkg_json->level < 2) {
 		return 1;
+	}
 
 	switch (pkg_json->current_key) {
 		case AUR_POPULARITY:
@@ -472,8 +482,9 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
-	if (pkg_json == NULL || stringVal == NULL)
+	if (pkg_json == NULL || stringVal == NULL) {
 		return 1;
+	}
 
 	// package info in level 2
 	if (pkg_json->level < 2) {
@@ -488,10 +499,11 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 		return 1;
 	}
 
-	if (pkg_json->pkg == NULL)
+	if (pkg_json->pkg == NULL) {
 		return 1;
+	}
 
-	char *s = strndup ((const char *)stringVal, stringLen);
+	char *s = strndup ((const char *) stringVal, stringLen);
 	switch (pkg_json->current_key) {
 		case AUR_DESCRIPTION:
 			FREE (pkg_json->pkg->desc);
@@ -575,8 +587,9 @@ static yajl_callbacks callbacks = {
 
 static alpm_list_t *aur_json_parse (const char *s)
 {
-	if (s == NULL)
+	if (s == NULL) {
 		return NULL;
+	}
 
 	const size_t len = strlen (s);
 	jsonpkg_t pkg_json = {NULL, NULL, 0, 0, NULL, 0};
@@ -587,7 +600,7 @@ static alpm_list_t *aur_json_parse (const char *s)
 		stat = yajl_complete_parse (hand);
 	}
 	if (stat != yajl_status_ok) {
-		unsigned char * str = yajl_get_error (hand, 1, (const unsigned char *) s, len);
+		unsigned char *str = yajl_get_error (hand, 1, (const unsigned char *) s, len);
 		fprintf(stderr, "%s\n", (const char *) str);
 		yajl_free_error (hand, str);
 		alpm_list_free_inner (pkg_json.pkgs, (alpm_list_fn_free) aur_pkg_free);
@@ -606,7 +619,7 @@ static alpm_list_t *aur_json_parse (const char *s)
 
 static alpm_list_t *aur_fetch (CURL *curl, const char *url)
 {
-	string_t *res = string_new();
+	string_t *res = string_new ();
 	curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
 	curl_easy_setopt (curl, CURLOPT_URL, url);
 
@@ -697,15 +710,11 @@ static int aur_request_info (alpm_list_t **targets, CURL *curl)
 	alpm_list_t *real_targets = NULL;
 	for (const alpm_list_t *t = *targets; t; t = alpm_list_next (t)) {
 		target_t *one_target = target_parse (t->data);
-		if (one_target->db && strcmp (one_target->db, AUR_REPO) !=0 ) {
+		if (one_target->db && strcmp (one_target->db, AUR_REPO) != 0) {
 			target_free (one_target);
 		} else {
 			real_targets = alpm_list_add (real_targets, one_target);
 		}
-	}
-
-	if (real_targets == NULL) {
-		return 0;
 	}
 
 	int pkgs_found = 0;
@@ -787,6 +796,7 @@ int aur_request (alpm_list_t **targets, aurrequest_t type)
 	CURL *curl = curl_easy_init ();
 	if (!curl) {
 		perror ("curl");
+		curl_global_cleanup ();
 		return 0;
 	}
 
@@ -808,7 +818,7 @@ int aur_request (alpm_list_t **targets, aurrequest_t type)
 
 const char *aur_get_str (void *p, unsigned char c)
 {
-	aurpkg_t *pkg = (aurpkg_t *) p;
+	const aurpkg_t *pkg = (const aurpkg_t *) p;
 	static char *info = NULL;
 	static bool free_info = false;
 	if (free_info) {
@@ -816,8 +826,7 @@ const char *aur_get_str (void *p, unsigned char c)
 		free_info = false;
 	}
 	info = NULL;
-	switch (c)
-	{
+	switch (c) {
 		case 'b':
 			info = (char *) aur_pkg_get_string_value (pkg, AUR_PKGBASE);
 			break;
