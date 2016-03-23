@@ -848,8 +848,12 @@ const char *aur_get_str (void *p, unsigned char c)
 			{
 				const char *pkgbase = aur_pkg_get_string_value (pkg, AUR_PKGBASE);
 				if (config.aur_url && pkgbase) {
-					asprintf (&info, "%s/%s.git", config.aur_url, pkgbase);
-					free_info = true;
+					int ret = asprintf (&info, "%s/%s.git", config.aur_url, pkgbase);
+					if (ret < 0) {
+						FREE (info);
+					} else {
+						free_info = true;
+					}
 				}
 			}
 			break;
@@ -914,8 +918,12 @@ const char *aur_get_str (void *p, unsigned char c)
 			{
 				const char *urlpath = aur_pkg_get_string_value (pkg, AUR_URLPATH);
 				if (config.aur_url && urlpath) {
-					asprintf (&info, "%s%s", config.aur_url, urlpath);
-					free_info = true;
+					int ret = asprintf (&info, "%s%s", config.aur_url, urlpath);
+					if (ret < 0) {
+						FREE (info);
+					} else {
+						free_info = true;
+					}
 				}
 			}
 			break;
