@@ -208,7 +208,9 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 
 static int aur_pkg_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
 {
-	return strcmp (aur_pkg_get_name (pkg1), aur_pkg_get_name (pkg2));
+	if (pkg1 && pkg1->name && pkg2 && pkg2->name)
+		return strcmp (pkg1->name, pkg2->name);
+	return 0;
 }
 
 static int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
@@ -220,144 +222,98 @@ static int aur_pkg_votes_cmp (const aurpkg_t *pkg1, const aurpkg_t *pkg2)
 	return 0;
 }
 
-static const char *aur_pkg_get_desc (const aurpkg_t *pkg)
+static const char *aur_pkg_get_string_value (const aurpkg_t *pkg, aurkeytype_t key)
 {
-	if (pkg != NULL)
-		return pkg->desc;
-	return NULL;
+	if (pkg == NULL) {
+		return NULL;
+	}
+
+	switch (key) {
+		case AUR_DESCRIPTION:
+			return pkg->desc;
+		case AUR_MAINTAINER:
+			return pkg->maintainer;
+		case AUR_NAME:
+			return pkg->name;
+		case AUR_PKGBASE:
+			return pkg->pkgbase;
+		case AUR_URL:
+			return pkg->url;
+		case AUR_URLPATH:
+			return pkg->urlpath;
+		case AUR_VERSION:
+			return pkg->version;
+		default:
+			return NULL;
+	}
 }
 
-static const char *aur_pkg_get_maintainer (const aurpkg_t *pkg)
+static const alpm_list_t *aur_pkg_get_list_value (const aurpkg_t *pkg, aurkeytype_t key)
 {
-	if (pkg != NULL)
-		return pkg->maintainer;
-	return NULL;
+	if (pkg == NULL) {
+		return NULL;
+	}
+
+	switch (key) {
+		case AUR_CHECKDEPENDS:
+			return pkg->checkdepends;
+		case AUR_CONFLICTS:
+			return pkg->conflicts;
+		case AUR_DEPENDS:
+			return pkg->depends;
+		case AUR_GROUPS:
+			return pkg->groups;
+		case AUR_KEYWORDS:
+			return pkg->keywords;
+		case AUR_LICENSES:
+			return pkg->licenses;
+		case AUR_MAKEDEPENDS:
+			return pkg->makedepends;
+		case AUR_OPTDEPENDS:
+			return pkg->optdepends;
+		case AUR_PROVIDES:
+			return pkg->provides;
+		case AUR_REPLACES:
+			return pkg->replaces;
+		default:
+			return NULL;
+	}
 }
 
-const char *aur_pkg_get_name (const aurpkg_t *pkg)
+static unsigned int aur_pkg_get_uint_value (const aurpkg_t *pkg, aurkeytype_t key)
 {
-	if (pkg != NULL)
-		return pkg->name;
-	return NULL;
+	if (pkg == NULL) {
+		return 0;
+	}
+
+	switch (key) {
+		case AUR_CATEGORY:
+			return pkg->category;
+		case AUR_ID:
+			return pkg->id;
+		case AUR_NUMVOTES:
+			return pkg->votes;
+		case AUR_PKGBASE_ID:
+			return pkg->pkgbase_id;
+		default:
+			return 0;
+	}
 }
 
-static const char *aur_pkg_get_pkgbase (const aurpkg_t *pkg)
+static time_t aur_pkg_get_time_value (const aurpkg_t *pkg, aurkeytype_t key)
 {
-	if (pkg != NULL)
-		return pkg->pkgbase;
-	return NULL;
-}
+	if (pkg == NULL) {
+		return 0;
+	}
 
-static const char *aur_pkg_get_url (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->url;
-	return NULL;
-}
-
-static const char *aur_pkg_get_urlpath (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->urlpath;
-	return NULL;
-}
-
-static const char *aur_pkg_get_version (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->version;
-	return NULL;
-}
-
-static const alpm_list_t *aur_pkg_get_checkdepends (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->checkdepends;
-	return NULL;
-}
-
-static const alpm_list_t *aur_pkg_get_conflicts (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->conflicts;
-	return NULL;
-}
-
-static const alpm_list_t *aur_pkg_get_depends (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->depends;
-	return NULL;
-}
-
-static const alpm_list_t *aur_pkg_get_groups (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->groups;
-	return NULL;
-}
-
-static const alpm_list_t *aur_pkg_get_keywords (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->keywords;
-	return NULL;
-}
-
-static const alpm_list_t *aur_pkg_get_licenses (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->licenses;
-	return NULL;
-}
-
-static const alpm_list_t *aur_pkg_get_makedepends (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->makedepends;
-	return NULL;
-}
-
-static const alpm_list_t *aur_pkg_get_optdepends (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->optdepends;
-	return NULL;
-}
-
-static const alpm_list_t *aur_pkg_get_provides (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->provides;
-	return NULL;
-}
-
-static const alpm_list_t *aur_pkg_get_replaces (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->replaces;
-	return NULL;
-}
-
-static unsigned int aur_pkg_get_id (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->id;
-	return 0;
-}
-
-static unsigned int aur_pkg_get_pkgbase_id (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->pkgbase_id;
-	return 0;
-}
-
-unsigned int aur_pkg_get_votes (const aurpkg_t *pkg)
-{
-	if (pkg != NULL)
-		return pkg->votes;
-	return 0;
+	switch (key) {
+		case AUR_FIRST:
+			return pkg->firstsubmit;
+		case AUR_LAST:
+			return pkg->lastmod;
+		default:
+			return 0;
+	}
 }
 
 static bool aur_pkg_get_outofdate (const aurpkg_t *pkg)
@@ -367,18 +323,14 @@ static bool aur_pkg_get_outofdate (const aurpkg_t *pkg)
 	return false;
 }
 
-static time_t aur_pkg_get_firstsubmit (const aurpkg_t *pkg)
+const char *aur_pkg_get_name (const aurpkg_t *pkg)
 {
-	if (pkg != NULL)
-		return pkg->firstsubmit;
-	return 0;
+	return aur_pkg_get_string_value (pkg, AUR_NAME);
 }
 
-static time_t aur_pkg_get_lastmod (const aurpkg_t *pkg)
+unsigned int aur_pkg_get_votes (const aurpkg_t *pkg)
 {
-	if (pkg != NULL)
-		return pkg->lastmod;
-	return 0;
+	return aur_pkg_get_uint_value (pkg, AUR_NUMVOTES);
 }
 
 double aur_pkg_get_popularity (const aurpkg_t *pkg)
@@ -718,17 +670,19 @@ static int aur_request_search (alpm_list_t **targets, CURL *curl)
 
 	for (const alpm_list_t *p = pkgs; p; p = alpm_list_next (p)) {
 		int match = 1;
+		const aurpkg_t *pkg = p->data;
+		const char *pkgname = aur_pkg_get_string_value (pkg, AUR_NAME);
+		const char *pkgdesc = aur_pkg_get_string_value (pkg, AUR_DESCRIPTION);
 		for (const alpm_list_t *t = alpm_list_next (*targets); t; t = alpm_list_next (t)) {
-			if (strcasestr (aur_pkg_get_name (p->data), t->data) == NULL &&
-					(aur_pkg_get_desc (p->data) == NULL ||
-					strcasestr (aur_pkg_get_desc (p->data), t->data) == NULL)) {
+			if (strcasestr (pkgname, t->data) == NULL &&
+					(pkgdesc == NULL || strcasestr (pkgdesc, t->data) == NULL)) {
 				match = 0;
 				break;
 			}
 		}
 		if (match) {
 			pkgs_found++;
-			print_or_add_result (p->data, R_AUR_PKG);
+			print_or_add_result ((void *) pkg, R_AUR_PKG);
 		}
 	}
 
@@ -788,12 +742,12 @@ static int aur_request_info (alpm_list_t **targets, CURL *curl)
 
 		for (const alpm_list_t *p = pkgs; p; p = alpm_list_next (p)) {
 			const aurpkg_t *pkg = p->data;
-			const char *pkgname = aur_pkg_get_name (pkg);
-			const char *pkgver = aur_pkg_get_version (pkg);
+			const char *pkgname = aur_pkg_get_string_value (pkg, AUR_NAME);
+			const char *pkgver = aur_pkg_get_string_value (pkg, AUR_VERSION);
 			const target_t *one_target = alpm_list_find (real_targets,
 					pkgname, (alpm_list_fn_cmp) target_name_cmp);
 			if (one_target && target_check_version (one_target, pkgver)) {
-				if (config.pkgbase && strcmp (aur_pkg_get_name (p->data), aur_pkg_get_pkgbase (p->data)) != 0) {
+				if (config.pkgbase && strcmp (pkgname, aur_pkg_get_string_value (pkg, AUR_PKGBASE)) != 0) {
 					continue;
 				}
 				pkgs_found++;
@@ -801,7 +755,7 @@ static int aur_request_info (alpm_list_t **targets, CURL *curl)
 				 * 'ta' will use it until target_arg_close() call.
 				 */
 				if (target_arg_add (ta, one_target->orig, (void *) pkgname)) {
-					print_package (one_target->orig, p->data, aur_get_str);
+					print_package (one_target->orig, (void *) pkg, aur_get_str);
 				}
 			}
 		}
@@ -856,87 +810,82 @@ const char *aur_get_str (void *p, unsigned char c)
 {
 	aurpkg_t *pkg = (aurpkg_t *) p;
 	static char *info = NULL;
-	static int free_info = 0;
+	static bool free_info = false;
 	if (free_info) {
 		free (info);
-		free_info = 0;
+		free_info = false;
 	}
 	info = NULL;
 	switch (c)
 	{
 		case 'b':
-			info = (char *) aur_pkg_get_pkgbase (pkg);
+			info = (char *) aur_pkg_get_string_value (pkg, AUR_PKGBASE);
 			break;
 		case 'c':
-			info = concat_str_list (aur_pkg_get_checkdepends (pkg));
-			free_info = 1;
+			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_CHECKDEPENDS));
+			free_info = true;
 			break;
 		case 'C':
-			info = concat_str_list (aur_pkg_get_conflicts (pkg));
-			free_info = 1;
+			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_CONFLICTS));
+			free_info = true;
 			break;
 		case 'd':
-			info = (char *) aur_pkg_get_desc (pkg);
+			info = (char *) aur_pkg_get_string_value (pkg, AUR_DESCRIPTION);
 			break;
 		case 'D':
-			info = concat_str_list (aur_pkg_get_depends (pkg));
-			free_info = 1;
+			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_DEPENDS));
+			free_info = true;
 			break;
 		case 'e':
-			info = concat_str_list (aur_pkg_get_licenses (pkg));
-			free_info = 1;
+			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_LICENSES));
+			free_info = true;
 			break;
 		case 'g':
-			info = concat_str_list (aur_pkg_get_groups (pkg));
-			free_info = 1;
+			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_GROUPS));
+			free_info = true;
 			break;
 		case 'G':
-			if (config.aur_url && aur_pkg_get_pkgbase (pkg)) {
-				info = (char *) malloc (sizeof (char) *
-					(strlen (config.aur_url) +
-					strlen (aur_pkg_get_pkgbase (pkg)) +
-					6 /* '/%s.git + \0 */
-				));
-				strcpy (info, config.aur_url);
-				strcat (info, "/");
-				strcat (info, aur_pkg_get_pkgbase (pkg));
-				strcat (info, ".git");
-				free_info = 1;
+			{
+				const char *pkgbase = aur_pkg_get_string_value (pkg, AUR_PKGBASE);
+				if (config.aur_url && pkgbase) {
+					asprintf (&info, "%s/%s.git", config.aur_url, pkgbase);
+					free_info = true;
+				}
 			}
 			break;
 		case 'i':
-			info = itostr (aur_pkg_get_id (pkg));
-			free_info = 1;
+			info = itostr (aur_pkg_get_uint_value (pkg, AUR_ID));
+			free_info = true;
 			break;
 		case 'k':
-			info = itostr (aur_pkg_get_pkgbase_id (pkg));
-			free_info = 1;
+			info = itostr (aur_pkg_get_uint_value (pkg, AUR_PKGBASE_ID));
+			free_info = true;
 			break;
 		case 'K':
-			info = concat_str_list (aur_pkg_get_keywords (pkg));
-			free_info = 1;
+			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_KEYWORDS));
+			free_info = true;
 			break;
 		case 'm':
-			info = (char *) aur_pkg_get_maintainer (pkg);
+			info = (char *) aur_pkg_get_string_value (pkg, AUR_MAINTAINER);
 			break;
 		case 'M':
-			info = concat_str_list (aur_pkg_get_makedepends (pkg));
-			free_info = 1;
+			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_MAKEDEPENDS));
+			free_info = true;
 			break;
 		case 'n':
-			info = (char *) aur_pkg_get_name (pkg);
+			info = (char *) aur_pkg_get_string_value (pkg, AUR_NAME);
 			break;
 		case 'L':
-			info = ttostr (aur_pkg_get_lastmod (pkg));
-			free_info = 1;
+			info = ttostr (aur_pkg_get_time_value (pkg, AUR_LAST));
+			free_info = true;
 			break;
 		case 'o':
 			info = itostr (aur_pkg_get_outofdate (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case 'O':
-			info = concat_str_list (aur_pkg_get_optdepends (pkg));
-			free_info = 1;
+			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_OPTDEPENDS));
+			free_info = true;
 			break;
 		case 'p':
 			{
@@ -944,49 +893,46 @@ const char *aur_get_str (void *p, unsigned char c)
 				if (ret < 0) {
 					FREE (info);
 				} else {
-					free_info = 1;
+					free_info = true;
 				}
 			}
 			break;
 		case 'P':
-			info = concat_str_list (aur_pkg_get_provides (pkg));
-			free_info = 1;
+			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_PROVIDES));
+			free_info = true;
 			break;
 		case 's':
 		case 'r':
 			info = strdup (AUR_REPO);
-			free_info = 1;
+			free_info = true;
 			break;
 		case 'R':
-			info = concat_str_list (aur_pkg_get_replaces (pkg));
-			free_info = 1;
+			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_REPLACES));
+			free_info = true;
 			break;
 		case 'u':
-			if (config.aur_url && aur_pkg_get_urlpath (pkg)) {
-				info = (char *) malloc (sizeof (char) *
-					(strlen (config.aur_url) +
-					strlen (aur_pkg_get_urlpath (pkg)) +
-					2 /* '/' separate url and filename */
-				));
-				strcpy (info, config.aur_url);
-				strcat (info, aur_pkg_get_urlpath (pkg));
-				free_info = 1;
+			{
+				const char *urlpath = aur_pkg_get_string_value (pkg, AUR_URLPATH);
+				if (config.aur_url && urlpath) {
+					asprintf (&info, "%s%s", config.aur_url, urlpath);
+					free_info = true;
+				}
 			}
 			break;
 		case 'U':
-			info = (char *) aur_pkg_get_url (pkg);
+			info = (char *) aur_pkg_get_string_value (pkg, AUR_URL);
 			break;
 		case 'S':
-			info = ttostr (aur_pkg_get_firstsubmit (pkg));
-			free_info = 1;
+			info = ttostr (aur_pkg_get_time_value (pkg, AUR_FIRST));
+			free_info = true;
 			break;
 		case 'V':
 		case 'v':
-			info = (char *) aur_pkg_get_version (pkg);
+			info = (char *) aur_pkg_get_string_value (pkg, AUR_VERSION);
 			break;
 		case 'w':
-			info = itostr (aur_pkg_get_votes (pkg));
-			free_info = 1;
+			info = itostr (aur_pkg_get_uint_value (pkg, AUR_NUMVOTES));
+			free_info = true;
 			break;
 		default:
 			return NULL;
