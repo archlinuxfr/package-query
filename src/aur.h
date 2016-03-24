@@ -45,7 +45,6 @@ typedef struct _aurpkg_t
 	alpm_list_t *provides;
 	alpm_list_t *replaces;
 
-	unsigned int category;
 	unsigned int id;
 	unsigned int pkgbase_id;
 	unsigned int votes;

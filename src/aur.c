@@ -55,8 +55,7 @@
  * AUR package information
  */
 typedef enum {
-	AUR_CATEGORY = 1,
-	AUR_CHECKDEPENDS,
+	AUR_CHECKDEPENDS = 1,
 	AUR_CONFLICTS,
 	AUR_DEPENDS,
 	AUR_DESCRIPTION,
@@ -89,7 +88,6 @@ typedef enum {
 const char *aur_key_types_names[] =
 {
 	"",
-	"CategoryID",
 	"CheckDepends",
 	"Conflicts",
 	"Depends",
@@ -187,8 +185,8 @@ aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 
 	aurpkg_t *pkg_ret = aur_pkg_new ();
 
-	// Only copy the values provided by the AUR search request:
-	// category as well as all array values are not provided
+	// Only copy the values provided by the AUR search request
+	// (all array values are not provided)
 	pkg_ret->firstsubmit = pkg->firstsubmit;
 	pkg_ret->id = pkg->id;
 	pkg_ret->lastmod = pkg->lastmod;
@@ -296,8 +294,6 @@ static unsigned int aur_pkg_get_uint_value (const aurpkg_t *pkg, aurkeytype_t ke
 	}
 
 	switch (key) {
-		case AUR_CATEGORY:
-			return pkg->category;
 		case AUR_ID:
 			return pkg->id;
 		case AUR_NUMVOTES:
@@ -426,9 +422,6 @@ static int json_integer (void *ctx, long long val)
 	}
 
 	switch (pkg_json->current_key) {
-		case AUR_CATEGORY:
-			pkg_json->pkg->category = (int) val;
-			break;
 		case AUR_FIRST:
 			pkg_json->pkg->firstsubmit = (time_t) val;
 			break;
