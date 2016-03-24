@@ -229,7 +229,7 @@ void calculate_results_relevance (alpm_list_t *targets)
 		for (const alpm_list_t *r = results; r; r = alpm_list_next(r)) {
 			results_t *res = (results_t *) r->data;
 			const char *res_name = results_name (res);
-			const size_t lev_dst = levenshtein_distance (target, res_name);
+			const double lev_dst = (double) levenshtein_distance (target, res_name);
 			// calc LCS only if searching by both name and description
 			const size_t lcs = !config.name_only ? longest_common_subseq (target, res_name) : 0;
 			const double rel = lcs ? lev_dst / lcs : lev_dst;
