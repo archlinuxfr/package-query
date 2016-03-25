@@ -54,13 +54,13 @@ bool init_db_sync (void);
  * Returns number of packages found
  * Those functions call print_package()
  */
-int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets);
-int search_pkg_by_name (alpm_db_t *db, alpm_list_t **targets);
-int list_grp (alpm_db_t *db, alpm_list_t *targets);
-int search_pkg (alpm_db_t *db, alpm_list_t *targets);
-int list_db (alpm_db_t *db, alpm_list_t *targets);
-int alpm_search_local (unsigned short filter, const char *format,
-                       alpm_list_t **res);
+unsigned int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets);
+unsigned int search_pkg_by_name (alpm_db_t *db, alpm_list_t **targets);
+unsigned int list_grp (alpm_db_t *db, alpm_list_t *targets);
+unsigned int search_pkg (alpm_db_t *db, alpm_list_t *targets);
+unsigned int list_db (alpm_db_t *db, alpm_list_t *targets);
+unsigned int alpm_search_local (unsigned short filter, const char *format,
+								alpm_list_t **res);
 
 off_t get_size_pkg (alpm_pkg_t *pkg);
 alpm_pkg_t *get_sync_pkg_by_name (const char *pkgname);

@@ -76,7 +76,7 @@ double aur_pkg_get_popularity (const aurpkg_t *pkg);
  * AUR search/info function
  * Returns number of packages found
  */
-int aur_request (alpm_list_t **targets, aurrequest_t type);
+unsigned int aur_request (alpm_list_t **targets, aurrequest_t type);
 
 /*
  * aur_get_str() get info for package
