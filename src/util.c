@@ -676,29 +676,29 @@ static void indent (const char *str)
 	}
 	const int cols = getcols();
 	if (!cols) {
-		fprintf (stdout, "%*s%s\n", INDENT, "", str);
+		printf ("%*s%s\n", INDENT, "", str);
 		return;
 	}
 	const char *c = str;
 	const char *c1 = NULL;
 	int cur_col = INDENT;
-	fprintf (stdout, "%*s", INDENT, "");
+	printf ("%*s", INDENT, "");
 	while ((c1 = strchr (c, ' ')) != NULL) {
 		const int len = c1 - c;
 		cur_col += len + 1;
 		if (cur_col >= cols) {
-			fprintf (stdout, "\n%*s%.*s ", INDENT, "", len, c);
+			printf ("\n%*s%.*s ", INDENT, "", len, c);
 			cur_col = INDENT + len + 1;
 		} else {
-			fprintf (stdout, "%.*s ", len, c);
+			printf ("%.*s ", len, c);
 		}
 		c = &c1[1];
 	}
 	cur_col += strlen (c);
 	if (cur_col >= cols && c != str) {
-		fprintf (stdout, "\n%*s%s\n", INDENT, "", c);
+		printf ("\n%*s%s\n", INDENT, "", c);
 	} else {
-		fprintf (stdout, "%s\n", c);
+		printf ("%s\n", c);
 	}
 }
 
@@ -711,13 +711,13 @@ static const char *color_print_repo (void *p, printpkgfn f)
 		if (config.get_res) {
 			dprintf (FD_RES, "%s/", info);
 		}
-		fprintf (stdout, "%s%s/%s", color_repo (info), info, color(C_NO));
+		printf ("%s%s/%s", color_repo (info), info, color(C_NO));
 	}
 	info = f(p, 'n');
 	if (config.get_res) {
 		dprintf (FD_RES, "%s\n", info);
 	}
-	fprintf (stdout, "%s%s%s ", color(C_PKG), info, color(C_NO));
+	printf ("%s%s%s ", color(C_PKG), info, color(C_NO));
 	return info;
 }
 
@@ -733,11 +733,11 @@ static const char *color_print_aur_version (void *p, printpkgfn f, const char *i
 			lver_color = color(C_OD);
 		}
 	}
-	fprintf (stdout, "%s%s%s", (lver_color) ? lver_color : color(C_VER), lver, color(C_NO));
+	printf ("%s%s%s", (lver_color) ? lver_color : color(C_VER), lver, color(C_NO));
 	if (alpm_pkg_vercmp (ver, lver) > 0) {
-		fprintf (stdout, " ( aur: %s )", ver);
+		printf (" ( aur: %s )", ver);
 	}
-	fprintf (stdout, "\n");
+	printf ("\n");
 	return info;
 }
 
@@ -745,7 +745,7 @@ static void color_print_size (void *p, printpkgfn f)
 {
 	const char *info = f(p, 'r');
 	if (info && strcmp (info, "aur") != 0) {
-		fprintf (stdout, " [%.2f M]", (double) get_size_pkg (p) / (1024.0 * 1024));
+		printf (" [%.2f M]", (double) get_size_pkg (p) / (1024.0 * 1024));
 	}
 }
 
@@ -753,7 +753,7 @@ static void color_print_groups (void *p, printpkgfn f)
 {
 	const char *info = f(p, 'g');
 	if (info) {
-		fprintf (stdout, " %s(%s)%s", color(C_GRP), info, color(C_NO));
+		printf (" %s(%s)%s", color(C_GRP), info, color(C_NO));
 	}
 }
 
@@ -762,11 +762,11 @@ static void color_print_install_info (void *p, printpkgfn f, const char *lver, c
 	if (lver) {
 		const char *info = f(p, 'r');
 		if (info && strcmp (info, "local") != 0) {
-			fprintf (stdout, " %s[%s", color(C_INSTALLED), _("installed"));
+			printf (" %s[%s", color(C_INSTALLED), _("installed"));
 			if (strcmp (ver, lver) != 0) {
-				fprintf (stdout, ": %s%s%s%s", color(C_LVER), lver, color(C_NO), color(C_INSTALLED));
+				printf (": %s%s%s%s", color(C_LVER), lver, color(C_NO), color(C_INSTALLED));
 			}
-			fprintf (stdout, "]%s", color(C_NO));
+			printf ("]%s", color(C_NO));
 		}
 	}
 }
@@ -775,15 +775,15 @@ static void color_print_aur_status (void *p, printpkgfn f)
 {
 	const char *info = f(p, 'o');
 	if (info && info[0] != '0') {
-		fprintf (stdout, " %s(%s)%s", color(C_OD), _("Out of Date"), color(C_NO));
+		printf (" %s(%s)%s", color(C_OD), _("Out of Date"), color(C_NO));
 	}
 	info = f(p, 'w');
 	if (info) {
-		fprintf (stdout, " %s(%s)%s", color(C_VOTES), info, color(C_NO));
+		printf (" %s(%s)%s", color(C_VOTES), info, color(C_NO));
 	}
 	info = f(p, 'p');
 	if (info) {
-		fprintf (stdout, " %s(%s)%s", color(C_POPUL), info, color(C_NO));
+		printf (" %s(%s)%s", color(C_POPUL), info, color(C_NO));
 	}
 }
 
@@ -795,7 +795,7 @@ static void color_print_package (void *p, printpkgfn f)
 
 	/* Numbering list */
 	if (config.numbering) {
-		fprintf (stdout, "%s%d%s ", color (C_NB), ++number, color (C_NO));
+		printf ("%s%d%s ", color (C_NB), ++number, color (C_NO));
 	}
 
 	/* repo/name */
@@ -803,7 +803,7 @@ static void color_print_package (void *p, printpkgfn f)
 
 	if (grp) {
 		/* no more output for groups */
-		fprintf (stdout, "\n");
+		printf ("\n");
 		return;
 	}
 
@@ -822,21 +822,21 @@ static void color_print_package (void *p, printpkgfn f)
 		if (aur) {
 			info = color_print_aur_version (p, f, info, lver, ver);
 		} else {
-			fprintf (stdout, " %s%s%s\n", color(C_VER), lver, color(C_NO));
+			printf (" %s%s%s\n", color(C_VER), lver, color(C_NO));
 		}
 		FREE (ver);
 		return;
 	}
 
 	if (aur && !info) {
-		fprintf (stdout, "%s", color(C_ORPHAN));
+		printf ("%s", color(C_ORPHAN));
 	} else {
-		fprintf (stdout, "%s", color(C_VER));
+		printf ("%s", color(C_VER));
 	}
 	if (config.filter & F_UPGRADES) {
-		fprintf (stdout, "%s%s -> %s%s%s", lver, color (C_NO), color(C_VER), ver, color (C_NO));
+		printf ("%s%s -> %s%s%s", lver, color (C_NO), color(C_VER), ver, color (C_NO));
 	} else {
-		fprintf (stdout, "%s%s", ver, color (C_NO));
+		printf ("%s%s", ver, color (C_NO));
 	}
 
 	/* show size */
@@ -845,7 +845,7 @@ static void color_print_package (void *p, printpkgfn f)
 	}
 
 	if (config.aur_upgrades || config.filter & F_UPGRADES) {
-		fprintf (stdout, "\n");
+		printf ("\n");
 		FREE (ver);
 		return;
 	}
@@ -865,7 +865,7 @@ static void color_print_package (void *p, printpkgfn f)
 	}
 
 	/* Nothing more to display */
-	fprintf (stdout, "\n");
+	printf ("\n");
 
 	/* Description
 	 * if -Q or -Sl or -Sg <target>, don't display description
@@ -873,9 +873,9 @@ static void color_print_package (void *p, printpkgfn f)
 	if (config.op != OP_SEARCH && config.op != OP_LIST_REPO_S) {
 		return;
 	}
-	fprintf (stdout, "%s", color(C_DSC));
+	printf ("%s", color(C_DSC));
 	indent (f(p, 'd'));
-	fprintf (stdout, "%s", color(C_NO));
+	printf ("%s", color(C_NO));
 }
 
 void print_package (const char *target, void *pkg, printpkgfn f)
