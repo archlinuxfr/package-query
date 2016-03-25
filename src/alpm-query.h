@@ -60,7 +60,7 @@ unsigned int list_grp (alpm_db_t *db, alpm_list_t *targets);
 unsigned int search_pkg (alpm_db_t *db, alpm_list_t *targets);
 unsigned int list_db (alpm_db_t *db, alpm_list_t *targets);
 unsigned int alpm_search_local (unsigned short filter, const char *format,
-								alpm_list_t **res);
+                                alpm_list_t **res);
 
 off_t get_size_pkg (alpm_pkg_t *pkg);
 alpm_pkg_t *get_sync_pkg_by_name (const char *pkgname);
