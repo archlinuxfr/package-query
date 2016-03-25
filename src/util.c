@@ -47,13 +47,13 @@ static results_t *results_new (void *ele, pkgtype_t type)
 {
 	results_t *r = NULL;
 	MALLOC (r, sizeof (results_t));
-	r->ele = (type == R_AUR_PKG) ? (void *) aur_pkg_dup ((aurpkg_t *) ele) : ele;
+	r->ele = (type == R_AUR_PKG) ? (void *) aur_pkg_dup ((const aurpkg_t *) ele) : ele;
 	r->rel = SIZE_MAX;
 	r->type = type;
 	return r;
 }
 
-static results_t *results_free (results_t *r)
+static void results_free (results_t *r)
 {
 	if (r) {
 		if (r->type == R_AUR_PKG) {
@@ -61,7 +61,6 @@ static results_t *results_free (results_t *r)
 		}
 		free (r);
 	}
-	return NULL;
 }
 
 static const char *results_name (const results_t *r)
