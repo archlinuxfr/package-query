@@ -158,7 +158,7 @@ static void usage (unsigned short _error)
 	cleanup (0);
 }
 
-static int deal_db (alpm_db_t *db)
+static unsigned int deal_db (alpm_db_t *db)
 {
 	switch (config.op) {
 		case OP_LIST_REPO:
@@ -178,9 +178,9 @@ static int deal_db (alpm_db_t *db)
 	}
 }
 
-static int deal_sync_dbs (void)
+static unsigned int deal_sync_dbs (void)
 {
-	int ret = 0;
+	unsigned int ret = 0;
 	for (const alpm_list_t *t = alpm_get_syncdbs (config.handle); t; t = alpm_list_next (t)) {
 		ret += deal_db (t->data);
 	}
@@ -189,8 +189,8 @@ static int deal_sync_dbs (void)
 
 int main (int argc, char **argv)
 {
-	int ret = 0, i;
-	int need = 0, given = 0, db_order = 0;
+	unsigned int ret = 0;
+	int need = 0, given = 0, db_order = 0, i;
 	bool cycle_db = false;
 	alpm_list_t *t;
 

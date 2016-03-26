@@ -652,7 +652,7 @@ static string_t *aur_prepare_url (const char *aur_rpc_type)
 	return url;
 }
 
-static int aur_request_search (alpm_list_t **targets, CURL *curl)
+static unsigned int aur_request_search (alpm_list_t **targets, CURL *curl)
 {
 	char *encoded_arg = NULL;
 	if (*targets) {
@@ -662,7 +662,7 @@ static int aur_request_search (alpm_list_t **targets, CURL *curl)
 		}
 	}
 
-	int pkgs_found = 0;
+	unsigned int pkgs_found = 0;
 	string_t *url = aur_prepare_url (AUR_RPC_SEARCH);
 	url = string_cat (url, encoded_arg);
 	curl_free (encoded_arg);
@@ -698,7 +698,7 @@ static int aur_request_search (alpm_list_t **targets, CURL *curl)
 	return pkgs_found;
 }
 
-static int aur_request_info (alpm_list_t **targets, CURL *curl)
+static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 {
 	alpm_list_t *real_targets = NULL;
 	for (const alpm_list_t *t = *targets; t; t = alpm_list_next (t)) {
@@ -710,7 +710,7 @@ static int aur_request_info (alpm_list_t **targets, CURL *curl)
 		}
 	}
 
-	int pkgs_found = 0;
+	unsigned int pkgs_found = 0;
 	target_arg_t *ta = target_arg_init ((ta_dup_fn) strdup,
 		(alpm_list_fn_cmp) strcmp,
 		(alpm_list_fn_free) free);
@@ -774,7 +774,7 @@ static int aur_request_info (alpm_list_t **targets, CURL *curl)
 	return pkgs_found;
 }
 
-int aur_request (alpm_list_t **targets, aurrequest_t type)
+unsigned int aur_request (alpm_list_t **targets, aurrequest_t type)
 {
 	if (targets == NULL && !config.aur_maintainer) {
 		return 0;
@@ -799,7 +799,7 @@ int aur_request (alpm_list_t **targets, aurrequest_t type)
 	if (config.insecure) {
 		curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
 	}
-	int aur_pkgs_found = (type == AUR_SEARCH)
+	const unsigned int aur_pkgs_found = (type == AUR_SEARCH)
 			? aur_request_search (targets, curl)
 			: aur_request_info (targets, curl);
 
