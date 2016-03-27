@@ -45,6 +45,7 @@
 #define AUR_RPC_BYMAINT  "&by=maintainer"
 #define AUR_RPC_INFO     "&type=multiinfo"
 #define AUR_RPC_INFO_ARG "&arg[]="
+#define AUR_PKGBUILD_URL "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h="
 
 /*
  * AUR repo name
@@ -351,7 +352,7 @@ static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *user
 {
 	string_t *s = (string_t *) userdata;
 	string_ncat (s, data, size * nmemb);
-	return nmemb;
+	return size * nmemb;
 }
 
 static int json_start_map (void *ctx)
@@ -610,7 +611,7 @@ static alpm_list_t *aur_json_parse (const char *s)
 	return pkg_json.pkgs;
 }
 
-static alpm_list_t *aur_fetch (CURL *curl, const char *url)
+static string_t *aur_fetch (CURL *curl, const char *url)
 {
 	string_t *res = string_new ();
 	curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
@@ -631,13 +632,22 @@ static alpm_list_t *aur_fetch (CURL *curl, const char *url)
 		return NULL;
 	}
 
+	return res;
+}
+
+static alpm_list_t *parse_aur_response (string_t *str)
+{
+	if (!str || !str->s) {
+		return NULL;
+	}
+
 	// this setlocale() hack is a workaround for the yajl issue:
 	// https://github.com/lloyd/yajl/issues/79
 	setlocale (LC_ALL, "C");
-	alpm_list_t *pkgs = aur_json_parse (string_cstr (res));
+	alpm_list_t *pkgs = aur_json_parse (string_cstr (str));
 	setlocale (LC_ALL, "");
 
-	string_free (res);
+	string_free (str);
 
 	return pkgs;
 }
@@ -671,7 +681,7 @@ static unsigned int aur_request_search (alpm_list_t **targets, CURL *curl)
 	} else if (config.aur_maintainer) {
 		url = string_cat (url, AUR_RPC_BYMAINT);
 	}
-	alpm_list_t *pkgs = aur_fetch (curl, string_cstr (url));
+	alpm_list_t *pkgs = parse_aur_response (aur_fetch (curl, string_cstr (url)));
 	string_free (url);
 
 	for (const alpm_list_t *p = pkgs; p; p = alpm_list_next (p)) {
@@ -739,7 +749,7 @@ static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 			break;
 		}
 
-		alpm_list_t *pkgs = aur_fetch (curl, string_cstr (url));
+		alpm_list_t *pkgs = parse_aur_response (aur_fetch (curl, string_cstr (url)));
 		string_free (url);
 
 		for (const alpm_list_t *p = pkgs; p; p = alpm_list_next (p)) {
@@ -774,6 +784,24 @@ static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 	return pkgs_found;
 }
 
+static CURL *curl_init ()
+{
+	CURL *curl = curl_easy_init ();
+	if (!curl) {
+		perror ("curl");
+		return NULL;
+	}
+
+	curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
+	curl_easy_setopt (curl, CURLOPT_USERAGENT, PQ_USERAGENT);
+	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
+	if (config.insecure) {
+		curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
+	}
+
+	return curl;
+}
+
 unsigned int aur_request (alpm_list_t **targets, aurrequest_t type)
 {
 	if (targets == NULL && !config.aur_maintainer) {
@@ -786,19 +814,12 @@ unsigned int aur_request (alpm_list_t **targets, aurrequest_t type)
 		curl_global_init (CURL_GLOBAL_NOTHING);
 	}
 
-	CURL *curl = curl_easy_init ();
+	CURL *curl = curl_init ();
 	if (!curl) {
-		perror ("curl");
 		curl_global_cleanup ();
 		return 0;
 	}
 
-	curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
-	curl_easy_setopt (curl, CURLOPT_USERAGENT, PQ_USERAGENT);
-	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
-	if (config.insecure) {
-		curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
-	}
 	const unsigned int aur_pkgs_found = (type == AUR_SEARCH)
 			? aur_request_search (targets, curl)
 			: aur_request_info (targets, curl);
@@ -807,6 +828,66 @@ unsigned int aur_request (alpm_list_t **targets, aurrequest_t type)
 	curl_global_cleanup ();
 
 	return aur_pkgs_found;
+}
+
+static alpm_list_t *read_pkgbuild_field (const char *pkgbuild, const char *field)
+{
+	alpm_list_t *field_list = NULL;
+	char *start = strstr (pkgbuild, field) + strlen (field);
+	const char *total_end = strstr (start, "')");
+
+	char *end;
+	while ((end = strchr (start, '\'')) && end <= total_end) {
+		char *entry = strndup (start, end - start);
+		if (entry[0] == '\0' || (entry[0] == ' ' && entry[1] == '\0')) {
+			free (entry);
+		} else {
+			field_list = alpm_list_add (field_list, entry);
+		}
+		start = end + 1;
+	}
+
+	return field_list;
+}
+
+static char *aur_get_arch (const aurpkg_t *pkg)
+{
+	if (!pkg) {
+		return NULL;
+	}
+
+	curl_global_init (CURL_GLOBAL_SSL);
+	CURL *curl = curl_init ();
+	if (!curl) {
+		curl_global_cleanup ();
+		return NULL;
+	}
+
+	const char *pkgname = aur_pkg_get_string_value (pkg, AUR_NAME);
+	char *url = NULL;
+	/* https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=pkgname */
+	int ret = asprintf (&url, "%s%s", AUR_PKGBUILD_URL, pkgname);
+	if (ret < 0) {
+		free (url);
+		curl_easy_cleanup (curl);
+		curl_global_cleanup ();
+		return NULL;
+	}
+
+	string_t *res = aur_fetch (curl, url);
+	free (url);
+	curl_easy_cleanup (curl);
+	curl_global_cleanup ();
+
+	char *arch = NULL;
+	if (res && res->s) {
+		alpm_list_t *arch_list = read_pkgbuild_field (res->s, "arch=('");
+		arch = concat_str_list (arch_list);
+		string_free (res);
+		FREELIST (arch_list);
+	}
+
+	return arch;
 }
 
 const char *aur_get_str (const void *p, unsigned char c)
@@ -820,6 +901,10 @@ const char *aur_get_str (const void *p, unsigned char c)
 	}
 	info = NULL;
 	switch (c) {
+		case 'a':
+			info = (char *) aur_get_arch (pkg);
+			free_info = true;
+			break;
 		case 'b':
 			info = (char *) aur_pkg_get_string_value (pkg, AUR_PKGBASE);
 			break;
