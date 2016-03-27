@@ -430,19 +430,18 @@ char *strtrim(char *str)
 
 char *concat_str_list (const alpm_list_t *l)
 {
-	char *ret = NULL;
-	size_t len = 0;
-	const size_t sep_len = strlen (config.delimiter);
-	int j = 0;
-
 	if (!l) {
 		return NULL;
 	}
 
-	for (const alpm_list_t *i = l; i; i = alpm_list_next(i)) {
+	const size_t sep_len = strlen (config.delimiter);
+	size_t len = 0;
+
+	for (const alpm_list_t *i = l; i; i = alpm_list_next (i)) {
 		if (i->data) {
-			/* data's len + space for separator */
-			len += strlen (i->data) + sep_len;
+			/* data's len + space for separator for all entries but the 1st */
+			if (i != l) len += sep_len;
+			len += strlen (i->data);
 		}
 	}
 
@@ -451,10 +450,11 @@ char *concat_str_list (const alpm_list_t *l)
 	}
 
 	len++; /* '\0' at the end */
+	char *ret = NULL;
 	CALLOC (ret, len, sizeof (char));
 	for (const alpm_list_t *i = l; i; i = alpm_list_next (i)) {
 		if (i->data) {
-			if (j++ > 0) strcat (ret, config.delimiter);
+			if (i != l) strcat (ret, config.delimiter);
 			strcat (ret, i->data);
 		}
 	}
@@ -475,20 +475,19 @@ char *concat_dep_list (const alpm_list_t *deps)
 
 char *concat_file_list (const alpm_filelist_t *f)
 {
-	char *ret = NULL;
-	size_t len = 0;
-	const size_t sep_len = strlen (config.delimiter);
-	int j = 0;
-
 	if (!f) {
 		return NULL;
 	}
 
+	const size_t sep_len = strlen (config.delimiter);
+	size_t len = 0;
+
 	for (size_t i = 0; i < f->count; i++) {
 		const alpm_file_t *file = f->files + i;
 		if (file && file->name) {
-			/* filename len + space for separator */
-			len += strlen (file->name) + sep_len;
+			/* filename len + space for separator for all entries but the 1st */
+			if (i != 0) len += sep_len;
+			len += strlen (file->name);
 		}
 	}
 
@@ -497,11 +496,12 @@ char *concat_file_list (const alpm_filelist_t *f)
 	}
 
 	len++; /* '\0' at the end */
+	char *ret = NULL;
 	CALLOC (ret, len, sizeof (char));
 	for (size_t i = 0; i < f->count; i++) {
 		const alpm_file_t *file = f->files + i;
 		if (file && file->name) {
-			if (j++ > 0) strcat (ret, config.delimiter);
+			if (i != 0) strcat (ret, config.delimiter);
 			strcat (ret, file->name);
 		}
 	}
@@ -532,15 +532,14 @@ void format_str (char *s)
 {
 	char *c = s;
 	while ((c = strchr (c, '\\'))) {
-		int mod = 1;
-		switch (c[1])
-		{
+		bool mod = true;
+		switch (c[1]) {
 			case '\\': c[0] = '\\'; break;
 			case 'e': c[0] = '\033'; break;
 			case 'n': c[0] = '\n'; break;
 			case 'r': c[0] = '\r'; break;
 			case 't': c[0] = '\t'; break;
-			default: mod = 0; break;
+			default: mod = false; break;
 		}
 		if (mod) {
 			memcpy (&(c[1]), &(c[2]), (strlen (&(c[2]))+1) * sizeof (char));
