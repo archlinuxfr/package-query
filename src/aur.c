@@ -946,7 +946,6 @@ const char *aur_get_str (void *p, unsigned char c)
 			break;
 		default:
 			return NULL;
-			break;
 	}
 	return info;
 }
