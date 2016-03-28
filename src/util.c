@@ -33,13 +33,17 @@
 #define FORMAT_LOCAL_PKG "lF134"
 #define INDENT 4
 
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
+
 static alpm_list_t *results = NULL;
 
 /* Results */
 typedef struct _results_t
 {
 	void *ele;
-	size_t rel;
+	double rel;
 	pkgtype_t type;
 } results_t;
 
@@ -48,7 +52,7 @@ static results_t *results_new (void *ele, pkgtype_t type)
 	results_t *r = NULL;
 	MALLOC (r, sizeof (results_t));
 	r->ele = (type == R_AUR_PKG) ? (void *) aur_pkg_dup ((const aurpkg_t *) ele) : ele;
-	r->rel = SIZE_MAX;
+	r->rel = DBL_MAX;
 	r->type = type;
 	return r;
 }
@@ -116,9 +120,9 @@ static double results_popularity (const results_t *r)
 	return aur_pkg_get_popularity ((const aurpkg_t *) r->ele);
 }
 
-static size_t results_relevance (const results_t *r)
+static double results_relevance (const results_t *r)
 {
-	return r ? r->rel : SIZE_MAX;
+	return r ? r->rel : DBL_MAX;
 }
 
 static int results_cmp (const void *r1, const void *r2)
@@ -165,15 +169,14 @@ static int results_popularity_cmp (const void *r1, const void *r2)
 
 static int results_relevance_cmp (const void *r1, const void *r2)
 {
-	const size_t rel1 = results_relevance ((const results_t *) r1);
-	const size_t rel2 = results_relevance ((const results_t *) r2);
+	const double rel1 = results_relevance ((const results_t *) r1);
+	const double rel2 = results_relevance ((const results_t *) r2);
 	if (rel1 > rel2) return 1;
 	if (rel2 > rel1) return -1;
 	return 0;
 }
 
 // https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#C
-#define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
 static size_t levenshtein_distance (const char *s1, const char *s2)
 {
 	const size_t s1len = strlen (s1);
@@ -194,16 +197,43 @@ static size_t levenshtein_distance (const char *s1, const char *s2)
 	return column[s1len];
 }
 
+// http://www.geeksforgeeks.org/dynamic-programming-set-4-longest-common-subsequence/
+static size_t longest_common_subseq (const char *s1, const char *s2)
+{
+	const size_t s1len = strlen (s1);
+	const size_t s2len = strlen (s2);
+	size_t L[s1len + 1][s2len + 1];
+
+	/* Following steps build L[m+1][n+1] in bottom up fashion. Note
+	that L[i][j] contains length of LCS of s1[0..i-1] and s2[0..j-1] */
+	for (size_t i = 0; i <= s1len; i++) {
+		for (size_t j = 0; j <= s2len; j++) {
+			if (i == 0 || j == 0) {
+				L[i][j] = 0;
+			} else if (s1[i-1] == s2[j-1]) {
+				L[i][j] = L[i-1][j-1] + 1;
+			} else {
+				L[i][j] = MAX (L[i-1][j], L[i][j-1]);
+			}
+		}
+	}
+
+	/* L[m][n] contains length of LCS for s1[0..n-1] and s2[0..m-1] */
+	return L[s1len][s2len];
+}
+
 void calculate_results_relevance (alpm_list_t *targets)
 {
 	for (const alpm_list_t *t = targets; t; t = alpm_list_next (t)) {
 		const char *target = t->data;
 		for (const alpm_list_t *r = results; r; r = alpm_list_next(r)) {
-			const char *result = results_name (r->data);
-			const size_t lev_dst = levenshtein_distance (target, result);
-			if (lev_dst < ((results_t *) r->data)->rel) {
-				((results_t *) r->data)->rel = lev_dst;
-			}
+			results_t *res = (results_t *) r->data;
+			const char *res_name = results_name (res);
+			const double lev_dst = (double) levenshtein_distance (target, res_name);
+			// calc LCS only if searching by both name and description
+			const size_t lcs = !config.name_only ? longest_common_subseq (target, res_name) : 0;
+			const double rel = lcs ? lev_dst / lcs : lev_dst;
+			res->rel = MIN (res->rel, rel);
 		}
 	}
 }
