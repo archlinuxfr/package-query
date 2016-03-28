@@ -181,6 +181,13 @@ static size_t levenshtein_distance (const char *s1, const char *s2)
 {
 	const size_t s1len = strlen (s1);
 	const size_t s2len = strlen (s2);
+	if (s1len == 0) {
+		return s2len;
+	}
+	if (s2len == 0) {
+		return s1len;
+	}
+
 	size_t column[s1len + 1];
 	for (size_t x = 1; x <= s1len; x++) {
 		column[x] = x;
@@ -194,6 +201,7 @@ static size_t levenshtein_distance (const char *s1, const char *s2)
 			lastdiag = olddiag;
 		}
 	}
+
 	return column[s1len];
 }
 
@@ -824,7 +832,7 @@ static void color_print_package (void *p, printpkgfn f)
 
 	/* Numbering list */
 	if (config.numbering) {
-		printf ("%s%d%s ", color (C_NB), ++number, color (C_NO));
+		printf ("%s%d%s ", color(C_NB), ++number, color(C_NO));
 	}
 
 	/* repo/name */
@@ -843,13 +851,13 @@ static void color_print_package (void *p, printpkgfn f)
 	 *   C_VER otherwise
 	 */
 	const char *lver = alpm_local_pkg_get_str (info, 'l');
-	info = f(p, (config.aur_upgrades || config.filter & F_UPGRADES) ? 'V' : 'v');
+	info = f (p, (config.aur_upgrades || config.filter & F_UPGRADES) ? 'V' : 'v');
 	char *ver = STRDUP (info);
-	info = (aur) ? f(p, 'm') : NULL;
+	info = (aur) ? f (p, 'm') : NULL;
 	if (config.aur_foreign) {
 		/* Compare foreign package with AUR */
 		if (aur) {
-			info = color_print_aur_version (p, f, info, lver, ver);
+			color_print_aur_version (p, f, info, lver, ver);
 		} else {
 			printf (" %s%s%s\n", color(C_VER), lver, color(C_NO));
 		}
@@ -863,9 +871,9 @@ static void color_print_package (void *p, printpkgfn f)
 		printf ("%s", color(C_VER));
 	}
 	if (config.filter & F_UPGRADES) {
-		printf ("%s%s -> %s%s%s", lver, color (C_NO), color(C_VER), ver, color (C_NO));
+		printf ("%s%s -> %s%s%s", lver, color(C_NO), color(C_VER), ver, color(C_NO));
 	} else {
-		printf ("%s%s", ver, color (C_NO));
+		printf ("%s%s", ver, color(C_NO));
 	}
 
 	/* show size */
