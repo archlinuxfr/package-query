@@ -868,10 +868,10 @@ static char *aur_get_arch (const aurpkg_t *pkg)
 		return NULL;
 	}
 
-	const char *pkgname = aur_pkg_get_string_value (pkg, AUR_NAME);
+	const char *pkgbase = aur_pkg_get_string_value (pkg, AUR_PKGBASE);
 	char *url = NULL;
-	/* https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=pkgname */
-	int ret = asprintf (&url, "%s%s", AUR_PKGBUILD_URL, pkgname);
+	/* https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=pkgbase */
+	int ret = asprintf (&url, "%s%s", AUR_PKGBUILD_URL, pkgbase);
 	if (ret < 0) {
 		free (url);
 		curl_easy_cleanup (curl);
