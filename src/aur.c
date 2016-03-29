@@ -832,9 +832,14 @@ unsigned int aur_request (alpm_list_t **targets, aurrequest_t type)
 
 static alpm_list_t *read_pkgbuild_field (const char *pkgbuild, const char *field)
 {
-	alpm_list_t *field_list = NULL;
-	char *start = strstr (pkgbuild, field) + strlen (field);
+	char *f = strstr (pkgbuild, field);
+	if (!f) {
+		return NULL;
+	}
+
+	char *start = f + strlen (field);
 	const char *total_end = strstr (start, "')");
+	alpm_list_t *field_list = NULL;
 
 	char *end;
 	while ((end = strchr (start, '\'')) && end <= total_end) {
