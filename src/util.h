@@ -90,12 +90,15 @@ typedef enum
 #define FD_RES 3
 
 /* Sort options */
-#define S_NAME 'n'
-#define S_VOTE 'w'
-#define S_POP  'p'
-#define S_REL  'r'
-#define S_IDATE '1'
-#define S_ISIZE '2'
+typedef enum
+{
+	S_NAME  = 'n',
+	S_VOTE  = 'w',
+	S_POP   = 'p',
+	S_REL   = 'r',
+	S_IDATE = '1',
+	S_ISIZE = '2'
+} stype_t;
 
 #define SEP_LEN 10
 
@@ -135,7 +138,7 @@ typedef struct _aq_config
 	qtype_t query;
 	bool quiet;
 	bool show_size;
-	char sort;
+	stype_t sort;
 	bool rsort;
 } aq_config;
 
