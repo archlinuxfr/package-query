@@ -16,8 +16,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _PQ_ALPM_QUERY_H
-#define _PQ_ALPM_QUERY_H
+#ifndef PQ_ALPM_QUERY_H
+#define PQ_ALPM_QUERY_H
 #include <stdbool.h>
 #include <alpm.h>
 #include <alpm_list.h>
