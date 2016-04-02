@@ -37,16 +37,11 @@
 
 
 /*
- * Init alpm
- */
-bool init_alpm (void);
-
-/*
  * Parse pacman config to find sync databases
  */
 /* get_db_sync() returns new list, use FREELIST() to free the list */
 alpm_list_t *get_db_sync (void);
-/* init_db_sync()  register sync database */
+/* init_db_sync() registers sync database */
 bool init_db_sync (void);
 
 /*
@@ -63,8 +58,6 @@ unsigned int alpm_search_local (unsigned short filter, const char *format,
                                 alpm_list_t **res);
 
 off_t get_size_pkg (alpm_pkg_t *pkg);
-alpm_pkg_t *get_sync_pkg_by_name (const char *pkgname);
-alpm_pkg_t *get_sync_pkg (alpm_pkg_t *pkg);
 
 /*
  * alpm_pkg_get_str() get info for package

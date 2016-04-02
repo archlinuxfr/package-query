@@ -44,7 +44,8 @@ static void setarch(const char *arch)
 	}
 }
 
-bool init_alpm (void)
+/* Init alpm */
+static bool init_alpm (void)
 {
 	if (config.rootdir) {
 		if (!config.dbpath) {
@@ -203,6 +204,26 @@ alpm_list_t *get_db_sync (void)
 bool init_db_sync (void)
 {
 	return parse_configfile (NULL, config.configfile, true);
+}
+
+static alpm_pkg_t *get_sync_pkg_by_name (const char *pkgname)
+{
+	alpm_pkg_t *sync_pkg = NULL;
+	for (const alpm_list_t *i = alpm_get_syncdbs (config.handle); i; i = alpm_list_next (i)) {
+		sync_pkg = alpm_db_get_pkg (i->data, pkgname);
+		if (sync_pkg) break;
+	}
+	return sync_pkg;
+}
+
+/* get_sync_pkg() returns the first pkg with same name in sync dbs */
+static alpm_pkg_t *get_sync_pkg (alpm_pkg_t *pkg)
+{
+	const char *dbname = alpm_db_get_name (alpm_pkg_get_db (pkg));
+	if (dbname == NULL || strcmp ("local", dbname) == 0) {
+		return get_sync_pkg_by_name (alpm_pkg_get_name (pkg));
+	}
+	return pkg;
 }
 
 static bool filter (alpm_pkg_t *pkg, unsigned int _filter)
@@ -415,26 +436,6 @@ unsigned int list_db (alpm_db_t *db, alpm_list_t *targets)
 		ret++;
 	}
 	return ret;
-}
-
-alpm_pkg_t *get_sync_pkg_by_name (const char *pkgname)
-{
-	alpm_pkg_t *sync_pkg = NULL;
-	for (const alpm_list_t *i = alpm_get_syncdbs (config.handle); i; i = alpm_list_next (i)) {
-		sync_pkg = alpm_db_get_pkg (i->data, pkgname);
-		if (sync_pkg) break;
-	}
-	return sync_pkg;
-}
-
-/* get_sync_pkg() returns the first pkg with same name in sync dbs */
-alpm_pkg_t *get_sync_pkg (alpm_pkg_t *pkg)
-{
-	const char *dbname = alpm_db_get_name (alpm_pkg_get_db (pkg));
-	if (dbname == NULL || strcmp ("local", dbname) == 0) {
-		return get_sync_pkg_by_name (alpm_pkg_get_name (pkg));
-	}
-	return pkg;
 }
 
 off_t get_size_pkg (alpm_pkg_t *pkg)
