@@ -37,6 +37,8 @@
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
 
+typedef alpm_list_t *(*alpm_list_nav)(const alpm_list_t *);
+
 static alpm_list_t *results = NULL;
 
 /* Results */
@@ -436,20 +438,19 @@ const char *string_cstr (const string_t *str)
 	return (const char *) (str ? (str->s ? str->s : "") : "");
 }
 
-char *strtrim(char *str)
+char *strtrim (char *str)
 {
-	char *pch = str;
-
 	if (str == NULL || *str == '\0') {
 		/* string is empty, so we're done. */
 		return str;
 	}
 
-	while (isspace(*pch)) {
+	char *pch = str;
+	while (isspace (*pch)) {
 		pch++;
 	}
 	if (pch != str) {
-		memmove (str, pch, (strlen(pch) + 1));
+		memmove (str, pch, (strlen (pch) + 1));
 	}
 
 	/* check if there wasn't anything but whitespace in the string. */
@@ -457,8 +458,8 @@ char *strtrim(char *str)
 		return str;
 	}
 
-	pch = str + (strlen(str) - 1);
-	while (isspace(*pch)) {
+	pch = str + (strlen (str) - 1);
+	while (isspace (*pch)) {
 		pch--;
 	}
 	*++pch = '\0';

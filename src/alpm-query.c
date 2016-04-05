@@ -414,7 +414,7 @@ unsigned int alpm_search_local (unsigned short _filter, const char *format, alpm
 		if (filter (pkg, _filter)) {
 			if (res) {
 				*res = alpm_list_add (*res,
-						pkg_to_str (NULL, pkg, (printpkgfn) alpm_pkg_get_str, (format) ? format : "%n"));
+						pkg_to_str (NULL, pkg, alpm_pkg_get_str, (format) ? format : "%n"));
 			} else {
 				print_or_add_result (pkg, R_ALPM_PKG);
 			}
