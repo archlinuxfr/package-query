@@ -170,7 +170,7 @@ int target_name_cmp (const target_t *t1, const char *name);
  * Target passed as argument
  */
 
-typedef void *(*ta_dup_fn)(void *);
+typedef void *(*ta_dup_fn)(const void *);
 typedef struct _target_arg_t
 {
 	alpm_list_t *args;
@@ -224,12 +224,12 @@ char *ttostr (time_t t);
  */
 typedef const char *(*printpkgfn)(const void *, unsigned char);
 void format_str (char *s);
-char *pkg_to_str (const char *target, void *pkg, printpkgfn f, const char *format);
-void print_package (const char *target, void *pkg, printpkgfn f);
+char *pkg_to_str (const char *target, const void *pkg, printpkgfn f, const char *format);
+void print_package (const char *target, const void *pkg, printpkgfn f);
 
 /* Results */
 void calculate_results_relevance (alpm_list_t *targets);
-void print_or_add_result (void *pkg, pkgtype_t type);
+void print_or_add_result (const void *pkg, pkgtype_t type);
 void show_results (void);
 
 /* Utils */

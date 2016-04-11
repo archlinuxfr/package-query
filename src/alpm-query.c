@@ -399,7 +399,7 @@ unsigned int search_pkg (alpm_db_t *db, alpm_list_t *targets)
 				!does_name_contain_targets (targets, alpm_pkg_get_name (info), true)))
 			continue;
 		ret++;
-		print_or_add_result ((void *) info, R_ALPM_PKG);
+		print_or_add_result (info, R_ALPM_PKG);
 	}
 	alpm_list_free (pkgs);
 	return ret;
@@ -432,7 +432,7 @@ unsigned int list_db (alpm_db_t *db, alpm_list_t *targets)
 	}
 	unsigned int ret = 0;
 	for (const alpm_list_t *i = alpm_db_get_pkgcache (db); i; i = alpm_list_next (i)) {
-		print_or_add_result ((void *) i->data, R_ALPM_PKG);
+		print_or_add_result (i->data, R_ALPM_PKG);
 		ret++;
 	}
 	return ret;

@@ -49,11 +49,11 @@ typedef struct _results_t
 	pkgtype_t type;
 } results_t;
 
-static results_t *results_new (void *ele, pkgtype_t type)
+static results_t *results_new (const void *ele, pkgtype_t type)
 {
 	results_t *r = NULL;
 	MALLOC (r, sizeof (results_t));
-	r->ele = (type == R_AUR_PKG) ? (void *) aur_pkg_dup ((const aurpkg_t *) ele) : ele;
+	r->ele = (void *) ((type == R_AUR_PKG) ? aur_pkg_dup ((const aurpkg_t *) ele) : ele);
 	r->rel = DBL_MAX;
 	r->type = type;
 	return r;
@@ -248,7 +248,7 @@ void calculate_results_relevance (alpm_list_t *targets)
 	}
 }
 
-void print_or_add_result (void *pkg, pkgtype_t type)
+void print_or_add_result (const void *pkg, pkgtype_t type)
 {
 	if (config.sort == 0) {
 		print_package ("", pkg, (type == R_ALPM_PKG) ? alpm_pkg_get_str : aur_get_str);
@@ -742,9 +742,9 @@ static void indent (const char *str)
 
 /* Helper functions for color_print_package() */
 
-static const char *color_print_repo (void *p, printpkgfn f)
+static const char *color_print_repo (const void *p, printpkgfn f)
 {
-	const char *info = (config.aur_foreign) ? f(p, 'r') : f(p, 's');
+	const char *info = (config.aur_foreign) ? f (p, 'r') : f (p, 's');
 	if (info) {
 		if (config.get_res) {
 			dprintf (FD_RES, "%s/", info);
@@ -759,14 +759,14 @@ static const char *color_print_repo (void *p, printpkgfn f)
 	return info;
 }
 
-static const char *color_print_aur_version (void *p, printpkgfn f, const char *i, const char *lver,
-											 const char *ver)
+static const char *color_print_aur_version (const void *p, printpkgfn f, const char *i, const char *lver,
+											const char *ver)
 {
 	const char *info = NULL, *lver_color = NULL;
 	if (!i) {
 		lver_color = color(C_ORPHAN);
 	} else {
-		info = f(p, 'o');
+		info = f (p, 'o');
 		if (info && info[0] == '1') {
 			lver_color = color(C_OD);
 		}
@@ -779,26 +779,26 @@ static const char *color_print_aur_version (void *p, printpkgfn f, const char *i
 	return info;
 }
 
-static void color_print_size (void *p, printpkgfn f)
+static void color_print_size (const void *p, printpkgfn f)
 {
-	const char *info = f(p, 'r');
+	const char *info = f (p, 'r');
 	if (info && strcmp (info, "aur") != 0) {
-		printf (" [%.2f M]", (double) get_size_pkg (p) / (1024.0 * 1024));
+		printf (" [%.2f M]", (double) get_size_pkg ((alpm_pkg_t *) p) / (1024.0 * 1024));
 	}
 }
 
-static void color_print_groups (void *p, printpkgfn f)
+static void color_print_groups (const void *p, printpkgfn f)
 {
-	const char *info = f(p, 'g');
+	const char *info = f (p, 'g');
 	if (info) {
 		printf (" %s(%s)%s", color(C_GRP), info, color(C_NO));
 	}
 }
 
-static void color_print_install_info (void *p, printpkgfn f, const char *lver, const char *ver)
+static void color_print_install_info (const void *p, printpkgfn f, const char *lver, const char *ver)
 {
 	if (lver) {
-		const char *info = f(p, 'r');
+		const char *info = f (p, 'r');
 		if (info && strcmp (info, "local") != 0) {
 			printf (" %s[%s", color(C_INSTALLED), _("installed"));
 			if (strcmp (ver, lver) != 0) {
@@ -809,23 +809,23 @@ static void color_print_install_info (void *p, printpkgfn f, const char *lver, c
 	}
 }
 
-static void color_print_aur_status (void *p, printpkgfn f)
+static void color_print_aur_status (const void *p, printpkgfn f)
 {
-	const char *info = f(p, 'o');
+	const char *info = f (p, 'o');
 	if (info && info[0] != '0') {
 		printf (" %s(%s)%s", color(C_OD), _("Out of Date"), color(C_NO));
 	}
-	info = f(p, 'w');
+	info = f (p, 'w');
 	if (info) {
 		printf (" %s(%s)%s", color(C_VOTES), info, color(C_NO));
 	}
-	info = f(p, 'p');
+	info = f (p, 'p');
 	if (info) {
 		printf (" %s(%s)%s", color(C_POPUL), info, color(C_NO));
 	}
 }
 
-static void color_print_package (void *p, printpkgfn f)
+static void color_print_package (const void *p, printpkgfn f)
 {
 	static int number = 0;
 	const bool aur = (f == aur_get_str);
@@ -916,7 +916,7 @@ static void color_print_package (void *p, printpkgfn f)
 	printf ("%s", color(C_NO));
 }
 
-void print_package (const char *target, void *pkg, printpkgfn f)
+void print_package (const char *target, const void *pkg, printpkgfn f)
 {
 	if (config.quiet || !target || !pkg || !f) {
 		return;
@@ -941,7 +941,7 @@ void print_package (const char *target, void *pkg, printpkgfn f)
 	fflush (NULL);
 }
 
-char *pkg_to_str (const char *target, void *pkg, printpkgfn f, const char *format)
+char *pkg_to_str (const char *target, const void *pkg, printpkgfn f, const char *format)
 {
 	if (!format) return NULL;
 	const char *c;
@@ -958,7 +958,7 @@ char *pkg_to_str (const char *target, void *pkg, printpkgfn f, const char *forma
 		} else {
 			const char *info = NULL;
 			if (strchr (FORMAT_LOCAL_PKG, c[1])) {
-				info = alpm_local_pkg_get_str (f(pkg, 'n'), c[1]);
+				info = alpm_local_pkg_get_str (f (pkg, 'n'), c[1]);
 			} else if (c[1] == 't') {
 				info = target;
 			} else {

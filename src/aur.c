@@ -688,7 +688,7 @@ static unsigned int aur_request_search (alpm_list_t **targets, CURL *curl)
 		}
 		if (match) {
 			pkgs_found++;
-			print_or_add_result ((void *) pkg, R_AUR_PKG);
+			print_or_add_result (pkg, R_AUR_PKG);
 		}
 	}
 
