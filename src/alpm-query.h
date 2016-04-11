@@ -65,9 +65,9 @@ off_t get_size_pkg (alpm_pkg_t *pkg);
  * alpm_grp_get_str() get info for group
  * str returned should not be passed to free
  */
-const char *alpm_pkg_get_str (void *p, unsigned char c);
+const char *alpm_pkg_get_str (const void *p, unsigned char c);
 const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c);
-const char *alpm_grp_get_str (void *p, unsigned char c);
+const char *alpm_grp_get_str (const void *p, unsigned char c);
 
 void alpm_cleanup (void);
 

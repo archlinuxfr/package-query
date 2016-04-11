@@ -493,7 +493,7 @@ static off_t alpm_pkg_get_realsize (alpm_pkg_t *pkg)
 	return size;
 }
 
-const char *alpm_pkg_get_str (void *p, unsigned char c)
+const char *alpm_pkg_get_str (const void *p, unsigned char c)
 {
 	alpm_pkg_t *pkg = (alpm_pkg_t *) p;
 	static char *info = NULL;
@@ -620,9 +620,11 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 		free_info = 0;
 	}
 	info = NULL;
-	if (!pkg_name) return NULL;
+	if (!pkg_name) {
+		return NULL;
+	}
 
-	alpm_pkg_t *pkg = alpm_db_get_pkg(alpm_get_localdb(config.handle), pkg_name);
+	alpm_pkg_t *pkg = alpm_db_get_pkg (alpm_get_localdb (config.handle), pkg_name);
 	if (!pkg) return NULL;
 
 	switch (c) {
@@ -651,10 +653,12 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 	return info;
 }
 
-const char *alpm_grp_get_str (void *p, unsigned char c)
+const char *alpm_grp_get_str (const void *p, unsigned char c)
 {
-	const alpm_group_t *grp = (alpm_group_t *) p;
-	if (!grp) return NULL;
+	const alpm_group_t *grp = (const alpm_group_t *) p;
+	if (!grp) {
+		return NULL;
+	}
 
 	switch (c) {
 		case 'n':

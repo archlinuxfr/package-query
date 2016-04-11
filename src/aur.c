@@ -809,7 +809,7 @@ unsigned int aur_request (alpm_list_t **targets, aurrequest_t type)
 	return aur_pkgs_found;
 }
 
-const char *aur_get_str (void *p, unsigned char c)
+const char *aur_get_str (const void *p, unsigned char c)
 {
 	const aurpkg_t *pkg = (const aurpkg_t *) p;
 	static char *info = NULL;

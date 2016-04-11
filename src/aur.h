@@ -82,7 +82,7 @@ unsigned int aur_request (alpm_list_t **targets, aurrequest_t type);
  * aur_get_str() get info for package
  * str returned should not be passed to free
  */
-const char *aur_get_str (void *p, unsigned char c);
+const char *aur_get_str (const void *p, unsigned char c);
 
 void aur_cleanup (void);
 
