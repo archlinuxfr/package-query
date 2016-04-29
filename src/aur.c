@@ -43,7 +43,7 @@
 #define AUR_RPC_SEARCH   "&type=search&arg="
 #define AUR_RPC_BYNAME   "&by=name"
 #define AUR_RPC_BYMAINT  "&by=maintainer"
-#define AUR_RPC_INFO     "&type=multiinfo"
+#define AUR_RPC_INFO     "&type=info"
 #define AUR_RPC_INFO_ARG "&arg[]="
 #define AUR_PKGBUILD_URL "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h="
 
