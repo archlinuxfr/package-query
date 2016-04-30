@@ -45,7 +45,7 @@
 #define AUR_RPC_BYMAINT  "&by=maintainer"
 #define AUR_RPC_INFO     "&type=info"
 #define AUR_RPC_INFO_ARG "&arg[]="
-#define AUR_PKGBUILD_URL "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h="
+#define AUR_PKGBUILD_URL "/cgit/aur.git/plain/PKGBUILD?h="
 
 /*
  * AUR repo name
@@ -872,7 +872,7 @@ static char *aur_get_arch (const aurpkg_t *pkg)
 	const char *pkgbase = aur_pkg_get_string_value (pkg, AUR_PKGBASE);
 
 	/* https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=pkgbase */
-	int ret = asprintf (&url, "%s%s", AUR_PKGBUILD_URL, pkgbase);
+	int ret = asprintf (&url, "%s%s%s", config.aur_url, AUR_PKGBUILD_URL, pkgbase);
 	if (ret > 0) {
 		string_t *res = aur_fetch (curl, url);
 		if (res && res->s) {
