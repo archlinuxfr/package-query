@@ -602,7 +602,7 @@ static alpm_list_t *aur_json_parse (const char *s)
 		pkg_json.pkgs = NULL;
 	}
 
-	yajl_free(hand);
+	yajl_free (hand);
 	if (pkg_json.error) {
 		fprintf(stderr, "AUR error : %s\n", pkg_json.error_msg);
 		FREE (pkg_json.error_msg);
@@ -685,14 +685,14 @@ static unsigned int aur_request_search (alpm_list_t **targets, CURL *curl)
 	string_free (url);
 
 	for (const alpm_list_t *p = pkgs; p; p = alpm_list_next (p)) {
-		int match = 1;
+		bool match = true;
 		const aurpkg_t *pkg = p->data;
 		const char *pkgname = aur_pkg_get_string_value (pkg, AUR_NAME);
 		const char *pkgdesc = aur_pkg_get_string_value (pkg, AUR_DESCRIPTION);
 		for (const alpm_list_t *t = alpm_list_next (*targets); t; t = alpm_list_next (t)) {
 			if (strcasestr (pkgname, t->data) == NULL &&
 					(pkgdesc == NULL || strcasestr (pkgdesc, t->data) == NULL)) {
-				match = 0;
+				match = false;
 				break;
 			}
 		}
@@ -727,18 +727,17 @@ static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 	const alpm_list_t *t = real_targets;
 
 	while (t) {
-		int fetch_waiting = 0;
-		int args_left = AUR_MAX_ARG;
+		bool fetch_waiting = false;
 		string_t *url = aur_prepare_url (AUR_RPC_INFO);
 
-		for (; t && args_left--; t = alpm_list_next (t)) {
+		for (int args_left = AUR_MAX_ARG; t && args_left--; t = alpm_list_next (t)) {
 			const target_t *one_target = t->data;
 			char *encoded_arg = curl_easy_escape (curl, one_target->name, 0);
 			if (encoded_arg != NULL) {
 				url = string_cat (url, AUR_RPC_INFO_ARG);
 				url = string_cat (url, encoded_arg);
 				curl_free (encoded_arg);
-				fetch_waiting = 1;
+				fetch_waiting = true;
 			} else {
 				args_left++;
 			}
