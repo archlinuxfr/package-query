@@ -867,29 +867,25 @@ static char *aur_get_arch (const aurpkg_t *pkg)
 		return NULL;
 	}
 
-	const char *pkgbase = aur_pkg_get_string_value (pkg, AUR_PKGBASE);
+	char *arch = NULL;
 	char *url = NULL;
+	const char *pkgbase = aur_pkg_get_string_value (pkg, AUR_PKGBASE);
+
 	/* https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=pkgbase */
 	int ret = asprintf (&url, "%s%s", AUR_PKGBUILD_URL, pkgbase);
-	if (ret < 0) {
-		free (url);
-		curl_easy_cleanup (curl);
-		curl_global_cleanup ();
-		return NULL;
+	if (ret > 0) {
+		string_t *res = aur_fetch (curl, url);
+		if (res && res->s) {
+			alpm_list_t *arch_list = read_pkgbuild_field (res->s, "arch=('");
+			arch = concat_str_list (arch_list);
+			string_free (res);
+			FREELIST (arch_list);
+		}
 	}
 
-	string_t *res = aur_fetch (curl, url);
 	free (url);
 	curl_easy_cleanup (curl);
 	curl_global_cleanup ();
-
-	char *arch = NULL;
-	if (res && res->s) {
-		alpm_list_t *arch_list = read_pkgbuild_field (res->s, "arch=('");
-		arch = concat_str_list (arch_list);
-		string_free (res);
-		FREELIST (arch_list);
-	}
 
 	return arch;
 }
