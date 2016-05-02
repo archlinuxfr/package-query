@@ -232,7 +232,7 @@ static size_t longest_common_subseq (const char *s1, const char *s2)
 	return L[s1len][s2len];
 }
 
-void calculate_results_relevance (alpm_list_t *targets)
+void calculate_results_relevance (const alpm_list_t *targets)
 {
 	for (const alpm_list_t *t = targets; t; t = alpm_list_next (t)) {
 		const char *target = t->data;
@@ -438,11 +438,11 @@ const char *string_cstr (const string_t *str)
 	return (const char *) (str ? (str->s ? str->s : "") : "");
 }
 
-char *strtrim (char *str)
+void strtrim (char *str)
 {
 	if (str == NULL || *str == '\0') {
 		/* string is empty, so we're done. */
-		return str;
+		return;
 	}
 
 	char *pch = str;
@@ -455,7 +455,7 @@ char *strtrim (char *str)
 
 	/* check if there wasn't anything but whitespace in the string. */
 	if (*str == '\0') {
-		return str;
+		return;
 	}
 
 	pch = str + (strlen (str) - 1);
@@ -463,8 +463,6 @@ char *strtrim (char *str)
 		pch--;
 	}
 	*++pch = '\0';
-
-	return str;
 }
 
 char *concat_str_list (const alpm_list_t *l)
@@ -1023,10 +1021,10 @@ static void target_arg_free (target_arg_t *t)
 	}
 }
 
-alpm_list_t *target_arg_clear (target_arg_t *t, alpm_list_t *targets)
+alpm_list_t *target_arg_clear (const target_arg_t *t, alpm_list_t *targets)
 {
 	if (t && targets && config.just_one) {
-		for (alpm_list_t *i = t->args; i; i = alpm_list_next (i)) {
+		for (const alpm_list_t *i = t->args; i; i = alpm_list_next (i)) {
 			char *data = NULL;
 			targets = alpm_list_remove_str (targets, i->data, &data);
 			if (data) {

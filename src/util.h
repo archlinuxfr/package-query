@@ -184,9 +184,8 @@ target_arg_t *target_arg_init (ta_dup_fn dup_fn,
                                alpm_list_fn_cmp cmp_fn,
                                alpm_list_fn_free free_fn);
 bool target_arg_add (target_arg_t *t, const char *s, void *item);
-alpm_list_t *target_arg_clear (target_arg_t *t, alpm_list_t *targets);
+alpm_list_t *target_arg_clear (const target_arg_t *t, alpm_list_t *targets);
 alpm_list_t *target_arg_close (target_arg_t *t, alpm_list_t *targets);
-
 
 /*
  * String helper
@@ -204,7 +203,7 @@ string_t *string_ncat (string_t *dest, const char *src, size_t n);
 string_t *string_cat (string_t *dest, const char *src);
 const char *string_cstr (const string_t *str);
 /* strtrim, strreplace are from pacman's code */
-char *strtrim (char *str);
+void strtrim (char *str);
 char *strreplace (const char *str, const char *needle, const char *replace);
 
 char *concat_str_list (const alpm_list_t *l);
@@ -228,7 +227,7 @@ char *pkg_to_str (const char *target, const void *pkg, printpkgfn f, const char 
 void print_package (const char *target, const void *pkg, printpkgfn f);
 
 /* Results */
-void calculate_results_relevance (alpm_list_t *targets);
+void calculate_results_relevance (const alpm_list_t *targets);
 void print_or_add_result (const void *pkg, pkgtype_t type);
 void show_results (void);
 
