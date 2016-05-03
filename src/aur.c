@@ -766,7 +766,7 @@ static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 				 * 'ta' will use it until target_arg_close() call.
 				 */
 				if (target_arg_add (ta, one_target->orig, (void *) pkgname)) {
-					print_package (one_target->orig, (void *) pkg, aur_get_str);
+					print_package (one_target->orig, (const void *) pkg, aur_get_str);
 				}
 			}
 		}
@@ -902,7 +902,7 @@ const char *aur_get_str (const void *p, unsigned char c)
 	info = NULL;
 	switch (c) {
 		case 'a':
-			info = (char *) aur_get_arch (pkg);
+			info = aur_get_arch (pkg);
 			free_info = true;
 			break;
 		case 'b':
