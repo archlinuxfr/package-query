@@ -50,8 +50,8 @@ static int colors_cmp (const void *c1, const void *c2)
 		return 0;
 	}
 
-	const char *c1id = ((colors_t *) c1)->id;
-	const char *c2id = ((colors_t *) c2)->id;
+	const char *c1id = ((const colors_t *) c1)->id;
+	const char *c2id = ((const colors_t *) c2)->id;
 	if (!c1id || !c2id) {
 		return 0;
 	}
@@ -65,12 +65,12 @@ static int colors_cmp_id (const void *c1, const void *id)
 		return 0;
 	}
 
-	const char *c1id = ((colors_t *) c1)->id;
+	const char *c1id = ((const colors_t *) c1)->id;
 	if (!c1id) {
 		return -1;
 	}
 
-	return strcmp (c1id, (char *) id);
+	return strcmp (c1id, (const char *) id);
 }
 
 static void colors_set_color (const char *id, const char *color)
