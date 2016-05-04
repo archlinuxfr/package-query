@@ -798,7 +798,7 @@ static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 	return pkgs_found;
 }
 
-static CURL *curl_init ()
+static CURL *curl_init (void)
 {
 	CURL *curl = curl_easy_init ();
 	if (!curl) {
