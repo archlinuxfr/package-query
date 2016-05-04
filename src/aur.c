@@ -579,7 +579,7 @@ static yajl_callbacks callbacks = {
     NULL,
 };
 
-static alpm_list_t *aur_json_parse (const char *s)
+static alpm_list_t *aur_json_parse (const char *s, char *error)
 {
 	if (s == NULL) {
 		return NULL;
@@ -604,7 +604,11 @@ static alpm_list_t *aur_json_parse (const char *s)
 
 	yajl_free (hand);
 	if (pkg_json.error) {
-		fprintf(stderr, "AUR error : %s\n", pkg_json.error_msg);
+		if (error) {
+			strcpy (error, pkg_json.error_msg);
+		} else {
+			fprintf(stderr, "AUR error : %s\n", pkg_json.error_msg);
+		}
 		FREE (pkg_json.error_msg);
 	}
 
@@ -635,7 +639,7 @@ static string_t *aur_fetch (CURL *curl, const char *url)
 	return res;
 }
 
-static alpm_list_t *parse_aur_response (string_t *str)
+static alpm_list_t *parse_aur_response (string_t *str, char *error)
 {
 	if (!str || !str->s) {
 		return NULL;
@@ -644,7 +648,7 @@ static alpm_list_t *parse_aur_response (string_t *str)
 	// this setlocale() hack is a workaround for the yajl issue:
 	// https://github.com/lloyd/yajl/issues/79
 	setlocale (LC_ALL, "C");
-	alpm_list_t *pkgs = aur_json_parse (string_cstr (str));
+	alpm_list_t *pkgs = aur_json_parse (string_cstr (str), error);
 	setlocale (LC_ALL, "");
 
 	string_free (str);
@@ -664,36 +668,47 @@ static string_t *aur_prepare_url (const char *aur_rpc_type)
 
 static unsigned int aur_request_search (alpm_list_t **targets, CURL *curl)
 {
-	char *encoded_arg = NULL;
-	if (*targets) {
-		encoded_arg = curl_easy_escape (curl, (*targets)->data, 0);
-		if (encoded_arg == NULL) {
-			return 0;
+	alpm_list_t *pkgs = NULL;
+	char error[256];
+
+	for (const alpm_list_t *t = *targets; !pkgs; t = alpm_list_next (*targets)) {
+		char *encoded_arg = NULL;
+		if (t) {
+			encoded_arg = curl_easy_escape (curl, t->data, 0);
+		} else if (!config.aur_maintainer) {
+			break;
 		}
+
+		string_t *url = aur_prepare_url (AUR_RPC_SEARCH);
+		url = string_cat (url, encoded_arg);
+		curl_free (encoded_arg);
+		if (config.name_only) {
+			url = string_cat (url, AUR_RPC_BYNAME);
+		} else if (config.aur_maintainer) {
+			url = string_cat (url, AUR_RPC_BYMAINT);
+		}
+
+		pkgs = parse_aur_response (aur_fetch (curl, string_cstr (url)), error);
+		string_free (url);
+	}
+
+	if (!pkgs && error[0] != '\0') {
+		fprintf(stderr, "AUR error : %s\n", error);
 	}
 
 	unsigned int pkgs_found = 0;
-	string_t *url = aur_prepare_url (AUR_RPC_SEARCH);
-	url = string_cat (url, encoded_arg);
-	curl_free (encoded_arg);
-	if (config.name_only) {
-		url = string_cat (url, AUR_RPC_BYNAME);
-	} else if (config.aur_maintainer) {
-		url = string_cat (url, AUR_RPC_BYMAINT);
-	}
-	alpm_list_t *pkgs = parse_aur_response (aur_fetch (curl, string_cstr (url)));
-	string_free (url);
-
 	for (const alpm_list_t *p = pkgs; p; p = alpm_list_next (p)) {
 		bool match = true;
 		const aurpkg_t *pkg = p->data;
 		const char *pkgname = aur_pkg_get_string_value (pkg, AUR_NAME);
 		const char *pkgdesc = aur_pkg_get_string_value (pkg, AUR_DESCRIPTION);
-		for (const alpm_list_t *t = alpm_list_next (*targets); t; t = alpm_list_next (t)) {
-			if (strcasestr (pkgname, t->data) == NULL &&
-					(pkgdesc == NULL || strcasestr (pkgdesc, t->data) == NULL)) {
-				match = false;
-				break;
+		if (!config.aur_maintainer) {
+			for (const alpm_list_t *t = *targets; t; t = alpm_list_next (t)) {
+				if (strcasestr (pkgname, t->data) == NULL &&
+						(pkgdesc == NULL || strcasestr (pkgdesc, t->data) == NULL)) {
+					match = false;
+					break;
+				}
 			}
 		}
 		if (match) {
@@ -748,7 +763,7 @@ static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 			break;
 		}
 
-		alpm_list_t *pkgs = parse_aur_response (aur_fetch (curl, string_cstr (url)));
+		alpm_list_t *pkgs = parse_aur_response (aur_fetch (curl, string_cstr (url)), NULL);
 		string_free (url);
 
 		for (const alpm_list_t *p = pkgs; p; p = alpm_list_next (p)) {
