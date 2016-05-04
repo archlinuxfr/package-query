@@ -230,7 +230,7 @@ static int aur_pkg_votes_cmp (const void *p1, const void *p2)
 	return 0;
 }
 
-static const char *aur_pkg_get_string_value (const aurpkg_t *pkg, aurkeytype_t key)
+static char *aur_pkg_get_string_value (const aurpkg_t *pkg, aurkeytype_t key)
 {
 	if (pkg == NULL) {
 		return NULL;
@@ -921,7 +921,7 @@ const char *aur_get_str (const void *p, unsigned char c)
 			free_info = true;
 			break;
 		case 'b':
-			info = (char *) aur_pkg_get_string_value (pkg, AUR_PKGBASE);
+			info = aur_pkg_get_string_value (pkg, AUR_PKGBASE);
 			break;
 		case 'c':
 			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_CHECKDEPENDS));
@@ -932,7 +932,7 @@ const char *aur_get_str (const void *p, unsigned char c)
 			free_info = true;
 			break;
 		case 'd':
-			info = (char *) aur_pkg_get_string_value (pkg, AUR_DESCRIPTION);
+			info = aur_pkg_get_string_value (pkg, AUR_DESCRIPTION);
 			break;
 		case 'D':
 			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_DEPENDS));
@@ -972,14 +972,14 @@ const char *aur_get_str (const void *p, unsigned char c)
 			free_info = true;
 			break;
 		case 'm':
-			info = (char *) aur_pkg_get_string_value (pkg, AUR_MAINTAINER);
+			info = aur_pkg_get_string_value (pkg, AUR_MAINTAINER);
 			break;
 		case 'M':
 			info = concat_str_list (aur_pkg_get_list_value (pkg, AUR_MAKEDEPENDS));
 			free_info = true;
 			break;
 		case 'n':
-			info = (char *) aur_pkg_get_string_value (pkg, AUR_NAME);
+			info = aur_pkg_get_string_value (pkg, AUR_NAME);
 			break;
 		case 'L':
 			info = ttostr (aur_pkg_get_time_value (pkg, AUR_LAST));
@@ -1030,7 +1030,7 @@ const char *aur_get_str (const void *p, unsigned char c)
 			}
 			break;
 		case 'U':
-			info = (char *) aur_pkg_get_string_value (pkg, AUR_URL);
+			info = aur_pkg_get_string_value (pkg, AUR_URL);
 			break;
 		case 'S':
 			info = ttostr (aur_pkg_get_time_value (pkg, AUR_FIRST));
@@ -1038,7 +1038,7 @@ const char *aur_get_str (const void *p, unsigned char c)
 			break;
 		case 'V':
 		case 'v':
-			info = (char *) aur_pkg_get_string_value (pkg, AUR_VERSION);
+			info = aur_pkg_get_string_value (pkg, AUR_VERSION);
 			break;
 		case 'w':
 			info = itostr (aur_pkg_get_uint_value (pkg, AUR_NUMVOTES));
