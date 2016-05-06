@@ -124,7 +124,7 @@ const char *aur_key_types_names[] =
  * AUR max argument for info query
  */
 #ifndef AUR_MAX_ARG
-#define AUR_MAX_ARG 20
+#define AUR_MAX_ARG 50
 #endif
 
 /*
