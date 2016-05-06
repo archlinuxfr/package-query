@@ -199,8 +199,8 @@ typedef struct _string_t
 
 string_t *string_new (void);
 void string_free (string_t *dest);
-string_t *string_ncat (string_t *dest, const char *src, size_t n);
-string_t *string_cat (string_t *dest, const char *src);
+void string_ncat (string_t *dest, const char *src, size_t n);
+void string_cat (string_t *dest, const char *src);
 const char *string_cstr (const string_t *str);
 /* strtrim, strreplace are from pacman's code */
 void strtrim (char *str);

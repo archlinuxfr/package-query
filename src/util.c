@@ -409,10 +409,10 @@ static char *string_free2 (string_t *dest)
 	return s;
 }
 
-string_t *string_ncat (string_t *dest, const char *src, size_t n)
+void string_ncat (string_t *dest, const char *src, size_t n)
 {
 	if (!dest || !src || !n) {
-		return dest;
+		return;
 	}
 	if (dest->size <= dest->used + n) {
 		while (dest->size <= dest->used + n) {
@@ -422,15 +422,13 @@ string_t *string_ncat (string_t *dest, const char *src, size_t n)
 	}
 	dest->used += n;
 	strncat (dest->s, src, n);
-	return dest;
 }
 
-string_t *string_cat (string_t *dest, const char *src)
+void string_cat (string_t *dest, const char *src)
 {
-	if (!src) {
-		return dest;
+	if (src) {
+		string_ncat (dest, src, strlen (src));
 	}
-	return string_ncat (dest, src, strlen (src));
 }
 
 const char *string_cstr (const string_t *str)
@@ -951,8 +949,8 @@ char *pkg_to_str (const char *target, const void *pkg, printpkgfn f, const char 
 			break;
 		}
 		if (c[1] == '%' ) {
-			ret = string_ncat (ret, ptr, (c-ptr));
-			ret = string_cat (ret, "%%");
+			string_ncat (ret, ptr, (c-ptr));
+			string_cat (ret, "%%");
 		} else {
 			const char *info = NULL;
 			if (strchr (FORMAT_LOCAL_PKG, c[1])) {
@@ -963,18 +961,18 @@ char *pkg_to_str (const char *target, const void *pkg, printpkgfn f, const char 
 				info = f (pkg, c[1]);
 			}
 			if (c != ptr) {
-				ret = string_ncat (ret, ptr, (c-ptr));
+				string_ncat (ret, ptr, (c-ptr));
 			}
 			if (info) {
-				ret = string_cat (ret, info);
+				string_cat (ret, info);
 			} else {
-				ret = string_cat (ret, "-");
+				string_cat (ret, "-");
 			}
 		}
 		ptr = &(c[2]);
 	}
 	if (ptr != end) {
-		ret = string_ncat (ret, ptr, (end - ptr));
+		string_ncat (ret, ptr, (end - ptr));
 	}
 	return string_free2 (ret);
 }

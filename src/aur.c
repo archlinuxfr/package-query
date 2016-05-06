@@ -659,10 +659,10 @@ static alpm_list_t *parse_aur_response (string_t *str, char *error)
 static string_t *aur_prepare_url (const char *aur_rpc_type)
 {
 	string_t *url = string_new ();
-	url = string_cat (url, config.aur_url);
-	url = string_cat (url, AUR_RPC);
-	url = string_cat (url, AUR_RPC_VERSION);
-	url = string_cat (url, aur_rpc_type);
+	string_cat (url, config.aur_url);
+	string_cat (url, AUR_RPC);
+	string_cat (url, AUR_RPC_VERSION);
+	string_cat (url, aur_rpc_type);
 	return url;
 }
 
@@ -680,12 +680,12 @@ static unsigned int aur_request_search (alpm_list_t **targets, CURL *curl)
 		}
 
 		string_t *url = aur_prepare_url (AUR_RPC_SEARCH);
-		url = string_cat (url, encoded_arg);
+		string_cat (url, encoded_arg);
 		curl_free (encoded_arg);
 		if (config.name_only) {
-			url = string_cat (url, AUR_RPC_BYNAME);
+			string_cat (url, AUR_RPC_BYNAME);
 		} else if (config.aur_maintainer) {
-			url = string_cat (url, AUR_RPC_BYMAINT);
+			string_cat (url, AUR_RPC_BYMAINT);
 		}
 
 		pkgs = parse_aur_response (aur_fetch (curl, string_cstr (url)), error);
@@ -749,8 +749,8 @@ static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 			const target_t *one_target = t->data;
 			char *encoded_arg = curl_easy_escape (curl, one_target->name, 0);
 			if (encoded_arg != NULL) {
-				url = string_cat (url, AUR_RPC_INFO_ARG);
-				url = string_cat (url, encoded_arg);
+				string_cat (url, AUR_RPC_INFO_ARG);
+				string_cat (url, encoded_arg);
 				curl_free (encoded_arg);
 				fetch_waiting = true;
 			} else {
