@@ -152,7 +152,7 @@ static aurpkg_t *aur_pkg_new (void)
 
 void aur_pkg_free (aurpkg_t *pkg)
 {
-	if (pkg == NULL) {
+	if (!pkg) {
 		return;
 	}
 
@@ -180,7 +180,7 @@ void aur_pkg_free (aurpkg_t *pkg)
 
 aurpkg_t *aur_pkg_dup (const aurpkg_t *pkg)
 {
-	if (pkg == NULL) {
+	if (!pkg) {
 		return NULL;
 	}
 
@@ -232,7 +232,7 @@ static int aur_pkg_votes_cmp (const void *p1, const void *p2)
 
 static char *aur_pkg_get_string_value (const aurpkg_t *pkg, aurkeytype_t key)
 {
-	if (pkg == NULL) {
+	if (!pkg) {
 		return NULL;
 	}
 
@@ -258,7 +258,7 @@ static char *aur_pkg_get_string_value (const aurpkg_t *pkg, aurkeytype_t key)
 
 static const alpm_list_t *aur_pkg_get_list_value (const aurpkg_t *pkg, aurkeytype_t key)
 {
-	if (pkg == NULL) {
+	if (!pkg) {
 		return NULL;
 	}
 
@@ -290,7 +290,7 @@ static const alpm_list_t *aur_pkg_get_list_value (const aurpkg_t *pkg, aurkeytyp
 
 static unsigned int aur_pkg_get_uint_value (const aurpkg_t *pkg, aurkeytype_t key)
 {
-	if (pkg == NULL) {
+	if (!pkg) {
 		return 0;
 	}
 
@@ -308,7 +308,7 @@ static unsigned int aur_pkg_get_uint_value (const aurpkg_t *pkg, aurkeytype_t ke
 
 static time_t aur_pkg_get_time_value (const aurpkg_t *pkg, aurkeytype_t key)
 {
-	if (pkg == NULL) {
+	if (!pkg) {
 		return 0;
 	}
 
@@ -324,7 +324,7 @@ static time_t aur_pkg_get_time_value (const aurpkg_t *pkg, aurkeytype_t key)
 
 static bool aur_pkg_get_outofdate (const aurpkg_t *pkg)
 {
-	if (pkg != NULL) {
+	if (pkg) {
 		return pkg->outofdate;
 	}
 	return false;
@@ -342,7 +342,7 @@ unsigned int aur_pkg_get_votes (const aurpkg_t *pkg)
 
 double aur_pkg_get_popularity (const aurpkg_t *pkg)
 {
-	if (pkg != NULL) {
+	if (pkg) {
 		return pkg->popularity;
 	}
 	return 0.0;
@@ -359,11 +359,11 @@ static int json_start_map (void *ctx)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
-	if (pkg_json == NULL) {
+	if (!pkg_json) {
 		return 1;
 	}
 
-	pkg_json->level += 1;
+	pkg_json->level++;
 	if (pkg_json->level > 1) {
 		aur_pkg_free (pkg_json->pkg);
 		pkg_json->pkg = aur_pkg_new ();
@@ -376,12 +376,12 @@ static int json_end_map (void *ctx)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
-	if (pkg_json == NULL) {
+	if (!pkg_json) {
 		return 1;
 	}
 
-	pkg_json->level -= 1;
-	if (pkg_json->level == 1 && pkg_json->pkg != NULL) {
+	pkg_json->level--;
+	if (pkg_json->level == 1 && pkg_json->pkg) {
 		alpm_list_fn_cmp fn_cmp = (config.sort == S_VOTE) ? aur_pkg_votes_cmp : aur_pkg_cmp;
 		pkg_json->pkgs = alpm_list_add_sorted (pkg_json->pkgs, pkg_json->pkg, fn_cmp);
 		pkg_json->pkg = NULL;
@@ -393,7 +393,7 @@ static int json_key (void *ctx, const unsigned char *stringVal, size_t stringLen
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
-	if (pkg_json == NULL || stringVal == NULL) {
+	if (!pkg_json || !stringVal) {
 		return 1;
 	}
 
@@ -413,7 +413,7 @@ static int json_integer (void *ctx, long long val)
 {
 	const jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
-	if (pkg_json == NULL || pkg_json->pkg == NULL) {
+	if (!pkg_json || !pkg_json->pkg) {
 		return 1;
 	}
 
@@ -452,7 +452,7 @@ static int json_double (void *ctx, double val)
 {
 	const jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
-	if (pkg_json == NULL || pkg_json->pkg == NULL) {
+	if (!pkg_json || !pkg_json->pkg) {
 		return 1;
 	}
 
@@ -476,7 +476,7 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
 
-	if (pkg_json == NULL || stringVal == NULL) {
+	if (!pkg_json || !stringVal) {
 		return 1;
 	}
 
@@ -493,7 +493,7 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 		return 1;
 	}
 
-	if (pkg_json->pkg == NULL) {
+	if (!pkg_json->pkg) {
 		return 1;
 	}
 
@@ -581,7 +581,7 @@ static yajl_callbacks callbacks = {
 
 static alpm_list_t *aur_json_parse (const char *s, char *error)
 {
-	if (s == NULL) {
+	if (!s) {
 		return NULL;
 	}
 
@@ -736,9 +736,7 @@ static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 	}
 
 	unsigned int pkgs_found = 0;
-	target_arg_t *ta = target_arg_init ((ta_dup_fn) strdup,
-		(alpm_list_fn_cmp) strcmp,
-		(alpm_list_fn_free) free);
+	target_arg_t *ta = target_arg_init ((ta_dup_fn) strdup, (alpm_list_fn_cmp) strcmp, free);
 	const alpm_list_t *t = real_targets;
 
 	while (t) {
