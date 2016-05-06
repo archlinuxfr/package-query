@@ -136,7 +136,7 @@ typedef struct _jsonpkg_t
 	alpm_list_t *pkgs;
 	aurpkg_t *pkg;
 	aurkeytype_t current_key;
-	int error;
+	bool error;
 	char *error_msg;
 	int level;
 } jsonpkg_t;
@@ -484,7 +484,7 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 	if (pkg_json->level < 2) {
 		if (pkg_json->current_key == AUR_JSON_TYPE_KEY &&
 				strncmp ((const char *) stringVal, AUR_TYPE_ERROR, stringLen) == 0) {
-			pkg_json->error = 1;
+			pkg_json->error = true;
 		}
 		if (pkg_json->error && pkg_json->current_key == AUR_JSON_RESULTS_KEY) {
 			FREE (pkg_json->error_msg);
@@ -586,7 +586,7 @@ static alpm_list_t *aur_json_parse (const char *s, char *error)
 	}
 
 	const size_t len = strlen (s);
-	jsonpkg_t pkg_json = {NULL, NULL, 0, 0, NULL, 0};
+	jsonpkg_t pkg_json = {NULL, NULL, 0, false, NULL, 0};
 	yajl_handle hand = yajl_alloc (&callbacks, NULL, (void *) &pkg_json);
 	yajl_status stat = yajl_parse (hand, (const unsigned char *) s, len);
 
