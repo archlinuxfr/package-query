@@ -23,6 +23,7 @@
 #include <sys/ioctl.h>
 #include <regex.h>
 #include <float.h>
+#include <limits.h>
 #include <time.h>
 
 #include "util.h"
@@ -106,10 +107,10 @@ static off_t results_isize (const results_t *r)
 	return alpm_pkg_get_isize ((alpm_pkg_t *) r->ele);
 }
 
-static int results_votes (const results_t *r)
+static unsigned int results_votes (const results_t *r)
 {
 	if (!r || r->type != R_AUR_PKG) {
-		return INT_MAX; // put ALPM packages on top
+		return UINT_MAX; // put ALPM packages on top
 	}
 	return aur_pkg_get_votes ((const aurpkg_t *) r->ele);
 }
@@ -438,7 +439,7 @@ const char *string_cstr (const string_t *str)
 
 void strtrim (char *str)
 {
-	if (str == NULL || *str == '\0') {
+	if (!str || *str == '\0') {
 		/* string is empty, so we're done. */
 		return;
 	}
@@ -652,7 +653,7 @@ char *strreplace (const char *str, const char *needle, const char *replace)
 	char *newstr = NULL;
 	const size_t needlesz = strlen (needle), replacesz = strlen (replace);
 
-	while (1) {
+	while (true) {
 		q = strstr (p, needle);
 		if (!q) { /* not found */
 			if (*p) {
@@ -939,16 +940,18 @@ void print_package (const char *target, const void *pkg, printpkgfn f)
 
 char *pkg_to_str (const char *target, const void *pkg, printpkgfn f, const char *format)
 {
-	if (!format) return NULL;
+	if (!format) {
+		return NULL;
+	}
 	const char *c;
-	string_t *ret = string_new();
+	string_t *ret = string_new ();
 	const char *ptr = format;
 	const char *end = &(format[strlen(format)]);
 	while ((c = strchr (ptr, '%'))) {
 		if (&(c[1]) == end) {
 			break;
 		}
-		if (c[1] == '%' ) {
+		if (c[1] == '%') {
 			string_ncat (ret, ptr, (c-ptr));
 			string_cat (ret, "%%");
 		} else {
