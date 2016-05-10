@@ -148,7 +148,7 @@ static bool parse_configfile (alpm_list_t **dbs, const char *configfile, bool re
 		}
 
 		char *equal = strchr (line, '=');
-		if (equal == NULL || equal == &(line[len-1])) {
+		if (!equal || equal == &(line[len-1])) {
 			continue;
 		}
 
@@ -177,7 +177,7 @@ static bool parse_configfile (alpm_list_t **dbs, const char *configfile, bool re
 					break;
 			}
 			globfree (&globbuf);
-		} else if (reg && strcmp (line, "Server") == 0 && db != NULL) {
+		} else if (reg && db && strcmp (line, "Server") == 0) {
 			parse_config_server (ptr, db);
 		} else if (reg && in_option) {
 			if (strcmp (line, "Architecture") == 0) {
@@ -220,7 +220,7 @@ static alpm_pkg_t *get_sync_pkg_by_name (const char *pkgname)
 static alpm_pkg_t *get_sync_pkg (alpm_pkg_t *pkg)
 {
 	const char *dbname = alpm_db_get_name (alpm_pkg_get_db (pkg));
-	if (dbname == NULL || strcmp ("local", dbname) == 0) {
+	if (!dbname || strcmp ("local", dbname) == 0) {
 		return get_sync_pkg_by_name (alpm_pkg_get_name (pkg));
 	}
 	return pkg;
@@ -228,9 +228,9 @@ static alpm_pkg_t *get_sync_pkg (alpm_pkg_t *pkg)
 
 static bool filter (alpm_pkg_t *pkg, unsigned int _filter)
 {
-	if ((_filter & F_FOREIGN) && get_sync_pkg (pkg) != NULL)
+	if ((_filter & F_FOREIGN) && get_sync_pkg (pkg))
 		return false;
-	if ((_filter & F_NATIVE) && get_sync_pkg (pkg) == NULL)
+	if ((_filter & F_NATIVE) && !get_sync_pkg (pkg))
 		return false;
 	if ((_filter & F_EXPLICIT) && alpm_pkg_get_reason (pkg) != ALPM_PKG_REASON_EXPLICIT)
 		return false;
@@ -352,7 +352,7 @@ unsigned int search_pkg_by_name (alpm_db_t *db, alpm_list_t **targets)
 			continue;
 		}
 		alpm_pkg_t *pkg_found = alpm_db_get_pkg (db, t1->name);
-		if (pkg_found != NULL && filter (pkg_found, config.filter) &&
+		if (pkg_found && filter (pkg_found, config.filter) &&
 				target_check_version (t1, alpm_pkg_get_version (pkg_found))) {
 			ret++;
 			if (target_arg_add (ta, target, pkg_found)) {
@@ -427,7 +427,7 @@ unsigned int alpm_search_local (unsigned short _filter, const char *format, alpm
 unsigned int list_db (alpm_db_t *db, alpm_list_t *targets)
 {
 	const char *db_name = alpm_db_get_name (db);
-	if (targets && alpm_list_find_str (targets, db_name) == NULL) {
+	if (targets && !alpm_list_find_str (targets, db_name)) {
 		return 0;
 	}
 	unsigned int ret = 0;
