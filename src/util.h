@@ -33,15 +33,15 @@
 
 #define STRDUP(s) (s) ? strdup (s) : NULL
 #define CALLOC(p, l, s) do { \
-	if ((p = calloc (l, s)) == NULL) { \
+    if ((p = calloc (l, s)) == NULL) { \
       perror ("calloc"); \
       exit (1); \
     } \
   } while (0)
 #define MALLOC(p, s) CALLOC (p, 1, s)
 #define REALLOC(p, s) do { \
-	if ((p = realloc (p, s)) == NULL) { \
-	  perror ("realloc"); \
+    if ((p = realloc (p, s)) == NULL) { \
+      perror ("realloc"); \
       exit (1); \
     } \
   } while (0)
