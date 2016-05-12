@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <alpm.h>
 #include <alpm_list.h>
+#include "aur.h"
 
 #if defined(HAVE_GETTEXT) && defined(ENABLE_NLS)
 #include <libintl.h>
@@ -30,23 +31,21 @@
 #define _(x) x
 #endif
 
-#include "aur.h"
-
 #define STRDUP(s) (s) ? strdup (s) : NULL
 #define CALLOC(p, l, s) do { \
-    if ((p=calloc (l, s)) == NULL) { \
+	if ((p = calloc (l, s)) == NULL) { \
       perror ("calloc"); \
       exit (1); \
     } \
   } while (0)
 #define MALLOC(p, s) CALLOC (p, 1, s)
 #define REALLOC(p, s) do { \
-    if ((p=realloc (p, s)) == NULL) { \
-      perror ("malloc"); \
+	if ((p = realloc (p, s)) == NULL) { \
+	  perror ("realloc"); \
       exit (1); \
     } \
   } while (0)
-#define FREE(p) do { free(p); p =NULL; } while (0)
+#define FREE(p) do { free (p); p = NULL; } while (0)
 
 
 

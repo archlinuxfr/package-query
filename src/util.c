@@ -384,7 +384,7 @@ int target_name_cmp (const target_t *t1, const char *name)
 
 string_t *string_new (void)
 {
-	string_t *str = NULL;
+	string_t *str;
 	MALLOC (str, sizeof (string_t));
 	str->size = PATH_MAX;
 	MALLOC (str->s, str->size * sizeof (char));
@@ -486,7 +486,7 @@ char *concat_str_list (const alpm_list_t *l)
 	}
 
 	len++; /* '\0' at the end */
-	char *ret = NULL;
+	char *ret;
 	CALLOC (ret, len, sizeof (char));
 	for (const alpm_list_t *i = l; i; i = alpm_list_next (i)) {
 		if (i->data) {
@@ -532,7 +532,7 @@ char *concat_file_list (const alpm_filelist_t *f)
 	}
 
 	len++; /* '\0' at the end */
-	char *ret = NULL;
+	char *ret;
 	CALLOC (ret, len, sizeof (char));
 	for (size_t i = 0; i < f->count; i++) {
 		const alpm_file_t *file = f->files + i;
@@ -985,8 +985,6 @@ target_arg_t *target_arg_init (ta_dup_fn dup_fn, alpm_list_fn_cmp cmp_fn,
 {
 	target_arg_t *t;
 	MALLOC (t, sizeof (target_arg_t));
-	t->args = NULL;
-	t->items = NULL;
 	t->dup_fn = dup_fn;
 	t->cmp_fn = cmp_fn;
 	t->free_fn = free_fn;
