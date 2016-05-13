@@ -669,7 +669,7 @@ static string_t *aur_prepare_url (const char *aur_rpc_type)
 static unsigned int aur_request_search (alpm_list_t **targets, CURL *curl)
 {
 	alpm_list_t *pkgs = NULL;
-	char error[256];
+	char error[256] = {0};
 
 	for (const alpm_list_t *t = *targets; !pkgs; t = alpm_list_next (*targets)) {
 		char *encoded_arg = NULL;
