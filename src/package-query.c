@@ -116,6 +116,7 @@ static void usage (unsigned short _error)
 	fprintf(stderr, "\n\t-i --info            search by name");
 	fprintf(stderr, "\n\t--maintainer         search by maintainer (AUR only)");
 	fprintf(stderr, "\n\t--pkgbase            limit info to pkgbase (AUR only)");
+	fprintf(stderr, "\n\t-g --groups          list groups or packages contained in a group");
 	fprintf(stderr, "\n\t-l --list            list repository content");
 	fprintf(stderr, "\n\t-m --foreign         search for foreign packages");
 	fprintf(stderr, "\n\t-n --native          search for native packages");
