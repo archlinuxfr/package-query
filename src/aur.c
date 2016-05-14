@@ -55,7 +55,8 @@
 /*
  * AUR package information
  */
-typedef enum {
+typedef enum
+{
 	AUR_CHECKDEPENDS = 1,
 	AUR_CONFLICTS,
 	AUR_DEPENDS,
@@ -86,7 +87,7 @@ typedef enum {
 
 #define AUR_LAST_ID AUR_JSON_TYPE_KEY
 
-const char *aur_key_types_names[] =
+static const char *aur_key_types_names[] =
 {
 	"",
 	"CheckDepends",
