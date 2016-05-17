@@ -22,6 +22,8 @@
 #include <stdbool.h>
 #include <alpm.h>
 #include <alpm_list.h>
+#include <curl/curl.h>
+#include <curl/easy.h>
 #include "aur.h"
 
 #if defined(HAVE_GETTEXT) && defined(ENABLE_NLS)
@@ -237,6 +239,12 @@ const char *mbasename (const char *path);
 /* Returns true if package name contains all targets; false otherwise */
 /* use_regex: true for AUR search, false for pacman search */
 bool does_name_contain_targets (const alpm_list_t *targets, const char *name, bool use_regex);
+
+/*
+ * curl helper
+ */
+CURL *curl_init (void);
+string_t *curl_fetch (CURL *curl, const char *url);
 
 #endif
 

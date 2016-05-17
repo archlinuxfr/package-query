@@ -16,24 +16,16 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "config.h"
 #include <string.h>
 #include <errno.h>
 #include <locale.h>
 
-#include <curl/curl.h>
-#include <curl/easy.h>
 #include <yajl/yajl_parse.h>
 #include <yajl/yajl_gen.h>
 
 #include "aur.h"
 #include "alpm-query.h"
 #include "util.h"
-
-/*
- * User agent
- */
-#define PQ_USERAGENT "package-query/" PACKAGE_VERSION
 
 /*
  * AUR url
@@ -349,13 +341,6 @@ double aur_pkg_get_popularity (const aurpkg_t *pkg)
 	return 0.0;
 }
 
-static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
-{
-	string_t *s = (string_t *) userdata;
-	string_ncat (s, data, size * nmemb);
-	return size * nmemb;
-}
-
 static int json_start_map (void *ctx)
 {
 	jsonpkg_t *pkg_json = (jsonpkg_t *) ctx;
@@ -616,30 +601,6 @@ static alpm_list_t *aur_json_parse (const char *s, char *error)
 	return pkg_json.pkgs;
 }
 
-static string_t *aur_fetch (CURL *curl, const char *url)
-{
-	string_t *res = string_new ();
-	curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
-	curl_easy_setopt (curl, CURLOPT_URL, url);
-
-	CURLcode curl_code;
-	if ((curl_code = curl_easy_perform (curl)) != CURLE_OK) {
-		fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
-		string_free (res);
-		return NULL;
-	}
-
-	long http_code;
-	curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
-	if (http_code != 200) {
-		fprintf(stderr, "The URL %s returned error : %ld\n", url, http_code);
-		string_free (res);
-		return NULL;
-	}
-
-	return res;
-}
-
 static alpm_list_t *parse_aur_response (string_t *str, char *error)
 {
 	if (!str || !str->s) {
@@ -689,7 +650,7 @@ static unsigned int aur_request_search (alpm_list_t **targets, CURL *curl)
 			string_cat (url, AUR_RPC_BYMAINT);
 		}
 
-		pkgs = parse_aur_response (aur_fetch (curl, string_cstr (url)), error);
+		pkgs = parse_aur_response (curl_fetch (curl, string_cstr (url)), error);
 		string_free (url);
 	}
 
@@ -764,7 +725,7 @@ static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 			break;
 		}
 
-		alpm_list_t *pkgs = parse_aur_response (aur_fetch (curl, string_cstr (url)), NULL);
+		alpm_list_t *pkgs = parse_aur_response (curl_fetch (curl, string_cstr (url)), NULL);
 		string_free (url);
 
 		for (const alpm_list_t *p = pkgs; p; p = alpm_list_next (p)) {
@@ -797,24 +758,6 @@ static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 	alpm_list_free (real_targets);
 
 	return pkgs_found;
-}
-
-static CURL *curl_init (void)
-{
-	CURL *curl = curl_easy_init ();
-	if (!curl) {
-		perror ("curl");
-		return NULL;
-	}
-
-	curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
-	curl_easy_setopt (curl, CURLOPT_USERAGENT, PQ_USERAGENT);
-	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
-	if (config.insecure) {
-		curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
-	}
-
-	return curl;
 }
 
 unsigned int aur_request (alpm_list_t **targets, aurrequest_t type)
@@ -887,10 +830,10 @@ static char *aur_get_arch (const aurpkg_t *pkg)
 	char *url = NULL;
 	const char *pkgbase = aur_pkg_get_string_value (pkg, AUR_PKGBASE);
 
-	/* https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=pkgbase */
+	/* https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=$pkgbase */
 	int ret = asprintf (&url, "%s%s%s", config.aur_url, AUR_PKGBUILD_URL, pkgbase);
 	if (ret > 0) {
-		string_t *res = aur_fetch (curl, url);
+		string_t *res = curl_fetch (curl, url);
 		if (res && res->s) {
 			alpm_list_t *arch_list = read_pkgbuild_field (res->s, "arch=('");
 			arch = concat_str_list (arch_list);

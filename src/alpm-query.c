@@ -28,6 +28,9 @@
 #include "util.h"
 #include "alpm-query.h"
 
+#define ARCH_PACKAGES_URL "https://www.archlinux.org/packages/"
+#define OUTOFDATE_FLAG "\"flag_date\": "
+
 typedef const char *(*retcharfn) (void *);
 
 /* from pacman */
@@ -493,6 +496,41 @@ static off_t alpm_pkg_get_realsize (alpm_pkg_t *pkg)
 	return size;
 }
 
+static bool alpm_pkg_get_outofdate (alpm_pkg_t *pkg)
+{
+	curl_global_init (CURL_GLOBAL_SSL);
+	CURL *curl = curl_init ();
+	if (!curl) {
+		curl_global_cleanup ();
+		return false;
+	}
+
+	bool flagged = false;
+	char *url = NULL;
+	const char *repo = alpm_db_get_name (alpm_pkg_get_db (pkg));
+	const char *arch = alpm_pkg_get_arch (pkg);
+	const char *name = alpm_pkg_get_name (pkg);
+
+	/* https://www.archlinux.org/packages/$repo/$arch/$name/json/ */
+	int ret = asprintf (&url, "%s%s/%s/%s/json/", ARCH_PACKAGES_URL, repo, arch, name);
+	if (ret > 0) {
+		string_t *res = curl_fetch (curl, url);
+		if (res && res->s) {
+			char *f = strstr (res->s, OUTOFDATE_FLAG);
+			if (f && strncmp (f + strlen (OUTOFDATE_FLAG), "null", strlen ("null")) != 0) {
+				flagged = true;
+			}
+			string_free (res);
+		}
+	}
+
+	free (url);
+	curl_easy_cleanup (curl);
+	curl_global_cleanup ();
+
+	return flagged;
+}
+
 const char *alpm_pkg_get_str (const void *p, unsigned char c)
 {
 	alpm_pkg_t *pkg = (alpm_pkg_t *) p;
@@ -564,6 +602,11 @@ const char *alpm_pkg_get_str (const void *p, unsigned char c)
 				free_info = true;
 			}
 			break;
+		case 'o':
+			pkg = get_sync_pkg (pkg);
+			info = itostr (alpm_pkg_get_outofdate (pkg));
+			free_info = true;
+			break;
 		case 'O':
 			info = concat_dep_list (alpm_pkg_get_optdepends (pkg));
 			free_info = true;
@@ -584,12 +627,12 @@ const char *alpm_pkg_get_str (const void *p, unsigned char c)
 			break;
 		case 'u':
 			{
-				const alpm_list_t *servers = alpm_db_get_servers(alpm_pkg_get_db(pkg));
+				const alpm_list_t *servers = alpm_db_get_servers (alpm_pkg_get_db (pkg));
 				if (servers) {
 					const char *dburl = servers->data;
 					const char *pkgfilename = alpm_pkg_get_filename (pkg);
 					if (!dburl || !pkgfilename) return NULL;
-					CALLOC (info, strlen (dburl) + strlen(pkgfilename) + 2, sizeof (char));
+					CALLOC (info, strlen (dburl) + strlen (pkgfilename) + 2, sizeof (char));
 					sprintf (info, "%s/%s", dburl, pkgfilename);
 					free_info = true;
 				}
