@@ -16,6 +16,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -37,6 +38,11 @@
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
+
+/*
+ * User agent
+ */
+#define PQ_USERAGENT "package-query/" PACKAGE_VERSION
 
 typedef alpm_list_t *(*alpm_list_nav)(const alpm_list_t *);
 
@@ -1069,6 +1075,55 @@ bool does_name_contain_targets (const alpm_list_t *targets, const char *name, bo
 	}
 
 	return true;
+}
+
+static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *userdata)
+{
+	string_t *s = (string_t *) userdata;
+	string_ncat (s, data, size * nmemb);
+	return size * nmemb;
+}
+
+CURL *curl_init (void)
+{
+	CURL *curl = curl_easy_init ();
+	if (!curl) {
+		perror ("curl");
+		return NULL;
+	}
+
+	curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
+	curl_easy_setopt (curl, CURLOPT_USERAGENT, PQ_USERAGENT);
+	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
+	if (config.insecure) {
+		curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
+	}
+
+	return curl;
+}
+
+string_t *curl_fetch (CURL *curl, const char *url)
+{
+	string_t *res = string_new ();
+	curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
+	curl_easy_setopt (curl, CURLOPT_URL, url);
+
+	CURLcode curl_code;
+	if ((curl_code = curl_easy_perform (curl)) != CURLE_OK) {
+		fprintf(stderr, "curl error: %s\n", curl_easy_strerror (curl_code));
+		string_free (res);
+		return NULL;
+	}
+
+	long http_code;
+	curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
+	if (http_code != 200) {
+		fprintf(stderr, "The URL %s returned error : %ld\n", url, http_code);
+		string_free (res);
+		return NULL;
+	}
+
+	return res;
 }
 
 /* vim: set ts=4 sw=4 noet: */
