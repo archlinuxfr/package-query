@@ -498,8 +498,7 @@ static off_t alpm_pkg_get_realsize (alpm_pkg_t *pkg)
 
 static bool alpm_pkg_get_outofdate (alpm_pkg_t *pkg)
 {
-	curl_global_init (CURL_GLOBAL_SSL);
-	CURL *curl = curl_init ();
+	CURL *curl = curl_init (CURL_GLOBAL_SSL);
 	if (!curl) {
 		curl_global_cleanup ();
 		return false;

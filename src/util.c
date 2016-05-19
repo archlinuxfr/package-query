@@ -1084,11 +1084,16 @@ static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *user
 	return size * nmemb;
 }
 
-CURL *curl_init (void)
+CURL *curl_init (long flags)
 {
+	if (curl_global_init (flags) != CURLE_OK) {
+		perror ("curl global");
+		return NULL;
+	}
+
 	CURL *curl = curl_easy_init ();
 	if (!curl) {
-		perror ("curl");
+		perror ("curl easy");
 		return NULL;
 	}
 
