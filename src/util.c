@@ -1108,7 +1108,7 @@ CURL *curl_init (long flags)
 	return curl;
 }
 
-string_t *curl_fetch (CURL *curl, const char *url)
+char *curl_fetch (CURL *curl, const char *url)
 {
 	string_t *res = string_new ();
 	curl_easy_setopt (curl, CURLOPT_WRITEDATA, res);
@@ -1129,7 +1129,7 @@ string_t *curl_fetch (CURL *curl, const char *url)
 		return NULL;
 	}
 
-	return res;
+	return string_free2 (res);
 }
 
 /* vim: set ts=4 sw=4 noet: */

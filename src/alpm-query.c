@@ -512,13 +512,13 @@ static bool alpm_pkg_get_outofdate (alpm_pkg_t *pkg)
 	/* https://www.archlinux.org/packages/$repo/$arch/$name/json/ */
 	int ret = asprintf (&url, "%s%s/%s/%s/json/", ARCH_PACKAGES_URL, repo, arch, name);
 	if (ret > 0) {
-		string_t *res = curl_fetch (curl, url);
-		if (res && res->s) {
-			char *f = strstr (res->s, OUTOFDATE_FLAG);
+		char *res = curl_fetch (curl, url);
+		if (res) {
+			char *f = strstr (res, OUTOFDATE_FLAG);
 			if (f && strncmp (f + strlen (OUTOFDATE_FLAG), "null", strlen ("null")) != 0) {
 				flagged = true;
 			}
-			string_free (res);
+			free (res);
 		}
 	}
 

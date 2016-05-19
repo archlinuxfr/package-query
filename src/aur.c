@@ -565,11 +565,15 @@ static yajl_callbacks callbacks = {
     NULL,
 };
 
-static alpm_list_t *aur_json_parse (const char *s, char *error)
+static alpm_list_t *aur_json_parse (char *s, char *error)
 {
 	if (!s) {
 		return NULL;
 	}
+
+	// this setlocale() hack is a workaround for the yajl issue:
+	// https://github.com/lloyd/yajl/issues/79
+	setlocale (LC_ALL, "C");
 
 	const size_t len = strlen (s);
 	jsonpkg_t pkg_json = {NULL, NULL, 0, false, NULL, 0};
@@ -598,24 +602,10 @@ static alpm_list_t *aur_json_parse (const char *s, char *error)
 		FREE (pkg_json.error_msg);
 	}
 
-	return pkg_json.pkgs;
-}
-
-static alpm_list_t *parse_aur_response (string_t *str, char *error)
-{
-	if (!str || !str->s) {
-		return NULL;
-	}
-
-	// this setlocale() hack is a workaround for the yajl issue:
-	// https://github.com/lloyd/yajl/issues/79
-	setlocale (LC_ALL, "C");
-	alpm_list_t *pkgs = aur_json_parse (string_cstr (str), error);
 	setlocale (LC_ALL, "");
+	free (s);
 
-	string_free (str);
-
-	return pkgs;
+	return pkg_json.pkgs;
 }
 
 static string_t *aur_prepare_url (const char *aur_rpc_type)
@@ -650,7 +640,7 @@ static unsigned int aur_request_search (alpm_list_t **targets, CURL *curl)
 			string_cat (url, AUR_RPC_BYMAINT);
 		}
 
-		pkgs = parse_aur_response (curl_fetch (curl, string_cstr (url)), error);
+		pkgs = aur_json_parse (curl_fetch (curl, string_cstr (url)), error);
 		string_free (url);
 	}
 
@@ -725,7 +715,7 @@ static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 			break;
 		}
 
-		alpm_list_t *pkgs = parse_aur_response (curl_fetch (curl, string_cstr (url)), NULL);
+		alpm_list_t *pkgs = aur_json_parse (curl_fetch (curl, string_cstr (url)), NULL);
 		string_free (url);
 
 		for (const alpm_list_t *p = pkgs; p; p = alpm_list_next (p)) {
@@ -825,11 +815,11 @@ static char *aur_get_arch (const aurpkg_t *pkg)
 	/* https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=$pkgbase */
 	int ret = asprintf (&url, "%s%s%s", config.aur_url, AUR_PKGBUILD_URL, pkgbase);
 	if (ret > 0) {
-		string_t *res = curl_fetch (curl, url);
-		if (res && res->s) {
-			alpm_list_t *arch_list = read_pkgbuild_field (res->s, "arch=('");
+		char *res = curl_fetch (curl, url);
+		if (res) {
+			alpm_list_t *arch_list = read_pkgbuild_field (res, "arch=('");
 			arch = concat_str_list (arch_list);
-			string_free (res);
+			free (res);
 			FREELIST (arch_list);
 		}
 	}
