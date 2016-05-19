@@ -976,7 +976,7 @@ const char *aur_get_str (const void *p, unsigned char c)
 	return info;
 }
 
-void aur_cleanup ()
+void aur_cleanup (void)
 {
 	aur_get_str (NULL, 0);
 }
