@@ -766,12 +766,8 @@ unsigned int aur_request (alpm_list_t **targets, aurrequest_t type)
 		return 0;
 	}
 
-	CURL *curl;
-	if (strncmp (config.aur_url, "https", strlen ("https")) == 0) {
-		curl = curl_init (CURL_GLOBAL_SSL);
-	} else {
-		curl = curl_init (CURL_GLOBAL_NOTHING);
-	}
+	CURL *curl = (strncmp (config.aur_url, "https", strlen ("https")) == 0) ?
+			curl_init (CURL_GLOBAL_SSL) : curl_init (CURL_GLOBAL_NOTHING);
 
 	if (!curl) {
 		curl_global_cleanup ();
