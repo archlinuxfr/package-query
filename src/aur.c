@@ -768,9 +768,7 @@ unsigned int aur_request (alpm_list_t **targets, aurrequest_t type)
 
 	CURL *curl = (strncmp (config.aur_url, "https", strlen ("https")) == 0) ?
 			curl_init (CURL_GLOBAL_SSL) : curl_init (CURL_GLOBAL_NOTHING);
-
 	if (!curl) {
-		curl_global_cleanup ();
 		return 0;
 	}
 
@@ -817,7 +815,6 @@ static char *aur_get_arch (const aurpkg_t *pkg)
 
 	CURL *curl = curl_init (CURL_GLOBAL_SSL);
 	if (!curl) {
-		curl_global_cleanup ();
 		return NULL;
 	}
 

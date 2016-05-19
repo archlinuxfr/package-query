@@ -1094,6 +1094,7 @@ CURL *curl_init (long flags)
 	CURL *curl = curl_easy_init ();
 	if (!curl) {
 		perror ("curl easy");
+		curl_global_cleanup ();
 		return NULL;
 	}
 

@@ -500,7 +500,6 @@ static bool alpm_pkg_get_outofdate (alpm_pkg_t *pkg)
 {
 	CURL *curl = curl_init (CURL_GLOBAL_SSL);
 	if (!curl) {
-		curl_global_cleanup ();
 		return false;
 	}
 
