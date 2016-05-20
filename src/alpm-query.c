@@ -604,6 +604,7 @@ const char *alpm_pkg_get_str (const void *p, unsigned char c)
 			break;
 		case 'o':
 			pkg = get_sync_pkg (pkg);
+			if (!pkg) break;
 			info = itostr (alpm_pkg_get_outofdate (pkg));
 			free_info = true;
 			break;
