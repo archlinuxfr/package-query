@@ -509,6 +509,10 @@ static bool alpm_pkg_get_outofdate (alpm_pkg_t *pkg)
 	const char *arch = alpm_pkg_get_arch (pkg);
 	const char *name = alpm_pkg_get_name (pkg);
 
+	if (!repo || !arch || !name) {
+		return false;
+	}
+
 	/* https://www.archlinux.org/packages/$repo/$arch/$name/json/ */
 	int ret = asprintf (&url, "%s%s/%s/%s/json/", ARCH_PACKAGES_URL, repo, arch, name);
 	if (ret > 0) {
