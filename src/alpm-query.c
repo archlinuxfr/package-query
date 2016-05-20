@@ -523,8 +523,6 @@ static bool alpm_pkg_get_outofdate (alpm_pkg_t *pkg)
 	}
 
 	free (url);
-	curl_easy_cleanup (curl);
-	curl_global_cleanup ();
 
 	return flagged;
 }

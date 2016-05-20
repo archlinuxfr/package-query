@@ -63,6 +63,7 @@ static void cleanup (int ret)
 	alpm_cleanup ();
 	aur_cleanup ();
 	color_cleanup ();
+	curl_cleanup ();
 	exit (ret);
 }
 

@@ -46,6 +46,13 @@
 
 typedef alpm_list_t *(*alpm_list_nav)(const alpm_list_t *);
 
+typedef struct _curl_config_t
+{
+	CURL *curl;
+	long flags;
+} curl_config_t;
+static curl_config_t curl_config = {NULL, -1};
+
 static alpm_list_t *results = NULL;
 
 /* Results */
@@ -1086,26 +1093,35 @@ static size_t curl_getdata_cb (void *data, size_t size, size_t nmemb, void *user
 
 CURL *curl_init (long flags)
 {
+	if (curl_config.curl) {
+		if (curl_config.flags == flags) {
+			return curl_config.curl;
+		}
+
+		curl_cleanup ();
+	}
+
 	if (curl_global_init (flags) != CURLE_OK) {
 		perror ("curl global");
 		return NULL;
 	}
 
-	CURL *curl = curl_easy_init ();
-	if (!curl) {
+	curl_config.curl = curl_easy_init ();
+	if (!curl_config.curl) {
 		perror ("curl easy");
 		curl_global_cleanup ();
 		return NULL;
 	}
 
-	curl_easy_setopt (curl, CURLOPT_ENCODING, "gzip");
-	curl_easy_setopt (curl, CURLOPT_USERAGENT, PQ_USERAGENT);
-	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
+	curl_config.flags = flags;
+	curl_easy_setopt (curl_config.curl, CURLOPT_ENCODING, "gzip");
+	curl_easy_setopt (curl_config.curl, CURLOPT_USERAGENT, PQ_USERAGENT);
+	curl_easy_setopt (curl_config.curl, CURLOPT_WRITEFUNCTION, curl_getdata_cb);
 	if (config.insecure) {
-		curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_easy_setopt (curl_config.curl, CURLOPT_SSL_VERIFYPEER, 0);
 	}
 
-	return curl;
+	return curl_config.curl;
 }
 
 char *curl_fetch (CURL *curl, const char *url)
@@ -1130,6 +1146,16 @@ char *curl_fetch (CURL *curl, const char *url)
 	}
 
 	return string_free2 (res);
+}
+
+void curl_cleanup (void)
+{
+	if (curl_config.curl) {
+		curl_easy_cleanup (curl_config.curl);
+		curl_global_cleanup ();
+		curl_config.curl = NULL;
+		curl_config.flags = -1;
+	}
 }
 
 /* vim: set ts=4 sw=4 noet: */

@@ -766,9 +766,6 @@ unsigned int aur_request (alpm_list_t **targets, aurrequest_t type)
 			? aur_request_search (targets, curl)
 			: aur_request_info (targets, curl);
 
-	curl_easy_cleanup (curl);
-	curl_global_cleanup ();
-
 	return aur_pkgs_found;
 }
 
@@ -825,8 +822,6 @@ static char *aur_get_arch (const aurpkg_t *pkg)
 	}
 
 	free (url);
-	curl_easy_cleanup (curl);
-	curl_global_cleanup ();
 
 	return arch;
 }

@@ -245,6 +245,7 @@ bool does_name_contain_targets (const alpm_list_t *targets, const char *name, bo
  */
 CURL *curl_init (long flags);
 char *curl_fetch (CURL *curl, const char *url);
+void curl_cleanup (void);
 
 #endif
 
