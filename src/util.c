@@ -39,18 +39,18 @@
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
 
-/*
- * User agent
- */
+/* User agent */
 #define PQ_USERAGENT "package-query/" PACKAGE_VERSION
 
 typedef alpm_list_t *(*alpm_list_nav)(const alpm_list_t *);
 
+/* curl init config */
 typedef struct _curl_config_t
 {
 	CURL *curl;
 	long flags;
 } curl_config_t;
+
 static curl_config_t curl_config = {NULL, -1};
 
 static alpm_list_t *results = NULL;
@@ -311,15 +311,13 @@ void show_results (void)
 target_t *target_parse (const char *str)
 {
 	target_t *ret = NULL;
-	char *c, *s = (char *)str;
+	char *c, *s = (char *) str;
 	MALLOC (ret, sizeof (target_t));
 	ret->orig = strdup (str);
 	if ((c = strchr (s, '/')) != NULL) {
 		/* target include db ("db/pkg*") */
-		ret->db = strndup (s, (c-s) / sizeof(char));
+		ret->db = strndup (s, (c-s) / sizeof (char));
 		s = ++c;
-	} else {
-		ret->db = NULL;
 	}
 
 	if ((c = strstr (s, "<=")) != NULL) {
@@ -341,7 +339,7 @@ target_t *target_parse (const char *str)
 		ret->mod = ALPM_DEP_MOD_ANY;
 		ret->ver = NULL;
 	}
-	ret->name = (c) ? strndup (s, (c-s) / sizeof(char)) : strdup (s);
+	ret->name = (c) ? strndup (s, (c-s) / sizeof (char)) : strdup (s);
 	return ret;
 }
 
@@ -363,8 +361,7 @@ bool target_check_version (const target_t *t, const char *ver)
 		return true;
 	}
 	const int ret = alpm_pkg_vercmp (ver, t->ver);
-	switch (t->mod)
-	{
+	switch (t->mod) {
 		case ALPM_DEP_MOD_LE: return (ret <= 0);
 		case ALPM_DEP_MOD_GE: return (ret >= 0);
 		case ALPM_DEP_MOD_LT: return (ret < 0);
