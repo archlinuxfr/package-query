@@ -615,7 +615,6 @@ char *itostr (int i)
 	int ret = asprintf (&is, "%d", i);
 	if (ret < 0) {
 		FREE (is);
-		return NULL;
 	}
 	return is;
 }
@@ -626,7 +625,6 @@ char *ltostr (long i)
 	int ret = asprintf (&is, "%ld", i);
 	if (ret < 0) {
 		FREE (is);
-		return NULL;
 	}
 	return is;
 }
@@ -869,7 +867,7 @@ static void color_print_package (const void *p, printpkgfn f)
 		} else {
 			printf (" %s%s%s\n", color(C_VER), lver, color(C_NO));
 		}
-		FREE (ver);
+		free (ver);
 		return;
 	}
 
@@ -891,7 +889,7 @@ static void color_print_package (const void *p, printpkgfn f)
 
 	if (config.aur_upgrades || config.filter & F_UPGRADES) {
 		printf ("\n");
-		FREE (ver);
+		free (ver);
 		return;
 	}
 
@@ -902,7 +900,7 @@ static void color_print_package (const void *p, printpkgfn f)
 	color_print_install_info (p, f, lver, ver);
 
 	/* ver no more needed */
-	FREE (ver);
+	free (ver);
 
 	/* Out of date status & votes */
 	if (aur) {

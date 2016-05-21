@@ -101,7 +101,7 @@ static void parse_config_server (char *ptr, alpm_db_t *db)
 		free (temp);
 	}
 	alpm_db_add_server (db, server);
-	FREE (server);
+	free (server);
 }
 
 static bool parse_configfile (alpm_list_t **dbs, const char *configfile, bool reg)
@@ -188,7 +188,7 @@ static bool parse_configfile (alpm_list_t **dbs, const char *configfile, bool re
 				setarch (ptr);
 			} else if (!config.dbpath && strcmp (line, "DBPath") == 0) {
 				strtrim (ptr);
-				FREE (config.dbpath);
+				free (config.dbpath);
 				config.dbpath = STRDUP (ptr);
 			}
 		}
@@ -310,7 +310,7 @@ unsigned int search_pkg_by_type (alpm_db_t *db, alpm_list_t **targets)
 			char *str = (char *) ((g) ? g(j->data) : j->data);
 			target_t *t1 = target_parse (str);
 			if (free_fn_ret & 2) {
-				FREE (str);
+				free (str);
 			}
 			for (const alpm_list_t *t = *targets; t; t = alpm_list_next (t)) {
 				target_t *t2 = target_parse (t->data);

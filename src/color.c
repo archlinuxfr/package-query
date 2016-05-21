@@ -77,7 +77,7 @@ static void colors_set_color (const char *id, const char *color)
 {
 	colors_t *c = alpm_list_find (colors, id, colors_cmp_id);
 	if (c) {
-		FREE (c->color);
+		free (c->color);
 	} else {
 		MALLOC (c, sizeof (colors_t));
 		c->id = strdup (id);

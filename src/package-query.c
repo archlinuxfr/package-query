@@ -260,11 +260,11 @@ int main (int argc, char **argv)
 				given |= N_DB;
 				break;
 			case 'b':
-				FREE (config.dbpath);
+				free (config.dbpath);
 				config.dbpath = strndup (optarg, PATH_MAX);
 				break;
 			case 'c':
-				FREE (config.configfile);
+				free (config.configfile);
 				config.configfile = strndup (optarg, PATH_MAX);
 				break;
 			case 'd':
@@ -275,7 +275,7 @@ int main (int argc, char **argv)
 				break;
 			case 'f':
 				config.custom_out = true;
-				FREE (config.format_out);
+				free (config.format_out);
 				config.format_out = strndup (optarg, PATH_MAX);
 				format_str (config.format_out);
 				break;
@@ -324,7 +324,7 @@ int main (int argc, char **argv)
 				config.quiet = true;
 				break;
 			case 'r':
-				FREE (config.rootdir);
+				free (config.rootdir);
 				config.rootdir = strndup (optarg, PATH_MAX);
 				break;
 			case 's':
@@ -404,7 +404,7 @@ int main (int argc, char **argv)
 				config.show_size = true;
 				break;
 			case 1007: /* --aur-url */
-				FREE (config.aur_url);
+				free (config.aur_url);
 				config.aur_url = strdup (optarg);
 				break;
 			case 1008: /* --insecure */

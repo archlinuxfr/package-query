@@ -486,31 +486,31 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 	char *s = strndup ((const char *) stringVal, stringLen);
 	switch (pkg_json->current_key) {
 		case AUR_DESCRIPTION:
-			FREE (pkg_json->pkg->desc);
+			free (pkg_json->pkg->desc);
 			pkg_json->pkg->desc = s;
 			break;
 		case AUR_MAINTAINER:
-			FREE (pkg_json->pkg->maintainer);
+			free (pkg_json->pkg->maintainer);
 			pkg_json->pkg->maintainer = s;
 			break;
 		case AUR_NAME:
-			FREE (pkg_json->pkg->name);
+			free (pkg_json->pkg->name);
 			pkg_json->pkg->name = s;
 			break;
 		case AUR_PKGBASE:
-			FREE (pkg_json->pkg->pkgbase);
+			free (pkg_json->pkg->pkgbase);
 			pkg_json->pkg->pkgbase = s;
 			break;
 		case AUR_URL:
-			FREE (pkg_json->pkg->url);
+			free (pkg_json->pkg->url);
 			pkg_json->pkg->url = s;
 			break;
 		case AUR_URLPATH:
-			FREE (pkg_json->pkg->urlpath);
+			free (pkg_json->pkg->urlpath);
 			pkg_json->pkg->urlpath = s;
 			break;
 		case AUR_VERSION:
-			FREE (pkg_json->pkg->version);
+			free (pkg_json->pkg->version);
 			pkg_json->pkg->version = s;
 			break;
 		case AUR_CHECKDEPENDS:
@@ -544,7 +544,7 @@ static int json_string (void *ctx, const unsigned char *stringVal, size_t string
 			pkg_json->pkg->replaces = alpm_list_add (pkg_json->pkg->replaces, s);
 			break;
 		default:
-			FREE (s);
+			free (s);
 			break;
 	}
 
