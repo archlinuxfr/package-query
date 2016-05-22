@@ -658,10 +658,10 @@ const char *alpm_pkg_get_str (const void *p, unsigned char c)
 const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 {
 	static char *info = NULL;
-	static int free_info = 0;
+	static bool free_info = false;
 	if (free_info) {
 		free (info);
-		free_info = 0;
+		free_info = false;
 	}
 	info = NULL;
 	if (!pkg_name) {
@@ -669,7 +669,9 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 	}
 
 	alpm_pkg_t *pkg = alpm_db_get_pkg (alpm_get_localdb (config.handle), pkg_name);
-	if (!pkg) return NULL;
+	if (!pkg) {
+		return NULL;
+	}
 
 	switch (c) {
 		case 'l':
@@ -677,19 +679,19 @@ const char *alpm_local_pkg_get_str (const char *pkg_name, unsigned char c)
 			break;
 		case 'F':
 			info = concat_file_list (alpm_pkg_get_files (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case '1':
 			info = ttostr (alpm_pkg_get_installdate (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case '3':
 			info = ltostr (alpm_pkg_get_realsize (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		case '4':
 			info = itostr (filter_state (pkg));
-			free_info = 1;
+			free_info = true;
 			break;
 		default:
 			return NULL;
