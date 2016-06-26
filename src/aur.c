@@ -640,7 +640,12 @@ static unsigned int aur_request_search (alpm_list_t **targets, CURL *curl)
 			string_cat (url, AUR_RPC_BYMAINT);
 		}
 
-		pkgs = aur_json_parse (curl_fetch (curl, string_cstr (url)), error);
+		char *curl_res = curl_fetch (curl, string_cstr (url));
+		if (!curl_res) {
+			break; // stop on any curl error
+		}
+
+		pkgs = aur_json_parse (curl_res, error);
 		string_free (url);
 	}
 
@@ -652,19 +657,15 @@ static unsigned int aur_request_search (alpm_list_t **targets, CURL *curl)
 	for (const alpm_list_t *p = pkgs; p; p = alpm_list_next (p)) {
 		bool match = true;
 		const aurpkg_t *pkg = p->data;
-
-		if (!config.aur_maintainer) {
-			const char *pkgname = aur_pkg_get_string_value (pkg, AUR_NAME);
-			const char *pkgdesc = aur_pkg_get_string_value (pkg, AUR_DESCRIPTION);
-			for (const alpm_list_t *t = *targets; t; t = alpm_list_next (t)) {
-				if (strcasestr (pkgname, t->data) == NULL &&
-						(!pkgdesc || strcasestr (pkgdesc, t->data) == NULL)) {
-					match = false;
-					break;
-				}
+		const char *pkgname = aur_pkg_get_string_value (pkg, AUR_NAME);
+		const char *pkgdesc = aur_pkg_get_string_value (pkg, AUR_DESCRIPTION);
+		for (const alpm_list_t *t = *targets; t; t = alpm_list_next (t)) {
+			if (strcasestr (pkgname, t->data) == NULL &&
+					(!pkgdesc || strcasestr (pkgdesc, t->data) == NULL)) {
+				match = false;
+				break;
 			}
 		}
-
 		if (match) {
 			pkgs_found++;
 			print_or_add_result (pkg, R_AUR_PKG);
