@@ -473,9 +473,6 @@ static off_t alpm_pkg_get_realsize (alpm_pkg_t *pkg)
 	memset (&inodes, 0, sizeof (inodes));
 	for (size_t k = 0, j = 0; k < files->count; k++) {
 		const alpm_file_t *f = files->files + k;
-		if (!f) {
-			continue;
-		}
 		struct stat buf;
 		if (lstat (f->name, &buf) == -1 || !(S_ISREG (buf.st_mode) || S_ISLNK (buf.st_mode))) {
 			continue;

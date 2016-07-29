@@ -641,12 +641,12 @@ static unsigned int aur_request_search (alpm_list_t **targets, CURL *curl)
 		}
 
 		char *curl_res = curl_fetch (curl, string_cstr (url));
+		string_free (url);
 		if (!curl_res) {
 			break; // stop on any curl error
 		}
 
 		pkgs = aur_json_parse (curl_res, error);
-		string_free (url);
 	}
 
 	if (!pkgs && error[0] != '\0') {
@@ -753,10 +753,6 @@ static unsigned int aur_request_info (alpm_list_t **targets, CURL *curl)
 
 unsigned int aur_request (alpm_list_t **targets, aurrequest_t type)
 {
-	if (!targets && !config.aur_maintainer) {
-		return 0;
-	}
-
 	CURL *curl = (strncmp (config.aur_url, "https", strlen ("https")) == 0) ?
 			curl_init (CURL_GLOBAL_SSL) : curl_init (CURL_GLOBAL_NOTHING);
 	if (!curl) {
