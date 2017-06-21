@@ -24,9 +24,6 @@ AC_CHECK_LIB([yajl], [yajl_free], ,
 	AC_MSG_ERROR([yajl is needed to compile package-query]))
 
 LIBCURL_CHECK_CONFIG([yes], [7.19.4])
-AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION(0.13.1)
-
 
 usegitver=no
 gitver=""
