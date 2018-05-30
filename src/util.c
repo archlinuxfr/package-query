@@ -802,11 +802,11 @@ static void color_print_groups (const void *p, printpkgfn f)
 
 static void color_print_install_info (const void *p, printpkgfn f, const char *lver, const char *ver)
 {
-	if (lver && ver) {
+	if (lver) {
 		const char *info = f (p, 'r');
 		if (info && strcmp (info, "local") != 0) {
 			printf (" %s[%s", color(C_INSTALLED), _("installed"));
-			if (strcmp (ver, lver) != 0) {
+			if (ver && strcmp (ver, lver) != 0) {
 				printf (": %s%s%s%s", color(C_LVER), lver, color(C_NO), color(C_INSTALLED));
 			}
 			printf ("]%s", color(C_NO));
