@@ -630,6 +630,7 @@ const char *alpm_pkg_get_str (const void *p, unsigned char c)
 		case 's':
 			pkg = get_sync_pkg (pkg);
 			if (!pkg) pkg = (alpm_pkg_t *) p;
+			// fall through
 		case 'r':
 			info = (char *) alpm_db_get_name (alpm_pkg_get_db (pkg));
 			break;
@@ -652,7 +653,7 @@ const char *alpm_pkg_get_str (const void *p, unsigned char c)
 		case 'V':
 			pkg = get_sync_pkg (pkg);
 			if (!pkg) break;
-			// falling through
+			// fall through
 		case 'v':
 			info = (char *) alpm_pkg_get_version (pkg);
 			break;
