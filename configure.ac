@@ -18,7 +18,7 @@ AC_CHECK_HEADERS([ctype.h getopt.h glob.h libintl.h limits.h locale.h regex.h si
 
 AC_CHECK_LIB([alpm], [alpm_version], ,
 	AC_MSG_ERROR([pacman is needed to compile package-query]))
-PKG_CHECK_MODULES([alpm], [libalpm >= 10.0.0])
+PKG_CHECK_MODULES([alpm], [libalpm >= 11.0.0])
 
 AC_CHECK_LIB([yajl], [yajl_free], ,
 	AC_MSG_ERROR([yajl is needed to compile package-query]))

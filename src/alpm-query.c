@@ -559,6 +559,13 @@ const char *alpm_pkg_get_str (const void *p, unsigned char c)
 			info = concat_backup_list (alpm_pkg_get_backup (pkg));
 			free_info = true;
 			break;
+		case 'c':
+			if (alpm_pkg_get_origin (pkg) != ALPM_PKG_FROM_FILE) {
+				return NULL;
+			}
+			info = concat_dep_list (alpm_pkg_get_checkdepends (pkg));
+			free_info = true;
+			break;
 		case 'C':
 			info = concat_dep_list (alpm_pkg_get_conflicts (pkg));
 			free_info = true;
@@ -587,6 +594,13 @@ const char *alpm_pkg_get_str (const void *p, unsigned char c)
 			break;
 		case 'm':
 			info = (char *) alpm_pkg_get_packager (pkg);
+			break;
+		case 'M':
+			if (alpm_pkg_get_origin (pkg) != ALPM_PKG_FROM_FILE) {
+				return NULL;
+			}
+			info = concat_dep_list (alpm_pkg_get_makedepends (pkg));
+			free_info = true;
 			break;
 		case 'n':
 			info = (char *) alpm_pkg_get_name (pkg);
