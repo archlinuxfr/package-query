@@ -116,7 +116,7 @@ typedef struct _aq_config
 	char *rootdir;
 	const char *myname;
 	alpm_handle_t *handle;
-	char delimiter[SEP_LEN];
+	char delimiter[SEP_LEN+1];
 	unsigned short aur;
 	bool aur_foreign;
 	bool aur_maintainer;
