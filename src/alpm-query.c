@@ -549,6 +549,10 @@ const char *alpm_pkg_get_str (const void *p, unsigned char c)
 			info = ltostr (alpm_pkg_download_size (pkg));
 			free_info = true;
 			break;
+		case '6':
+			info = ttostr (alpm_pkg_get_builddate (pkg));
+			free_info = true;
+			break;
 		case 'a':
 			info = (char *) alpm_pkg_get_arch (pkg);
 			break;
