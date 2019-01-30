@@ -1,0 +1,13 @@
+option(
+  'aur-url',
+  description: 'AUR url',
+  type: 'string',
+  value: 'https://aur.archlinux.org'
+)
+
+option(
+  'root-dir',
+  description: 'see pacman configuration',
+  type: 'string',
+  value: '/'
+)
