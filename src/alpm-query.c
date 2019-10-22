@@ -25,11 +25,16 @@
 #include <sys/utsname.h>
 #include <glob.h>
 
+#include "config.h"
 #include "util.h"
 #include "alpm-query.h"
 
 #define ARCH_PACKAGES_URL "https://www.archlinux.org/packages/"
 #define OUTOFDATE_FLAG "\"flag_date\": "
+
+#if HAVE_ALPM_SYNC_GET_NEW_VERSION
+#define alpm_sync_newversion alpm_sync_get_new_version
+#endif /* HAVE_ALPM_SYNC_GET_NEW_VERSION */
 
 typedef const char *(*retcharfn) (void *);
 
