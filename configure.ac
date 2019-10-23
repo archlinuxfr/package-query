@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.69)
-AC_INIT([package-query], [1.9], [https://github.com/archlinuxfr/package-query])
+AC_INIT([package-query], [1.10], [https://github.com/archlinuxfr/package-query])
 AM_INIT_AUTOMAKE([-Wall])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/package-query.c])
@@ -18,7 +18,7 @@ AC_CHECK_HEADERS([ctype.h getopt.h glob.h libintl.h limits.h locale.h regex.h si
 
 AC_CHECK_LIB([alpm], [alpm_version], ,
 	AC_MSG_ERROR([pacman is needed to compile package-query]))
-PKG_CHECK_MODULES([alpm], [libalpm >= 11.0.0])
+PKG_CHECK_MODULES([alpm], [libalpm >= 12.0.0])
 
 AC_CHECK_LIB([yajl], [yajl_free], ,
 	AC_MSG_ERROR([yajl is needed to compile package-query]))

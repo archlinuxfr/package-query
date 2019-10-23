@@ -253,7 +253,7 @@ static bool filter (alpm_pkg_t *pkg, unsigned int _filter)
 			}
 		}
 	}
-	if ((_filter & F_UPGRADES) && !alpm_sync_newversion (pkg, alpm_get_syncdbs(config.handle)))
+	if ((_filter & F_UPGRADES) && !alpm_sync_get_new_version (pkg, alpm_get_syncdbs(config.handle)))
 		return false;
 	if ((_filter & F_GROUP) && !alpm_pkg_get_groups (pkg))
 		return false;
