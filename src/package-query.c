@@ -46,6 +46,8 @@ need |= N_TARGET | N_DB; } while (0)
 extern char *optarg;
 extern int optind;
 
+aq_config config;
+
 static alpm_list_t *targets = NULL;
 
 static void cleanup (int ret)

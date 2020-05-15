@@ -143,7 +143,7 @@ typedef struct _aq_config
 	bool rsort;
 } aq_config;
 
-aq_config config;
+extern aq_config config;
 
 /*
  * Target type
