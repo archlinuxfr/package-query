@@ -71,7 +71,7 @@ static bool init_alpm (void)
 	if (!config.arch) {
 		setarch ("auto");
 	}
-	alpm_option_set_arch (handle, config.arch);
+	alpm_option_add_architecture (handle, config.arch);
 	config.handle = handle;
 	return true;
 }
@@ -93,7 +93,7 @@ static bool parse_config_options (char *ptr, alpm_db_t **db, alpm_list_t **dbs, 
 static void parse_config_server (char *ptr, alpm_db_t *db)
 {
 	strtrim (ptr);
-	const char *arch = alpm_option_get_arch (config.handle);
+	const char *arch = alpm_option_get_architectures (config.handle)->data;
 	char *server = strreplace (ptr, "$repo", alpm_db_get_name (db));
 	if (arch) {
 		char *temp = server;
@@ -394,7 +394,8 @@ unsigned int list_grp (alpm_db_t *db, alpm_list_t *targets)
 unsigned int search_pkg (alpm_db_t *db, alpm_list_t *targets)
 {
 	unsigned int ret = 0;
-	alpm_list_t *pkgs = alpm_db_search (db, targets);
+	alpm_list_t *pkgs = NULL;
+	alpm_db_search (db, targets, &pkgs);
 	for (const alpm_list_t *t = pkgs; t; t = alpm_list_next (t)) {
 		alpm_pkg_t *info = t->data;
 		if (!filter (info, config.filter) ||
