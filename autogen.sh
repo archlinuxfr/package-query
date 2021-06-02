@@ -1,7 +1,4 @@
 #!/bin/sh -x
 
-libtoolize
-aclocal -I m4 --install
-autoheader
-automake --foreign --add-missing
-autoconf
+mkdir -p m4/
+autoreconf -vif

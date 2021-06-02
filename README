@@ -1,7 +1,7 @@
 package-query is a frontend to Arch Linux pacman's database - libalpm; it also
 adds support of Arch User Repository - AUR (https://aur.archlinux.org/).
 
-package-query is mostly used by yaourt (https://github.com/archlinuxfr/yaourt)
+package-query was mostly used by yaourt (https://github.com/archlinuxfr/yaourt)
 but may as well be used as a stand-alone tool.
 
 Dependencies:
