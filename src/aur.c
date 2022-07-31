@@ -30,7 +30,7 @@
 /*
  * AUR url
  */
-#define AUR_RPC          "/rpc.php"
+#define AUR_RPC          "/rpc"
 #define AUR_RPC_VERSION  "?v=5"
 #define AUR_RPC_SEARCH   "&type=search&arg="
 #define AUR_RPC_BYNAME   "&by=name"
